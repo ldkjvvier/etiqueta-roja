@@ -1,7 +1,6 @@
 'use client'
 
-import { Search, ShoppingBag, Menu, X, Star } from 'lucide-react'
-import { usePathname, useRouter } from 'next/navigation'
+import { ShoppingBag, Menu, X, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
 	Sheet,
@@ -32,8 +31,6 @@ function Logo() {
 }
 
 export function Header() {
-	const router = useRouter()
-	const pathname = usePathname()
 	const {
 		cartCount,
 		isCartOpen,
@@ -41,26 +38,6 @@ export function Header() {
 		isMobileMenuOpen,
 		setIsMobileMenuOpen,
 	} = useStore()
-
-	const focusProductSearch = () => {
-		const input = document.getElementById(
-			'product-search'
-		) as HTMLInputElement | null
-		if (input) {
-			input.scrollIntoView({ behavior: 'smooth', block: 'center' })
-			try {
-				input.focus({ preventScroll: true })
-			} catch {
-				input.focus()
-			}
-			return
-		}
-		if (pathname !== '/') {
-			router.push('/#stock')
-			return
-		}
-		window.location.hash = '#stock'
-	}
 
 	return (
 		<header className="sticky top-0 z-50 bg-background border-b border-border">
@@ -76,7 +53,10 @@ export function Header() {
 								<Button
 									variant="ghost"
 									size="icon"
-									className="hover:bg-transparent"
+									type="button"
+									className="hover:text-primary active:scale-[0.98]"
+									aria-label="Abrir menú"
+									title="Abrir menú"
 								>
 									<Menu className="h-6 w-6" />
 									<span className="sr-only">Abrir menú</span>
@@ -92,8 +72,11 @@ export function Header() {
 										<Button
 											variant="ghost"
 											size="icon"
+											type="button"
+											aria-label="Cerrar menú"
+											title="Cerrar menú"
 											onClick={() => setIsMobileMenuOpen(false)}
-											className="hover:bg-transparent"
+											className="hover:text-primary active:scale-[0.98]"
 										>
 											<X className="h-6 w-6" />
 										</Button>
@@ -116,17 +99,26 @@ export function Header() {
 					</div>
 
 					{/* Logo */}
-					<a href="#" className="flex items-center">
+					<a
+						href="#"
+						className="flex items-center"
+						aria-label="Ir al inicio"
+						title="Ir al inicio"
+					>
 						<Logo />
 					</a>
 
 					{/* Desktop Nav */}
-					<nav className="hidden md:flex items-center gap-8">
+					<nav
+						className="hidden md:flex items-center gap-8"
+						aria-label="Navegación principal"
+					>
 						{navLinks.map((link) => (
 							<a
 								key={link.label}
 								href={link.href}
 								className="text-sm font-bold tracking-wide hover:text-primary transition-colors"
+								title={link.label}
 							>
 								{link.label}
 							</a>
@@ -135,24 +127,18 @@ export function Header() {
 
 					{/* Actions */}
 					<div className="flex items-center gap-2">
+						{/* Mobile: icon-only */}
 						<Button
 							variant="ghost"
 							size="icon"
-							className="hover:bg-transparent"
 							type="button"
-							aria-label="Buscar productos"
-							aria-controls="product-search"
-							onClick={focusProductSearch}
-						>
-							<Search className="h-5 w-5" />
-							<span className="sr-only">Buscar productos</span>
-						</Button>
-						<Button
-							variant="ghost"
-							size="icon"
-							className="relative hover:bg-transparent"
+							className="relative md:hidden hover:text-primary active:scale-[0.98]"
 							onClick={() => setIsCartOpen(true)}
-							type="button"
+							title={
+								cartCount > 0
+									? `Abrir carrito (${cartCount} artículos)`
+									: 'Abrir carrito'
+							}
 							aria-label={
 								cartCount > 0
 									? `Abrir carrito (${cartCount} artículos)`
@@ -175,6 +161,39 @@ export function Header() {
 								Carrito
 								{cartCount > 0 ? `, ${cartCount} artículos` : ''}
 							</span>
+						</Button>
+
+						{/* Desktop: icon + label + count */}
+						<Button
+							variant="ghost"
+							size="sm"
+							type="button"
+							className="hidden md:inline-flex font-bold hover:text-primary active:scale-[0.98]"
+							onClick={() => setIsCartOpen(true)}
+							title={
+								cartCount > 0
+									? `Abrir carrito (${cartCount} artículos)`
+									: 'Abrir carrito'
+							}
+							aria-label={
+								cartCount > 0
+									? `Abrir carrito (${cartCount} artículos)`
+									: 'Abrir carrito'
+							}
+							aria-haspopup="dialog"
+							aria-expanded={isCartOpen}
+							aria-controls="cart-sheet"
+						>
+							<ShoppingBag className="h-5 w-5" />
+							<span className="uppercase tracking-wide">Carrito</span>
+							{cartCount > 0 && (
+								<span
+									aria-hidden="true"
+									className="ml-1 bg-primary text-primary-foreground text-xs font-black px-2 py-0.5"
+								>
+									{cartCount}
+								</span>
+							)}
 						</Button>
 					</div>
 				</div>
