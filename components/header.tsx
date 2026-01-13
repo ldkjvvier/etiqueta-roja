@@ -54,7 +54,7 @@ export function Header() {
 									variant="ghost"
 									size="icon"
 									type="button"
-									className="hover:text-primary active:scale-[0.98]"
+									className="hover:bg-transparent hover:text-primary active:scale-[0.98]"
 									aria-label="Abrir menú"
 									title="Abrir menú"
 								>
@@ -76,7 +76,7 @@ export function Header() {
 											aria-label="Cerrar menú"
 											title="Cerrar menú"
 											onClick={() => setIsMobileMenuOpen(false)}
-											className="hover:text-primary active:scale-[0.98]"
+											className="hover:bg-transparent hover:text-primary active:scale-[0.98]"
 										>
 											<X className="h-6 w-6" />
 										</Button>
@@ -132,7 +132,7 @@ export function Header() {
 							variant="ghost"
 							size="icon"
 							type="button"
-							className="relative md:hidden hover:text-primary active:scale-[0.98]"
+							className="relative md:hidden hover:bg-transparent hover:text-primary active:scale-[0.98]"
 							onClick={() => setIsCartOpen(true)}
 							title={
 								cartCount > 0
@@ -168,7 +168,7 @@ export function Header() {
 							variant="ghost"
 							size="sm"
 							type="button"
-							className="hidden md:inline-flex font-bold hover:text-primary active:scale-[0.98]"
+							className="hidden md:inline-flex font-bold hover:bg-transparent hover:text-primary active:scale-[0.98]"
 							onClick={() => setIsCartOpen(true)}
 							title={
 								cartCount > 0
