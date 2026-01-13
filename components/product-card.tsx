@@ -1,85 +1,100 @@
-"use client"
+'use client'
 
-import { useStore, type Product } from "@/lib/store-context"
+import { useStore, type Product } from '@/lib/store-context'
+import { ProductCardCarousel } from './product-card-carousel'
 
-export type { Product } from "@/lib/store-context"
+export type { Product } from '@/lib/store-context'
 
 export function ProductCard({ product }: { product: Product }) {
-  const { setSelectedProduct } = useStore()
+	const { setSelectedProduct } = useStore()
 
-  const isSoldOut = product.stockStatus === "sold_out"
+	const isSoldOut = product.stockStatus === 'sold_out'
 
-  const handleClick = () => {
-    if (!isSoldOut) {
-      setSelectedProduct(product)
-    }
-  }
+	const handleClick = () => {
+		if (!isSoldOut) {
+			setSelectedProduct(product)
+		}
+	}
 
-  return (
-    <div
-      onClick={handleClick}
-      className={`group border border-border bg-card ${!isSoldOut ? "cursor-pointer" : ""} ${isSoldOut ? "opacity-70" : ""}`}
-    >
-      {/* Image Container */}
-      <div className="relative aspect-square bg-secondary overflow-hidden">
-        <img
-          src={product.image || "/placeholder.svg"}
-          alt={product.name}
-          className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${
-            isSoldOut ? "grayscale" : ""
-          }`}
-        />
+	const carouselImages =
+		product.images?.length > 0
+			? product.images
+			: [product.image, product.image, product.image]
 
-        {/* Stock Badge */}
-        {product.stockStatus === "low" && (
-          <span className="absolute top-3 left-3 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-1 uppercase tracking-wider">
-            Last Pieces
-          </span>
-        )}
-        {isSoldOut && (
-          <span className="absolute top-3 left-3 bg-foreground text-background text-[10px] font-bold px-2 py-1 uppercase tracking-wider">
-            Sold Out
-          </span>
-        )}
+	return (
+		<div
+			onClick={handleClick}
+			className={`group border border-border bg-card ${
+				!isSoldOut ? 'cursor-pointer' : ''
+			} ${isSoldOut ? 'opacity-70' : ''}`}
+		>
+			<div className="relative aspect-square bg-secondary overflow-hidden">
+				<ProductCardCarousel
+					images={carouselImages}
+					alt={product.name}
+					isSoldOut={isSoldOut}
+				/>
 
-        {/* Sale Badge */}
-        {product.originalPrice && !isSoldOut && (
-          <span className="absolute top-3 right-3 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-1">
-            SALE
-          </span>
-        )}
-      </div>
+				{/* Stock Badge - High z-index to overlay carousel */}
+				{product.stockStatus === 'low' && (
+					<span className="absolute top-3 left-3 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-1 uppercase tracking-wider z-20">
+						Poco Stock
+					</span>
+				)}
+				{isSoldOut && (
+					<span className="absolute top-3 left-3 bg-foreground text-background text-[10px] font-bold px-2 py-1 uppercase tracking-wider z-20">
+						Agotado
+					</span>
+				)}
 
-      {/* Info */}
-      <div className="p-3 md:p-4">
-        <h3 className="font-bold text-xs md:text-sm uppercase tracking-wide mb-2 line-clamp-1">{product.name}</h3>
+				{/* Sale Badge */}
+				{product.originalPrice && !isSoldOut && (
+					<span className="absolute top-3 right-3 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-1 z-20">
+						SALE
+					</span>
+				)}
+			</div>
 
-        <div className="flex items-center gap-2 mb-3">
-          <span className="font-black text-base md:text-lg">${product.price}</span>
-          {product.originalPrice && (
-            <span className="text-muted-foreground line-through text-xs md:text-sm">${product.originalPrice}</span>
-          )}
-        </div>
+			{/* Info */}
+			<div className="p-3 md:p-4">
+				<h3 className="font-bold text-xs md:text-sm uppercase tracking-wide mb-2 line-clamp-1">
+					{product.name}
+				</h3>
 
-        {!isSoldOut && product.sizes.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-2">
-            {product.sizes.map((size) => (
-              <span
-                key={size}
-                className="text-[10px] font-bold border border-border px-1.5 py-0.5 text-muted-foreground"
-              >
-                {size}
-              </span>
-            ))}
-          </div>
-        )}
+				<div className="flex items-center gap-2 mb-3">
+					<span className="font-black text-base md:text-lg">
+						${product.price}
+					</span>
+					{product.originalPrice && (
+						<span className="text-muted-foreground line-through text-xs md:text-sm">
+							${product.originalPrice}
+						</span>
+					)}
+				</div>
 
-        {!isSoldOut ? (
-          <p className="text-[10px] md:text-xs font-bold text-primary uppercase tracking-wide">Ver detalles →</p>
-        ) : (
-          <p className="text-[10px] md:text-xs font-bold text-muted-foreground uppercase tracking-wide">Agotado</p>
-        )}
-      </div>
-    </div>
-  )
+				{!isSoldOut && product.sizes.length > 0 && (
+					<div className="flex flex-wrap gap-1 mb-2">
+						{product.sizes.map((size) => (
+							<span
+								key={size}
+								className="text-[10px] font-bold border border-border px-1.5 py-0.5 text-muted-foreground"
+							>
+								{size}
+							</span>
+						))}
+					</div>
+				)}
+
+				{!isSoldOut ? (
+					<p className="text-[10px] md:text-xs font-bold text-primary uppercase tracking-wide">
+						Ver detalles →
+					</p>
+				) : (
+					<p className="text-[10px] md:text-xs font-bold text-muted-foreground uppercase tracking-wide">
+						Agotado
+					</p>
+				)}
+			</div>
+		</div>
+	)
 }

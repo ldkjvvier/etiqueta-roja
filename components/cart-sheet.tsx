@@ -27,10 +27,7 @@ export function CartSheet() {
 
 	return (
 		<Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
-			<SheetContent
-				id="cart-sheet"
-				className="w-full sm:max-w-md bg-background border-l border-border flex flex-col"
-			>
+			<SheetContent className="w-full sm:max-w-md bg-background border-l border-border flex flex-col">
 				<SheetHeader className="border-b border-border pb-4">
 					<SheetTitle className="text-xl font-black tracking-tight">
 						TU CARRITO ({cartItems.length})
