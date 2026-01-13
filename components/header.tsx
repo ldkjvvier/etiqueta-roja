@@ -1,6 +1,6 @@
 'use client'
 
-import { Search, ShoppingBag, Menu, X, Star } from 'lucide-react'
+import { ShoppingBag, Menu, X, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
 	Sheet,
@@ -33,6 +33,7 @@ function Logo() {
 export function Header() {
 	const {
 		cartCount,
+		isCartOpen,
 		setIsCartOpen,
 		isMobileMenuOpen,
 		setIsMobileMenuOpen,
@@ -114,24 +115,31 @@ export function Header() {
 						<Button
 							variant="ghost"
 							size="icon"
-							className="hover:bg-transparent"
-						>
-							<Search className="h-5 w-5" />
-							<span className="sr-only">Buscar</span>
-						</Button>
-						<Button
-							variant="ghost"
-							size="icon"
 							className="relative hover:bg-transparent"
 							onClick={() => setIsCartOpen(true)}
+							type="button"
+							aria-label={
+								cartCount > 0
+									? `Abrir carrito (${cartCount} artículos)`
+									: 'Abrir carrito'
+							}
+							aria-haspopup="dialog"
+							aria-expanded={isCartOpen}
+							aria-controls="cart-sheet"
 						>
 							<ShoppingBag className="h-5 w-5" />
 							{cartCount > 0 && (
-								<span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold w-5 h-5 flex items-center justify-center">
+								<span
+									aria-hidden="true"
+									className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold w-5 h-5 flex items-center justify-center"
+								>
 									{cartCount}
 								</span>
 							)}
-							<span className="sr-only">Carrito</span>
+							<span className="sr-only">
+								Carrito
+								{cartCount > 0 ? `, ${cartCount} artículos` : ''}
+							</span>
 						</Button>
 					</div>
 				</div>
