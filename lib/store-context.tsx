@@ -22,11 +22,11 @@ export type Product = {
 	price: number
 	originalPrice?: number
 	image: string
-	images: string[] // Array of 3 images for carousel
+	images?: string[]
 	sizes: string[]
 	stockStatus: 'available' | 'low' | 'sold_out'
-	description?: string
 	category?: string
+	description?: string
 }
 
 type StoreContextType = {
@@ -40,6 +40,8 @@ type StoreContextType = {
 	setIsCartOpen: (open: boolean) => void
 	isMobileMenuOpen: boolean
 	setIsMobileMenuOpen: (open: boolean) => void
+	searchQuery: string
+	setSearchQuery: (query: string) => void
 	selectedProduct: Product | null
 	setSelectedProduct: (product: Product | null) => void
 	generateWhatsAppMessage: (
@@ -58,6 +60,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 	const [cartItems, setCartItems] = useState<CartItem[]>([])
 	const [isCartOpen, setIsCartOpen] = useState(false)
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+	const [searchQuery, setSearchQuery] = useState('')
 	const [selectedProduct, setSelectedProduct] =
 		useState<Product | null>(null)
 
@@ -150,6 +153,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 				setIsCartOpen,
 				isMobileMenuOpen,
 				setIsMobileMenuOpen,
+				searchQuery,
+				setSearchQuery,
 				selectedProduct,
 				setSelectedProduct,
 				generateWhatsAppMessage,

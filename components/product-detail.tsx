@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
+import Link from 'next/link'
 import useEmblaCarousel from 'embla-carousel-react'
 import {
 	ArrowLeft,
@@ -11,103 +12,14 @@ import {
 import { Button } from '@/components/ui/button'
 import { useStore, type Product } from '@/lib/store-context'
 import { ProductCard } from './product-card'
-
-// Recommended products data
-const allProducts: Product[] = [
-	{
-		id: '1',
-		name: 'Hoodie Oversize Negro',
-		price: 89,
-		image: '/black-oversized-streetwear-hoodie-front.jpg',
-		images: [
-			'/black-oversized-streetwear-hoodie-front.jpg',
-			'/black-oversized-streetwear-hoodie-back.jpg',
-			'/black-oversized-streetwear-hoodie-detail.jpg',
-		],
-		sizes: ['S', 'M', 'L', 'XL'],
-		stockStatus: 'available',
-		category: 'hoodies',
-	},
-	{
-		id: '2',
-		name: 'Camiseta Acid Wash',
-		price: 45,
-		originalPrice: 65,
-		image: '/acid-wash-distressed-tshirt-front.jpg',
-		images: [
-			'/acid-wash-distressed-tshirt-front.jpg',
-			'/acid-wash-distressed-tshirt-back.jpg',
-			'/acid-wash-distressed-tshirt-detail-texture.jpg',
-		],
-		sizes: ['S', 'M', 'L'],
-		stockStatus: 'low',
-		category: 'tees',
-	},
-	{
-		id: '3',
-		name: 'Cargo Pants Wide Fit',
-		price: 120,
-		image: '/wide-fit-cargo-pants-streetwear-front.jpg',
-		images: [
-			'/wide-fit-cargo-pants-streetwear-front.jpg',
-			'/wide-fit-cargo-pants-streetwear-back.jpg',
-			'/wide-fit-cargo-pants-pocket-detail.jpg',
-		],
-		sizes: ['M', 'L', 'XL'],
-		stockStatus: 'available',
-		category: 'pants',
-	},
-	{
-		id: '5',
-		name: 'Beanie Logo Bordado',
-		price: 35,
-		image: '/black-beanie-embroidered-logo-front.jpg',
-		images: [
-			'/black-beanie-embroidered-logo-front.jpg',
-			'/black-beanie-embroidered-logo-side.jpg',
-			'/black-beanie-embroidered-logo-detail.jpg',
-		],
-		sizes: ['OS'],
-		stockStatus: 'low',
-		category: 'accessories',
-	},
-	{
-		id: '7',
-		name: 'Sudadera Cropped',
-		price: 68,
-		image: '/cropped-sweatshirt-streetwear-front.jpg',
-		images: [
-			'/cropped-sweatshirt-streetwear-front.jpg',
-			'/cropped-sweatshirt-streetwear-back.jpg',
-			'/cropped-sweatshirt-streetwear-detail.jpg',
-		],
-		sizes: ['XS', 'S', 'M'],
-		stockStatus: 'available',
-		category: 'hoodies',
-	},
-	{
-		id: '10',
-		name: 'Hoodie Graphic Print',
-		price: 98,
-		image: '/placeholder.svg?height=600&width=600',
-		images: [
-			'/placeholder.svg?height=600&width=600',
-			'/placeholder.svg?height=600&width=600',
-			'/placeholder.svg?height=600&width=600',
-		],
-		sizes: ['M', 'L'],
-		stockStatus: 'low',
-		category: 'hoodies',
-	},
-]
+import { products as allProducts } from '@/lib/products'
 
 export function ProductDetail({ product }: { product: Product }) {
 	const [selectedSize, setSelectedSize] = useState<string | null>(
 		null
 	)
 	const [selectedImageIndex, setSelectedImageIndex] = useState(0)
-	const { setSelectedProduct, addToCart, generateWhatsAppMessage } =
-		useStore()
+	const { addToCart, generateWhatsAppMessage } = useStore()
 
 	// Main gallery carousel
 	const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true })
@@ -116,7 +28,7 @@ export function ProductDetail({ product }: { product: Product }) {
 
 	// Get product images or fallback
 	const productImages =
-		product.images?.length > 0
+		product.images && product.images.length > 0
 			? product.images
 			: [product.image, product.image, product.image]
 
@@ -178,16 +90,24 @@ export function ProductDetail({ product }: { product: Product }) {
 		<div className="min-h-screen bg-background">
 			{/* Breadcrumbs */}
 			<div className="container mx-auto px-4 py-4">
-				<nav className="flex items-center gap-2 text-sm">
-					<button
-						onClick={() => setSelectedProduct(null)}
+				<nav
+					className="flex items-center gap-2 text-sm"
+					aria-label="Breadcrumb"
+				>
+					<Link
+						href="/"
 						className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
 					>
-						<ArrowLeft className="h-4 w-4" />
+						<ArrowLeft className="h-4 w-4" aria-hidden="true" />
 						<span>Inicio</span>
-					</button>
+					</Link>
 					<span className="text-muted-foreground">/</span>
-					<span className="text-muted-foreground">Stock</span>
+					<Link
+						href="/#stock"
+						className="text-muted-foreground hover:text-foreground transition-colors"
+					>
+						Stock
+					</Link>
 					<span className="text-muted-foreground">/</span>
 					<span className="font-medium">{product.name}</span>
 				</nav>
@@ -316,7 +236,7 @@ export function ProductDetail({ product }: { product: Product }) {
 										<button
 											key={size}
 											onClick={() => setSelectedSize(size)}
-											className={`min-w-[3.5rem] h-12 text-sm font-bold border-2 transition-all ${
+											className={`w-14 h-12 text-sm font-bold border-2 transition-all ${
 												selectedSize === size
 													? 'bg-foreground text-background border-foreground'
 													: 'bg-transparent text-foreground border-border hover:border-foreground'
@@ -388,7 +308,7 @@ export function ProductDetail({ product }: { product: Product }) {
 					{recommendedProducts.map((recProduct) => (
 						<div
 							key={recProduct.id}
-							className="min-w-[260px] md:min-w-0"
+							className="flex-none w-65 md:w-auto"
 						>
 							<ProductCard product={recProduct} />
 						</div>

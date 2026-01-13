@@ -1,6 +1,7 @@
 'use client'
 
-import { ShoppingBag, Menu, X, Star } from 'lucide-react'
+import { Search, ShoppingBag, Menu, X, Star } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import {
 	Sheet,
@@ -31,6 +32,8 @@ function Logo() {
 }
 
 export function Header() {
+	const router = useRouter()
+	const pathname = usePathname()
 	const {
 		cartCount,
 		isCartOpen,
@@ -38,6 +41,26 @@ export function Header() {
 		isMobileMenuOpen,
 		setIsMobileMenuOpen,
 	} = useStore()
+
+	const focusProductSearch = () => {
+		const input = document.getElementById(
+			'product-search'
+		) as HTMLInputElement | null
+		if (input) {
+			input.scrollIntoView({ behavior: 'smooth', block: 'center' })
+			try {
+				input.focus({ preventScroll: true })
+			} catch {
+				input.focus()
+			}
+			return
+		}
+		if (pathname !== '/') {
+			router.push('/#stock')
+			return
+		}
+		window.location.hash = '#stock'
+	}
 
 	return (
 		<header className="sticky top-0 z-50 bg-background border-b border-border">
@@ -112,6 +135,18 @@ export function Header() {
 
 					{/* Actions */}
 					<div className="flex items-center gap-2">
+						<Button
+							variant="ghost"
+							size="icon"
+							className="hover:bg-transparent"
+							type="button"
+							aria-label="Buscar productos"
+							aria-controls="product-search"
+							onClick={focusProductSearch}
+						>
+							<Search className="h-5 w-5" />
+							<span className="sr-only">Buscar productos</span>
+						</Button>
 						<Button
 							variant="ghost"
 							size="icon"

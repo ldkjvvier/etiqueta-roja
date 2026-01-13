@@ -54,7 +54,7 @@ export function CartSheet() {
 									key={`${item.id}-${item.size}`}
 									className="flex gap-4 p-4 border border-border"
 								>
-									<div className="w-20 h-20 bg-secondary flex-shrink-0">
+									<div className="w-20 h-20 bg-secondary shrink-0">
 										<img
 											src={item.image || '/placeholder.svg'}
 											alt={item.name}

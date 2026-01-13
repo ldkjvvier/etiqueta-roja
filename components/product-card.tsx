@@ -1,33 +1,25 @@
 'use client'
 
-import { useStore, type Product } from '@/lib/store-context'
+import Link from 'next/link'
+import type { Product } from '@/lib/store-context'
 import { ProductCardCarousel } from './product-card-carousel'
 
 export type { Product } from '@/lib/store-context'
 
 export function ProductCard({ product }: { product: Product }) {
-	const { setSelectedProduct } = useStore()
-
 	const isSoldOut = product.stockStatus === 'sold_out'
 
-	const handleClick = () => {
-		if (!isSoldOut) {
-			setSelectedProduct(product)
-		}
-	}
-
 	const carouselImages =
-		product.images?.length > 0
+		product.images && product.images.length > 0
 			? product.images
 			: [product.image, product.image, product.image]
 
-	return (
-		<div
-			onClick={handleClick}
-			className={`group border border-border bg-card ${
-				!isSoldOut ? 'cursor-pointer' : ''
-			} ${isSoldOut ? 'opacity-70' : ''}`}
-		>
+	const className = `group border border-border bg-card ${
+		!isSoldOut ? 'cursor-pointer' : ''
+	} ${isSoldOut ? 'opacity-70' : ''}`
+
+	const content = (
+		<>
 			<div className="relative aspect-square bg-secondary overflow-hidden">
 				<ProductCardCarousel
 					images={carouselImages}
@@ -95,6 +87,20 @@ export function ProductCard({ product }: { product: Product }) {
 					</p>
 				)}
 			</div>
-		</div>
+		</>
+	)
+
+	if (isSoldOut) {
+		return <div className={className}>{content}</div>
+	}
+
+	return (
+		<Link
+			href={`/producto/${product.id}`}
+			className={className}
+			aria-label={`Ver detalles de ${product.name}`}
+		>
+			{content}
+		</Link>
 	)
 }
