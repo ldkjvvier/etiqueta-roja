@@ -115,9 +115,9 @@ export function ProductDetail({ product }: { product: Product }) {
 
 			{/* Product Content */}
 			<div className="container mx-auto px-4 py-8">
-				<div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
+				<div className="grid lg:grid-cols-2 gap-8 lg:gap-10 items-start">
 					{/* Main Gallery */}
-					<div className="space-y-4">
+					<div className="space-y-4 w-full lg:max-w-150">
 						{/* Main Carousel */}
 						<div className="relative aspect-square bg-secondary overflow-hidden group">
 							<div ref={emblaRef} className="overflow-hidden h-full">
@@ -198,13 +198,13 @@ export function ProductDetail({ product }: { product: Product }) {
 					</div>
 
 					{/* Product Info */}
-					<div className="flex flex-col">
-						<h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight uppercase mb-4">
+					<div className="flex flex-col pt-2">
+						<h1 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight uppercase mb-3">
 							{product.name}
 						</h1>
 
-						<div className="flex items-center gap-3 mb-6">
-							<span className="text-3xl md:text-4xl font-black">
+						<div className="flex items-center gap-3 mb-4">
+							<span className="text-2xl md:text-3xl lg:text-4xl font-black">
 								${product.price}
 							</span>
 							{product.originalPrice && (
@@ -215,8 +215,8 @@ export function ProductDetail({ product }: { product: Product }) {
 						</div>
 
 						{/* Description */}
-						<div className="mb-8">
-							<h3 className="font-bold text-sm uppercase tracking-wide mb-2 text-muted-foreground">
+						<div className="mb-6">
+							<h3 className="font-bold text-xs uppercase tracking-wide mb-2 text-muted-foreground">
 								Descripción
 							</h3>
 							<p className="text-foreground leading-relaxed">
@@ -227,8 +227,8 @@ export function ProductDetail({ product }: { product: Product }) {
 
 						{/* Size Selector */}
 						{!isSoldOut && (
-							<div className="mb-8">
-								<h3 className="font-bold text-sm uppercase tracking-wide mb-3 text-muted-foreground">
+							<div className="mb-6 mt-24">
+								<h3 className="font-bold text-xs uppercase tracking-wide mb-3 text-muted-foreground">
 									Selecciona tu talla
 								</h3>
 								<div className="flex flex-wrap gap-3">
@@ -257,9 +257,9 @@ export function ProductDetail({ product }: { product: Product }) {
 									<Button
 										onClick={handleWhatsAppOrder}
 										disabled={!selectedSize}
-										className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-black text-lg py-8 gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+										className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-black text-base lg:text-lg py-6 gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
 									>
-										<MessageCircle className="h-6 w-6" />
+										<MessageCircle className="h-5 w-5 lg:h-6 lg:w-6" />
 										{selectedSize
 											? 'PEDIR POR WHATSAPP'
 											: 'SELECCIONA TU TALLA'}
@@ -270,7 +270,7 @@ export function ProductDetail({ product }: { product: Product }) {
 										onClick={handleAddToCart}
 										disabled={!selectedSize}
 										variant="outline"
-										className="w-full border-2 border-foreground text-foreground hover:bg-foreground hover:text-background font-bold py-6 disabled:opacity-50 disabled:cursor-not-allowed bg-transparent"
+										className="w-full border-2 border-foreground text-foreground hover:bg-foreground hover:text-background font-bold py-4 disabled:opacity-50 disabled:cursor-not-allowed bg-transparent"
 									>
 										AGREGAR AL CARRITO
 									</Button>
