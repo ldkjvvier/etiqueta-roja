@@ -1,6 +1,7 @@
 'use client'
 
 import { ShoppingBag, Menu, X, Star } from 'lucide-react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import {
 	Sheet,
@@ -11,10 +12,11 @@ import { useStore } from '@/lib/store-context'
 import { CartSheet } from './cart-sheet'
 
 const navLinks = [
-	{ label: 'INICIO', href: '#' },
-	{ label: 'OFERTAS', href: '#ofertas' },
-	{ label: 'PEDIDOS', href: '#pedidos' },
-	{ label: 'STOCK', href: '#stock' },
+	{ label: 'INICIO', href: '/' },
+	// Using absolute paths for anchors to ensure they work from other pages
+	{ label: 'OFERTAS', href: '/#ofertas' },
+	{ label: 'PEDIDOS', href: '/#pedidos' },
+	{ label: 'STOCK', href: '/#stock' },
 ]
 
 function Logo() {
@@ -83,14 +85,14 @@ export function Header() {
 									</div>
 									<nav className="flex flex-col p-6 gap-2">
 										{navLinks.map((link) => (
-											<a
+											<Link
 												key={link.label}
 												href={link.href}
 												onClick={() => setIsMobileMenuOpen(false)}
 												className="text-4xl font-black tracking-tight py-4 border-b border-border hover:text-primary transition-colors"
 											>
 												{link.label}
-											</a>
+											</Link>
 										))}
 									</nav>
 								</div>
@@ -99,14 +101,14 @@ export function Header() {
 					</div>
 
 					{/* Logo */}
-					<a
-						href="#"
+					<Link
+						href="/"
 						className="flex items-center"
 						aria-label="Ir al inicio"
 						title="Ir al inicio"
 					>
 						<Logo />
-					</a>
+					</Link>
 
 					{/* Desktop Nav */}
 					<nav
@@ -114,14 +116,14 @@ export function Header() {
 						aria-label="Navegación principal"
 					>
 						{navLinks.map((link) => (
-							<a
+							<Link
 								key={link.label}
 								href={link.href}
 								className="text-sm font-bold tracking-wide hover:text-primary transition-colors"
 								title={link.label}
 							>
 								{link.label}
-							</a>
+							</Link>
 						))}
 					</nav>
 
