@@ -54,9 +54,15 @@ const StoreContext = createContext<StoreContextType | undefined>(
 	undefined
 )
 
-const WHATSAPP_NUMBER = '5491123456789' // Replace with actual number
+interface StoreProviderProps {
+	children: ReactNode
+	whatsappNumber?: string
+}
 
-export function StoreProvider({ children }: { children: ReactNode }) {
+export function StoreProvider({
+	children,
+	whatsappNumber = '5491123456789',
+}: StoreProviderProps) {
 	const [cartItems, setCartItems] = useState<CartItem[]>([])
 	const [isCartOpen, setIsCartOpen] = useState(false)
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -107,10 +113,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 		product?: Product,
 		size?: string
 	) => {
+		const cleanNumber = whatsappNumber.replace(/[^0-9]/g, '')
+
 		if (product && size) {
 			// Single product order
 			const message = `Hola Etiqueta Roja, me interesa el ${product.name} en talla ${size}.`
-			return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+			return `https://wa.me/${cleanNumber}?text=${encodeURIComponent(
 				message
 			)}`
 		} else {
@@ -125,7 +133,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 				}\n`
 			})
 			message += `\nTotal: $${cartTotal}`
-			return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+			return `https://wa.me/${cleanNumber}?text=${encodeURIComponent(
 				message
 			)}`
 		}

@@ -4,6 +4,10 @@ import { Inter, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import { Providers } from './providers'
+import {
+	getSiteConfig,
+	ContactInfoConfig,
+} from '@/lib/services/site-config-server'
 
 const _inter = Inter({ subsets: ['latin'] })
 const _geistMono = Geist_Mono({ subsets: ['latin'] })
@@ -36,15 +40,22 @@ export const viewport: Viewport = {
 	themeColor: '#E62727',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
 	children,
 }: Readonly<{
 	children: React.ReactNode
 }>) {
+	const config = await getSiteConfig<ContactInfoConfig>(
+		'contact_info'
+	)
+	const whatsappNumber = config?.value?.whatsapp
+
 	return (
 		<html lang="es">
 			<body className={`font-sans antialiased`}>
-				<Providers>{children}</Providers>
+				<Providers whatsappNumber={whatsappNumber}>
+					{children}
+				</Providers>
 				<Analytics />
 			</body>
 		</html>
