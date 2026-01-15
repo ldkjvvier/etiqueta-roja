@@ -2,7 +2,6 @@ import { createClient } from '@/lib/supabase/server'
 
 export interface PromoBannerConfig {
 	message: string
-	show_whatsapp_icon: boolean
 	link?: string | null
 }
 

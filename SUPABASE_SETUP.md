@@ -113,7 +113,6 @@ values
     'promo_banner',
     '{
       "message": "ENVÍO GRATIS EN PEDIDOS +$100 ★ DROP LIMITADO ★ NO RESTOCK",
-      "show_whatsapp_icon": true,
       "link": null
     }'::jsonb,
     true
