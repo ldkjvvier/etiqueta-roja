@@ -4,7 +4,10 @@ import { Header } from '@/components/header'
 import { PromoBanner } from '@/components/promo-banner'
 import { Footer } from '@/components/footer'
 import { ProductDetail } from '@/components/product-detail'
-import { getProductById } from '@/lib/products'
+import {
+	getProduct,
+	getRelatedProducts,
+} from '@/lib/services/products-server'
 
 export async function generateMetadata({
 	params,
@@ -12,7 +15,7 @@ export async function generateMetadata({
 	params: Promise<{ id: string }>
 }): Promise<Metadata> {
 	const { id } = await params
-	const product = getProductById(id)
+	const product = await getProduct(id)
 	if (!product) return { title: 'Producto | ETIQUETA ROJA' }
 
 	return {
@@ -29,18 +32,23 @@ export default async function ProductPage({
 	params: Promise<{ id: string }>
 }) {
 	const { id } = await params
-	const product = getProductById(id)
+	const product = await getProduct(id)
 
 	if (!product) {
 		notFound()
 	}
+
+	const relatedProducts = await getRelatedProducts(id)
 
 	return (
 		<div className="min-h-screen flex flex-col">
 			<PromoBanner />
 			<Header />
 			<main className="flex-1">
-				<ProductDetail product={product} />
+				<ProductDetail
+					product={product}
+					relatedProducts={relatedProducts}
+				/>
 			</main>
 			<Footer />
 		</div>

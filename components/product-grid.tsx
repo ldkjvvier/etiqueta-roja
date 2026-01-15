@@ -3,12 +3,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ProductCard } from './product-card'
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react'
-import { products } from '@/lib/products'
-import { useStore } from '@/lib/store-context'
+import { useStore, type Product } from '@/lib/store-context'
 
 const PRODUCTS_PER_PAGE = 8
 
-export function ProductGrid() {
+interface ProductGridProps {
+	products: Product[]
+}
+
+export function ProductGrid({ products }: ProductGridProps) {
 	const { searchQuery, setSearchQuery } = useStore()
 	const [currentPage, setCurrentPage] = useState(1)
 
@@ -16,7 +19,7 @@ export function ProductGrid() {
 		const q = searchQuery.trim().toLowerCase()
 		if (!q) return products
 		return products.filter((p) => p.name.toLowerCase().includes(q))
-	}, [searchQuery])
+	}, [searchQuery, products])
 
 	useEffect(() => {
 		setCurrentPage(1)

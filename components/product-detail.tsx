@@ -12,9 +12,14 @@ import {
 import { Button } from '@/components/ui/button'
 import { useStore, type Product } from '@/lib/store-context'
 import { ProductCard } from './product-card'
-import { products as allProducts } from '@/lib/products'
 
-export function ProductDetail({ product }: { product: Product }) {
+export function ProductDetail({
+	product,
+	relatedProducts = [],
+}: {
+	product: Product
+	relatedProducts?: Product[]
+}) {
 	const [selectedSize, setSelectedSize] = useState<string | null>(
 		null
 	)
@@ -33,11 +38,7 @@ export function ProductDetail({ product }: { product: Product }) {
 			: [product.image, product.image, product.image]
 
 	// Get recommended products (exclude current product)
-	const recommendedProducts = allProducts
-		.filter(
-			(p) => p.id !== product.id && p.stockStatus !== 'sold_out'
-		)
-		.slice(0, 4)
+	const recommendedProducts = relatedProducts
 
 	const scrollTo = useCallback(
 		(index: number) => {
