@@ -17,8 +17,24 @@ export async function PromoBanner() {
 	const { message, show_whatsapp_icon } = config.value
 
 	return (
-		<div className="bg-foreground text-background py-3 border-b border-foreground overflow-hidden">
-			<div className="flex animate-marquee whitespace-nowrap">
+		<div className="bg-foreground text-background py-3 border-b border-foreground overflow-hidden flex select-none gap-0">
+			<div className="flex animate-marquee-infinite whitespace-nowrap min-w-full shrink-0 items-center justify-around">
+				{Array.from({ length: 8 }).map((_, i) => (
+					<span
+						key={i}
+						className="mx-8 text-sm font-bold tracking-widest flex items-center gap-2"
+					>
+						{show_whatsapp_icon && (
+							<MessageCircle className="w-4 h-4 fill-green-500 text-green-500" />
+						)}
+						{message}
+					</span>
+				))}
+			</div>
+			<div
+				aria-hidden="true"
+				className="flex animate-marquee-infinite whitespace-nowrap min-w-full shrink-0 items-center justify-around"
+			>
 				{Array.from({ length: 8 }).map((_, i) => (
 					<span
 						key={i}
