@@ -51,6 +51,33 @@ export interface Database {
 				}
 				Relationships: []
 			}
+			site_config: {
+				Row: {
+					id: string
+					key: string
+					value: Json // Using the Json type defined above
+					is_active: boolean
+					created_at: string
+					updated_at: string
+				}
+				Insert: {
+					id?: string
+					key: string
+					value: Json
+					is_active?: boolean
+					created_at?: string
+					updated_at?: string
+				}
+				Update: {
+					id?: string
+					key?: string
+					value?: Json
+					is_active?: boolean
+					created_at?: string
+					updated_at?: string
+				}
+				Relationships: []
+			}
 		}
 		Views: {
 			[_ in never]: never
