@@ -28,45 +28,107 @@ create table if not exists public.products (
 alter table public.products enable row level security;
 
 -- Política de lectura: Todo el mundo puede ver productos
+drop policy if exists "Public products are viewable by everyone" on public.products;
 create policy "Public products are viewable by everyone"
   on public.products for select
   using ( true );
 
 -- Política de escritura: Solo usuarios autenticados (admins) pueden modificar
--- Nota: Para mayor seguridad en producción, puedes verificar un rol específico o email
+drop policy if exists "Authenticated users can insert products" on public.products;
 create policy "Authenticated users can insert products"
   on public.products for insert
   with check ( auth.role() = 'authenticated' );
 
+drop policy if exists "Authenticated users can update products" on public.products;
 create policy "Authenticated users can update products"
   on public.products for update
   using ( auth.role() = 'authenticated' );
 
+drop policy if exists "Authenticated users can delete products" on public.products;
 create policy "Authenticated users can delete products"
   on public.products for delete
   using ( auth.role() = 'authenticated' );
 
 -- Configurar Storage para imágenes
 insert into storage.buckets (id, name, public)
-values ('products', 'products', true);
+values ('products', 'products', true)
+on conflict (id) do nothing;
 
 -- Política de Storage: Acceso público de lectura
+drop policy if exists "Give public access to product images" on storage.objects;
 create policy "Give public access to product images"
   on storage.objects for select
   using ( bucket_id = 'products' );
 
 -- Política de Storage: Acceso de escritura para admins
+drop policy if exists "Authenticated users can upload product images" on storage.objects;
 create policy "Authenticated users can upload product images"
   on storage.objects for insert
   with check ( bucket_id = 'products' and auth.role() = 'authenticated' );
   
+drop policy if exists "Authenticated users can update product images" on storage.objects;
 create policy "Authenticated users can update product images"
   on storage.objects for update
   using ( bucket_id = 'products' and auth.role() = 'authenticated' );
 
+drop policy if exists "Authenticated users can delete product images" on storage.objects;
 create policy "Authenticated users can delete product images"
   on storage.objects for delete
   using ( bucket_id = 'products' and auth.role() = 'authenticated' );
+
+-- Crear tabla de configuración del sitio (banner, redes sociales, etc.)
+create table if not exists public.site_config (
+  id uuid default gen_random_uuid() primary key,
+  key text unique not null, -- 'promo_banner', 'contact_info', etc.
+  value jsonb not null, -- Contenido flexible en formato JSON
+  is_active boolean default true, -- Para activar/desactivar features globalmente
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Habilitar RLS para config
+alter table public.site_config enable row level security;
+
+-- Política de lectura pública para config
+drop policy if exists "Site config is viewable by everyone" on public.site_config;
+create policy "Site config is viewable by everyone"
+  on public.site_config for select
+  using ( true );
+
+-- Política de escritura solo para admins
+drop policy if exists "Authenticated users can update site config" on public.site_config;
+create policy "Authenticated users can update site config"
+  on public.site_config for update
+  using ( auth.role() = 'authenticated' );
+
+drop policy if exists "Authenticated users can insert site config" on public.site_config;
+create policy "Authenticated users can insert site config"
+  on public.site_config for insert
+  with check ( auth.role() = 'authenticated' );
+
+-- Datos iniciales (Seed)
+insert into public.site_config (key, value, is_active)
+values
+  (
+    'promo_banner',
+    '{
+      "message": "ENVÍO GRATIS EN PEDIDOS +$100 ★ DROP LIMITADO ★ NO RESTOCK",
+      "show_whatsapp_icon": true,
+      "link": null
+    }'::jsonb,
+    true
+  ),
+  (
+    'contact_info',
+    '{
+      "whatsapp": "+56912345678",
+      "instagram": "https://instagram.com/etiquetaroja",
+      "tiktok": "https://tiktok.com/@etiquetaroja",
+      "email": "contacto@etiquetaroja.com"
+    }'::jsonb,
+    true
+  )
+on conflict (key) do nothing;
 ```
 
 ## 3. Variables de Entorno
