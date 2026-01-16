@@ -122,9 +122,9 @@ export function ProductDetail({
 			<div className="container mx-auto px-4 py-8">
 				<div className="grid lg:grid-cols-2 gap-8 lg:gap-10 items-start">
 					{/* Main Gallery */}
-					<div className="space-y-4 w-full lg:max-w-150">
+					<div className="flex flex-col lg:flex-row gap-4 w-full">
 						{/* Main Carousel */}
-						<div className="relative aspect-square bg-secondary overflow-hidden group">
+						<div className="relative aspect-square bg-secondary overflow-hidden group flex-1 order-1">
 							<div ref={emblaRef} className="overflow-hidden h-full">
 								<div className="flex h-full">
 									{productImages.map((img, index) => (
@@ -184,17 +184,20 @@ export function ProductDetail({
 							)}
 						</div>
 
-						{/* Thumbnail Row */}
+						{/* Thumbnail Row/Column */}
 						{productImages.length > 1 && (
-							<div className="flex gap-2">
+							<div className="flex gap-2 lg:flex-col lg:w-24 order-2 lg:h-[calc(100%-0px)] overflow-y-auto scrollbar-hide">
 								{productImages.map((img, index) => (
 									<button
 										key={index}
 										onClick={() => scrollTo(index)}
-										className={`flex-1 aspect-square bg-secondary overflow-hidden border-2 transition-colors ${
+										className={`relative aspect-square bg-secondary overflow-hidden border-2 transition-colors flex-shrink-0 ${
 											selectedImageIndex === index
 												? 'border-foreground'
 												: 'border-transparent hover:border-muted-foreground'
+										} ${
+											// Mobile: fill available space equally. Desktop: Fixed width
+											'flex-1 lg:flex-none lg:w-full'
 										}`}
 									>
 										<img
@@ -209,7 +212,7 @@ export function ProductDetail({
 					</div>
 
 					{/* Product Info */}
-					<div className="flex flex-col pt-2">
+					<div className="flex flex-col pt-2 w-full">
 						<h1 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight uppercase mb-3">
 							{product.name}
 						</h1>
