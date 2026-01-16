@@ -32,10 +32,14 @@ export function ProductDetail({
 	const isSoldOut = product.stockStatus === 'sold_out'
 
 	// Get product images or fallback
+	// Combine main image with gallery images, ensuring main image is first
+	const allImages = [product.image, ...(product.images || [])]
+	const validImages = allImages.filter((img) => !!img)
+	// Remove duplicates (in case main image is also in gallery)
+	const uniqueImages = Array.from(new Set(validImages))
+
 	const productImages =
-		product.images && product.images.length > 0
-			? product.images
-			: [product.image, product.image, product.image]
+		uniqueImages.length > 0 ? uniqueImages : ['/placeholder.svg']
 
 	// Get recommended products (exclude current product)
 	const recommendedProducts = relatedProducts
@@ -141,20 +145,24 @@ export function ProductDetail({
 							</div>
 
 							{/* Navigation Arrows */}
-							<button
-								onClick={scrollPrev}
-								className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-background/90 border border-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-								aria-label="Previous image"
-							>
-								<ChevronLeft className="w-5 h-5" />
-							</button>
-							<button
-								onClick={scrollNext}
-								className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-background/90 border border-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-								aria-label="Next image"
-							>
-								<ChevronRight className="w-5 h-5" />
-							</button>
+							{productImages.length > 1 && (
+								<>
+									<button
+										onClick={scrollPrev}
+										className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-background/90 border border-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+										aria-label="Previous image"
+									>
+										<ChevronLeft className="w-5 h-5" />
+									</button>
+									<button
+										onClick={scrollNext}
+										className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-background/90 border border-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+										aria-label="Next image"
+									>
+										<ChevronRight className="w-5 h-5" />
+									</button>
+								</>
+							)}
 
 							{/* Stock Badge */}
 							{product.stockStatus === 'low' && (
@@ -177,25 +185,27 @@ export function ProductDetail({
 						</div>
 
 						{/* Thumbnail Row */}
-						<div className="flex gap-2">
-							{productImages.map((img, index) => (
-								<button
-									key={index}
-									onClick={() => scrollTo(index)}
-									className={`flex-1 aspect-square bg-secondary overflow-hidden border-2 transition-colors ${
-										selectedImageIndex === index
-											? 'border-foreground'
-											: 'border-transparent hover:border-muted-foreground'
-									}`}
-								>
-									<img
-										src={img || '/placeholder.svg'}
-										alt={`${product.name} thumbnail ${index + 1}`}
-										className="w-full h-full object-cover"
-									/>
-								</button>
-							))}
-						</div>
+						{productImages.length > 1 && (
+							<div className="flex gap-2">
+								{productImages.map((img, index) => (
+									<button
+										key={index}
+										onClick={() => scrollTo(index)}
+										className={`flex-1 aspect-square bg-secondary overflow-hidden border-2 transition-colors ${
+											selectedImageIndex === index
+												? 'border-foreground'
+												: 'border-transparent hover:border-muted-foreground'
+										}`}
+									>
+										<img
+											src={img || '/placeholder.svg'}
+											alt={`${product.name} thumbnail ${index + 1}`}
+											className="w-full h-full object-cover"
+										/>
+									</button>
+								))}
+							</div>
+						)}
 					</div>
 
 					{/* Product Info */}
