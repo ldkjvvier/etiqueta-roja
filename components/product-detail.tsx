@@ -191,7 +191,7 @@ export function ProductDetail({
 									<button
 										key={index}
 										onClick={() => scrollTo(index)}
-										className={`relative aspect-square bg-secondary overflow-hidden border-2 transition-colors flex-shrink-0 ${
+										className={`relative aspect-square bg-secondary overflow-hidden border-2 transition-colors shrink-0 ${
 											selectedImageIndex === index
 												? 'border-foreground'
 												: 'border-transparent hover:border-muted-foreground'
