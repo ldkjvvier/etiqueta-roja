@@ -9,10 +9,16 @@ export type { Product } from '@/lib/store-context'
 export function ProductCard({ product }: { product: Product }) {
 	const isSoldOut = product.stockStatus === 'sold_out'
 
+	// Optimize: Only show up to 2 images in the card to reduce load
+	// Always prioritize the main 'image' column
+	const MAX_IMAGES = 2
+	const allImages = [product.image, ...(product.images || [])]
+	const uniqueImages = Array.from(new Set(allImages.filter(Boolean)))
+
 	const carouselImages =
-		product.images && product.images.length > 0
-			? product.images
-			: [product.image, product.image, product.image]
+		uniqueImages.length > 0
+			? uniqueImages.slice(0, MAX_IMAGES)
+			: ['/placeholder.svg']
 
 	const className = `group border border-border bg-card ${
 		!isSoldOut ? 'cursor-pointer' : ''

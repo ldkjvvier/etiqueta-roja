@@ -159,6 +159,3 @@ export function ProductGrid({ products }: ProductGridProps) {
 		</section>
 	)
 }
-
-// Export products for use in other components
-export { products }
