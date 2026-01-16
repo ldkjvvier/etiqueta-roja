@@ -25,7 +25,8 @@ export function ProductCardCarousel({
 
 	const scrollPrev = useCallback(
 		(e: React.MouseEvent) => {
-			e.stopPropagation()
+			e.preventDefault() // Prevent navigation
+			e.stopPropagation() // Prevent bubbling
 			emblaApi?.scrollPrev()
 		},
 		[emblaApi]
@@ -33,7 +34,8 @@ export function ProductCardCarousel({
 
 	const scrollNext = useCallback(
 		(e: React.MouseEvent) => {
-			e.stopPropagation()
+			e.preventDefault() // Prevent navigation
+			e.stopPropagation() // Prevent bubbling
 			emblaApi?.scrollNext()
 		},
 		[emblaApi]
@@ -93,23 +95,26 @@ export function ProductCardCarousel({
 			</button>
 
 			{/* Square Indicator Dots */}
-			<div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
-				{images.map((_, index) => (
-					<button
-						key={index}
-						onClick={(e) => {
-							e.stopPropagation()
-							emblaApi?.scrollTo(index)
-						}}
-						className={`w-1.5 h-1.5 transition-colors ${
-							selectedIndex === index
-								? 'bg-foreground'
-								: 'bg-foreground/40'
-						}`}
-						aria-label={`Go to image ${index + 1}`}
-					/>
-				))}
-			</div>
+			{images.length > 1 && (
+				<div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+					{images.map((_, index) => (
+						<button
+							key={index}
+							onClick={(e) => {
+								e.preventDefault()
+								e.stopPropagation()
+								emblaApi?.scrollTo(index)
+							}}
+							className={`w-1.5 h-1.5 transition-colors ${
+								selectedIndex === index
+									? 'bg-foreground'
+									: 'bg-foreground/40'
+							}`}
+							aria-label={`Go to image ${index + 1}`}
+						/>
+					))}
+				</div>
+			)}
 		</div>
 	)
 }
