@@ -3,19 +3,36 @@ import type { Product } from '@/lib/store-context'
 import { Database } from '@/lib/supabase/types'
 import { products as staticProducts } from '@/lib/products'
 
-type ProductRow = Database['public']['Tables']['products']['Row']
+type ProductRow = Database['public']['Tables']['products']['Row'] & {
+	categories: Database['public']['Tables']['categories']['Row'] | null
+	product_variants: Database['public']['Tables']['product_variants']['Row'][]
+}
 
 function mapRowToProduct(row: ProductRow): Product {
+	// Calculate stock logic from variants
+	const totalStock = row.product_variants.reduce(
+		(acc, v) => acc + v.stock_quantity,
+		0
+	)
+	let stockStatus: 'available' | 'low' | 'sold_out' = 'available'
+	if (totalStock === 0) stockStatus = 'sold_out'
+	else if (totalStock < 5) stockStatus = 'low'
+
+	// Extract sizes from variants
+	const sizes = Array.from(
+		new Set(row.product_variants.map((v) => v.size))
+	).sort()
+
 	return {
 		id: row.id,
 		name: row.name,
 		price: row.price,
 		originalPrice: row.original_price ?? undefined,
-		image: row.image, // Should ideally be a full URL if stored in bucket, or strict path
+		image: row.image,
 		images: row.images,
-		sizes: row.sizes,
-		stockStatus: row.stock_status as 'available' | 'low' | 'sold_out',
-		category: row.category,
+		sizes: sizes,
+		stockStatus: stockStatus,
+		category: row.categories?.name || 'Uncategorized',
 		description: row.description ?? undefined,
 	}
 }
@@ -25,7 +42,19 @@ export async function getProducts(): Promise<Product[]> {
 		const supabase = await createClient()
 		const { data, error } = await supabase
 			.from('products')
-			.select('*')
+			.select(
+				`
+				*,
+				categories (
+					name,
+					slug
+				),
+				product_variants (
+					size,
+					stock_quantity
+				)
+			`
+			)
 			.order('created_at', { ascending: false })
 
 		if (error || !data || data.length === 0) {
@@ -33,13 +62,11 @@ export async function getProducts(): Promise<Product[]> {
 				'Supabase fetch failed or empty, using static data fallback:',
 				error
 			)
-			// Fallback or Initial State
-			// In a real migration, we might want to return staticProducts if DB is empty to "hydrate" it,
-			// but for now let's just return staticProducts if connection fails to keep app running
 			if (error) return staticProducts
-			return [] // If just empty, return empty
+			return []
 		}
 
+		// @ts-ignore - Supabase types for joined queries are tricky to auto-infer sometimes
 		return data.map(mapRowToProduct)
 	} catch (e) {
 		console.error('Exception fetching products:', e)
@@ -53,15 +80,22 @@ export async function getProduct(
 	const supabase = await createClient()
 	const { data, error } = await supabase
 		.from('products')
-		.select('*')
+		.select(
+			`
+			*,
+			categories ( name, slug ),
+			product_variants ( size, stock_quantity )
+		`
+		)
 		.eq('id', id)
 		.single()
 
-	if (error) {
+	if (error || !data) {
 		// Fallback to static
 		const p = staticProducts.find((p) => p.id === id)
 		return p || null
 	}
+	// @ts-ignore
 	return mapRowToProduct(data)
 }
 
@@ -72,7 +106,13 @@ export async function getRelatedProducts(
 		const supabase = await createClient()
 		const { data, error } = await supabase
 			.from('products')
-			.select('*')
+			.select(
+				`
+				*,
+				categories ( name, slug ),
+				product_variants ( size, stock_quantity )
+			`
+			)
 			.neq('id', excludeId)
 			.limit(4)
 
@@ -81,6 +121,7 @@ export async function getRelatedProducts(
 				.filter((p) => p.id !== excludeId)
 				.slice(0, 4)
 		}
+		// @ts-ignore
 		return data.map(mapRowToProduct)
 	} catch {
 		return staticProducts

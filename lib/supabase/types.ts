@@ -9,6 +9,55 @@ export type Json =
 export interface Database {
 	public: {
 		Tables: {
+			categories: {
+				Row: {
+					id: string
+					created_at: string
+					name: string
+					slug: string
+					description: string | null
+					image: string | null
+				}
+				Insert: {
+					id?: string
+					created_at?: string
+					name: string
+					slug: string
+					description?: string | null
+					image?: string | null
+				}
+				Update: {
+					id?: string
+					created_at?: string
+					name?: string
+					slug?: string
+					description?: string | null
+					image?: string | null
+				}
+			}
+			product_variants: {
+				Row: {
+					id: string
+					product_id: string
+					size: string
+					stock_quantity: number
+					sku: string | null
+				}
+				Insert: {
+					id?: string
+					product_id: string
+					size: string
+					stock_quantity?: number
+					sku?: string | null
+				}
+				Update: {
+					id?: string
+					product_id?: string
+					size?: string
+					stock_quantity?: number
+					sku?: string | null
+				}
+			}
 			products: {
 				Row: {
 					id: string
@@ -18,10 +67,8 @@ export interface Database {
 					original_price: number | null
 					image: string
 					images: string[]
-					sizes: string[]
-					stock_status: string
-					category: string
 					description: string | null
+					category_id: string | null
 				}
 				Insert: {
 					id?: string
@@ -31,10 +78,8 @@ export interface Database {
 					original_price?: number | null
 					image: string
 					images?: string[]
-					sizes?: string[]
-					stock_status?: string
-					category?: string
 					description?: string | null
+					category_id?: string | null
 				}
 				Update: {
 					id?: string
@@ -44,10 +89,8 @@ export interface Database {
 					original_price?: number | null
 					image?: string
 					images?: string[]
-					sizes?: string[]
-					stock_status?: string
-					category?: string
 					description?: string | null
+					category_id?: string | null
 				}
 				Relationships: []
 			}
