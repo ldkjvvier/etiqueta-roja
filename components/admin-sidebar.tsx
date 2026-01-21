@@ -7,12 +7,14 @@ import {
 	Package,
 	Settings,
 	LogOut,
+	Tags,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
 	{ href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
 	{ href: '/admin/products', label: 'Products', icon: Package },
+	{ href: '/admin/categories', label: 'Categories', icon: Tags },
 	{ href: '/admin/config', label: 'Site Config', icon: Settings },
 ]
 
@@ -46,7 +48,7 @@ export function AdminSidebar() {
 										'flex items-center gap-3 px-4 py-3 font-mono text-sm border transition-colors',
 										isActive
 											? 'bg-black text-white border-black'
-											: 'border-transparent text-gray-500 hover:border-gray-200 hover:bg-gray-50 hover:text-black'
+											: 'border-transparent text-gray-500 hover:border-gray-200 hover:bg-gray-50 hover:text-black',
 									)}
 								>
 									<item.icon className="w-4 h-4" />
