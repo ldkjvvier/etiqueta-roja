@@ -140,3 +140,12 @@ Esta tabla contiene la información "estática" y de marketing del producto.
 Aquí vive el stock real.
 - Si un producto tiene tallas S y M, tendrás 2 filas aquí vinculadas al mismo `product_id`.
 - El frontend suma automáticamente `stock_quantity` de todas las variantes para saber si el producto está "Agotado" o "Disponible".
+
+-- ==========================================
+-- 5. Actualización de Políticas de Storage
+-- ==========================================
+
+-- Permitir a usuarios autenticados (admin) ACTUALIZAR y ELIMINAR imágenes
+create policy "Admin update images" on storage.objects for update with check ( bucket_id = 'products' and auth.role() = 'authenticated' );
+create policy "Admin delete images" on storage.objects for delete using ( bucket_id = 'products' and auth.role() = 'authenticated' );
+
