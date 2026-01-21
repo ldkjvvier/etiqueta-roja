@@ -35,8 +35,8 @@ export async function getSiteConfig<T>(
 
 		// Supabase stores JSONB as any, we cast it to T
 		return {
-			value: data.value as unknown as T,
-			is_active: data.is_active ?? true,
+			value: (data as any).value as unknown as T,
+			is_active: (data as any).is_active ?? true,
 		}
 	} catch (e) {
 		console.error(`Exception fetching site config for key: ${key}`, e)
