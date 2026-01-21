@@ -9,6 +9,7 @@ import {
 	SheetTitle,
 } from '@/components/ui/sheet'
 import { useStore } from '@/lib/store-context'
+import { formatPrice } from '@/lib/utils'
 
 export function CartSheet() {
 	const {
@@ -95,7 +96,7 @@ export function CartSheet() {
 														updateQuantity(
 															item.id,
 															item.size,
-															item.quantity - 1
+															item.quantity - 1,
 														)
 													}
 												>
@@ -112,7 +113,7 @@ export function CartSheet() {
 														updateQuantity(
 															item.id,
 															item.size,
-															item.quantity + 1
+															item.quantity + 1,
 														)
 													}
 												>
@@ -120,7 +121,7 @@ export function CartSheet() {
 												</Button>
 											</div>
 											<span className="font-bold">
-												${item.price * item.quantity}
+												{formatPrice(item.price * item.quantity)}
 											</span>
 										</div>
 									</div>
@@ -132,7 +133,7 @@ export function CartSheet() {
 							<div className="flex justify-between items-center">
 								<span className="font-bold uppercase">Subtotal</span>
 								<span className="text-xl font-black">
-									${cartTotal}
+									{formatPrice(cartTotal)}
 								</span>
 							</div>
 							<Button

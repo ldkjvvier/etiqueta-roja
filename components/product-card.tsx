@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import type { Product } from '@/lib/store-context'
 import { ProductCardCarousel } from './product-card-carousel'
+import { formatPrice } from '@/lib/utils'
 
 export type { Product } from '@/lib/store-context'
 
@@ -61,11 +62,11 @@ export function ProductCard({ product }: { product: Product }) {
 
 				<div className="flex items-center gap-2 mb-3">
 					<span className="font-black text-base md:text-lg">
-						${product.price}
+						{formatPrice(product.price)}
 					</span>
 					{product.originalPrice && (
 						<span className="text-muted-foreground line-through text-xs md:text-sm">
-							${product.originalPrice}
+							{formatPrice(product.originalPrice)}
 						</span>
 					)}
 				</div>

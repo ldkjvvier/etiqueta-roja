@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useTransition } from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
 import {
 	MoreHorizontal,
 	Plus,
@@ -10,11 +9,7 @@ import {
 	Trash,
 	Edit,
 } from 'lucide-react'
-import {
-	useRouter,
-	usePathname,
-	useSearchParams,
-} from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -37,6 +32,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { deleteProduct } from '@/lib/actions/products'
 import type { AdminProduct } from '@/lib/services/products-admin'
+import { formatPrice } from '@/lib/utils'
 
 interface ProductTableProps {
 	products: AdminProduct[]
@@ -156,10 +152,10 @@ export function ProductTable({
 									</TableCell>
 									<TableCell>
 										<div className="flex flex-col">
-											<span>${product.price}</span>
+											<span>{formatPrice(product.price)}</span>
 											{product.original_price && (
 												<span className="text-xs text-muted-foreground line-through">
-													${product.original_price}
+													{formatPrice(product.original_price)}
 												</span>
 											)}
 										</div>

@@ -1,4 +1,5 @@
 'use client'
+import { formatPrice } from '@/lib/utils'
 
 import {
 	createContext,
@@ -46,12 +47,12 @@ type StoreContextType = {
 	setSelectedProduct: (product: Product | null) => void
 	generateWhatsAppMessage: (
 		product?: Product,
-		size?: string
+		size?: string,
 	) => string
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(
-	undefined
+	undefined,
 )
 
 interface StoreProviderProps {
@@ -73,13 +74,13 @@ export function StoreProvider({
 	const addToCart = (item: Omit<CartItem, 'quantity'>) => {
 		setCartItems((prev) => {
 			const existing = prev.find(
-				(i) => i.id === item.id && i.size === item.size
+				(i) => i.id === item.id && i.size === item.size,
 			)
 			if (existing) {
 				return prev.map((i) =>
 					i.id === item.id && i.size === item.size
 						? { ...i, quantity: i.quantity + 1 }
-						: i
+						: i,
 				)
 			}
 			return [...prev, { ...item, quantity: 1 }]
@@ -89,14 +90,14 @@ export function StoreProvider({
 
 	const removeFromCart = (id: string, size: string) => {
 		setCartItems((prev) =>
-			prev.filter((i) => !(i.id === id && i.size === size))
+			prev.filter((i) => !(i.id === id && i.size === size)),
 		)
 	}
 
 	const updateQuantity = (
 		id: string,
 		size: string,
-		quantity: number
+		quantity: number,
 	) => {
 		if (quantity <= 0) {
 			removeFromCart(id, size)
@@ -104,14 +105,14 @@ export function StoreProvider({
 		}
 		setCartItems((prev) =>
 			prev.map((i) =>
-				i.id === id && i.size === size ? { ...i, quantity } : i
-			)
+				i.id === id && i.size === size ? { ...i, quantity } : i,
+			),
 		)
 	}
 
 	const generateWhatsAppMessage = (
 		product?: Product,
-		size?: string
+		size?: string,
 	) => {
 		const cleanNumber = whatsappNumber.replace(/[^0-9]/g, '')
 
@@ -119,7 +120,7 @@ export function StoreProvider({
 			// Single product order
 			const message = `Hola Etiqueta Roja, me interesa el ${product.name} en talla ${size}.`
 			return `https://wa.me/${cleanNumber}?text=${encodeURIComponent(
-				message
+				message,
 			)}`
 		} else {
 			// Cart order
@@ -128,24 +129,24 @@ export function StoreProvider({
 			cartItems.forEach((item) => {
 				message += `• ${item.name} - Talla: ${
 					item.size
-				} - Cantidad: ${item.quantity} - $${
-					item.price * item.quantity
-				}\n`
+				} - Cantidad: ${item.quantity} - ${formatPrice(
+					item.price * item.quantity,
+				)}\n`
 			})
-			message += `\nTotal: $${cartTotal}`
+			message += `\nTotal: ${formatPrice(cartTotal)}`
 			return `https://wa.me/${cleanNumber}?text=${encodeURIComponent(
-				message
+				message,
 			)}`
 		}
 	}
 
 	const cartCount = cartItems.reduce(
 		(acc, item) => acc + item.quantity,
-		0
+		0,
 	)
 	const cartTotal = cartItems.reduce(
 		(acc, item) => acc + item.price * item.quantity,
-		0
+		0,
 	)
 
 	return (

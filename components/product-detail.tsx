@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { useStore, type Product } from '@/lib/store-context'
 import { ProductCard } from './product-card'
+import { formatPrice } from '@/lib/utils'
 
 export function ProductDetail({
 	product,
@@ -21,7 +22,7 @@ export function ProductDetail({
 	relatedProducts?: Product[]
 }) {
 	const [selectedSize, setSelectedSize] = useState<string | null>(
-		null
+		null,
 	)
 	const [selectedImageIndex, setSelectedImageIndex] = useState(0)
 	const { addToCart, generateWhatsAppMessage } = useStore()
@@ -49,7 +50,7 @@ export function ProductDetail({
 			emblaApi?.scrollTo(index)
 			setSelectedImageIndex(index)
 		},
-		[emblaApi]
+		[emblaApi],
 	)
 
 	const scrollPrev = useCallback(() => {
@@ -75,7 +76,7 @@ export function ProductDetail({
 		if (!selectedSize) return
 		window.open(
 			generateWhatsAppMessage(product, selectedSize),
-			'_blank'
+			'_blank',
 		)
 	}
 
@@ -219,11 +220,11 @@ export function ProductDetail({
 
 						<div className="flex items-center gap-3 mb-4">
 							<span className="text-2xl md:text-3xl lg:text-4xl font-black">
-								${product.price}
+								{formatPrice(product.price)}
 							</span>
 							{product.originalPrice && (
 								<span className="text-xl text-muted-foreground line-through">
-									${product.originalPrice}
+									{formatPrice(product.originalPrice)}
 								</span>
 							)}
 						</div>

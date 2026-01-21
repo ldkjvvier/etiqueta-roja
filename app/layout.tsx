@@ -45,9 +45,8 @@ export default async function RootLayout({
 }: Readonly<{
 	children: React.ReactNode
 }>) {
-	const config = await getSiteConfig<ContactInfoConfig>(
-		'contact_info'
-	)
+	const config =
+		await getSiteConfig<ContactInfoConfig>('contact_info')
 	const whatsappNumber = config?.value?.whatsapp
 
 	return (
