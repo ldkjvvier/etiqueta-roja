@@ -1,6 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Button } from '@/components/ui/button'
+import {
+	getDashboardStats,
+	getRecentProducts,
+	getTopViewedProducts,
+} from '@/lib/services/dashboard-server'
+import { StatsGrid } from '@/components/admin/dashboard/stats-grid'
+import { RecentProducts } from '@/components/admin/dashboard/recent-products'
+import { TopProducts } from '@/components/admin/dashboard/top-products'
 
 export default async function AdminDashboard() {
 	const supabase = await createClient()
@@ -13,38 +20,33 @@ export default async function AdminDashboard() {
 		redirect('/admin/login')
 	}
 
+	// Fetch all data in parallel
+	const [stats, recentProducts, topViewed] = await Promise.all([
+		getDashboardStats(),
+		getRecentProducts(),
+		getTopViewedProducts(),
+	])
+
 	return (
-		<div className="max-w-5xl">
-			<div className="flex justify-between items-center mb-8">
-				<div>
-					<h1 className="text-3xl font-bold">
-						Panel de Administración
-					</h1>
-					<p className="text-muted-foreground">
-						Bienvenido, {user.email}
-					</p>
+		<div className="flex-1 space-y-4 p-8 pt-6">
+			<div className="flex items-center justify-between space-y-2">
+				<h2 className="text-3xl font-bold tracking-tight">
+					Dashboard
+				</h2>
+				<div className="flex items-center space-x-2">
+					{/* Add DatePicker here later if needed */}
 				</div>
-				<form
-					action={async () => {
-						'use server'
-						const sb = await createClient()
-						await sb.auth.signOut()
-						redirect('/')
-					}}
-				>
-					<Button variant="outline">Cerrar Sesión</Button>
-				</form>
 			</div>
 
-			<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-				<div className="p-6 border rounded-lg shadow-sm hover:shadow-md transition-shadow">
-					<h2 className="text-xl font-semibold mb-2">Productos</h2>
-					<p className="text-muted-foreground mb-4">
-						Gestionar inventario, precios y descripciones.
-					</p>
-					<Button className="w-full">Próximamente</Button>
+			<StatsGrid stats={stats} />
+
+			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+				<div className="col-span-4">
+					<RecentProducts products={recentProducts} />
 				</div>
-				{/* Add more widgets here */}
+				<div className="col-span-3">
+					<TopProducts products={topViewed} />
+				</div>
 			</div>
 		</div>
 	)

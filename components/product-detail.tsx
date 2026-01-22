@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { useStore, type Product } from '@/lib/store-context'
 import { ProductCard } from './product-card'
 import { formatPrice } from '@/lib/utils'
+import { ViewTracker } from '@/components/view-tracker'
 
 export function ProductDetail({
 	product,
@@ -94,6 +95,7 @@ export function ProductDetail({
 
 	return (
 		<div className="min-h-screen bg-background">
+			<ViewTracker productId={product.id} />
 			{/* Breadcrumbs */}
 			<div className="container mx-auto px-4 py-4">
 				<nav
