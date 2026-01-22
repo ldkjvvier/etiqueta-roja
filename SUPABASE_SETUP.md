@@ -158,20 +158,40 @@ drop policy if exists "Admin delete images" on storage.objects;
 create policy "Admin delete images" on storage.objects for delete using ( bucket_id = 'products' and auth.role() = 'authenticated' );
 
 -- ==========================================
--- 6. Analytics (Vistas de Productos)
+-- 6. Analytics (Vistas de Productos "Pro" - Por Día)
 -- ==========================================
 
--- Agregar columna de vistas
+-- 1. Tabla para guardar vistas por día (Histórico)
+create table if not exists public.product_views_daily (
+  product_id uuid references public.products(id) on delete cascade not null,
+  date date default current_date not null,
+  views integer default 0 not null,
+  primary key (product_id, date)
+);
+
+-- Habilitar RLS
+alter table public.product_views_daily enable row level security;
+create policy "Public view daily stats" on public.product_views_daily for select using (true);
+
+-- 2. Asegurar que existe la columnas 'views' en 'products' para acceso rápido (Total)
 ALTER TABLE public.products 
 ADD COLUMN IF NOT EXISTS views INTEGER DEFAULT 0;
 
--- Función para incrementar vistas de forma atómica
-CREATE OR REPLACE FUNCTION increment_product_view(product_id UUID)
+-- 3. Función optimizada (Actualiza ambos contadores)
+-- Corrección: Se renombró el parámetro a 'p_product_id' para evitar ambigüedad con nombre de columnas
+CREATE OR REPLACE FUNCTION increment_product_view(p_product_id UUID)
 RETURNS VOID AS $$
 BEGIN
+  -- A. Insertar o Actualizar conteo del día (Granular)
+  INSERT INTO public.product_views_daily (product_id, date, views)
+  VALUES (p_product_id, CURRENT_DATE, 1)
+  ON CONFLICT (product_id, date)
+  DO UPDATE SET views = product_views_daily.views + 1;
+
+  -- B. Actualizar conteo total en tabla principal (Lectura rápida)
   UPDATE public.products
-  SET views = views + 1
-  WHERE id = product_id;
+  SET views = COALESCE(views, 0) + 1
+  WHERE id = p_product_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ```

@@ -126,7 +126,12 @@ export interface Database {
 			[_ in never]: never
 		}
 		Functions: {
-			[_ in never]: never
+			increment_product_view: {
+				Args: {
+					p_product_id: string
+				}
+				Returns: void
+			}
 		}
 		Enums: {
 			[_ in never]: never
