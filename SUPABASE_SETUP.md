@@ -141,11 +141,38 @@ Aquí vive el stock real.
 - Si un producto tiene tallas S y M, tendrás 2 filas aquí vinculadas al mismo `product_id`.
 - El frontend suma automáticamente `stock_quantity` de todas las variantes para saber si el producto está "Agotado" o "Disponible".
 
+## 5. Scripts Adicionales (Storage y Analytics)
+
+Ejecuta este bloque si estás actualizando tu base de datos:
+
+```sql
 -- ==========================================
 -- 5. Actualización de Políticas de Storage
 -- ==========================================
 
 -- Permitir a usuarios autenticados (admin) ACTUALIZAR y ELIMINAR imágenes
+drop policy if exists "Admin update images" on storage.objects;
 create policy "Admin update images" on storage.objects for update with check ( bucket_id = 'products' and auth.role() = 'authenticated' );
+
+drop policy if exists "Admin delete images" on storage.objects;
 create policy "Admin delete images" on storage.objects for delete using ( bucket_id = 'products' and auth.role() = 'authenticated' );
+
+-- ==========================================
+-- 6. Analytics (Vistas de Productos)
+-- ==========================================
+
+-- Agregar columna de vistas
+ALTER TABLE public.products 
+ADD COLUMN IF NOT EXISTS views INTEGER DEFAULT 0;
+
+-- Función para incrementar vistas de forma atómica
+CREATE OR REPLACE FUNCTION increment_product_view(product_id UUID)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE public.products
+  SET views = views + 1
+  WHERE id = product_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+```
 
