@@ -42,7 +42,7 @@ const formSchema = z.object({
 				id: z.string().optional(),
 				size: z.string().min(1, 'Talla requerida'),
 				stock_quantity: z.coerce.number().min(0),
-				sku: z.string().optional(),
+				sku: z.string().optional().nullable(),
 			}),
 		)
 		.min(1, 'Agrega al menos una variante (talla/stock)'),
@@ -79,9 +79,13 @@ export function ProductForm({
 					original_price: initialData.original_price,
 					category_id: initialData.category_id || '',
 					images: defaultImages,
-					variants: initialData.variants || [
-						{ size: 'M', stock_quantity: 0, sku: '' },
-					],
+					variants:
+						initialData.variants && initialData.variants.length > 0
+							? initialData.variants.map((v: any) => ({
+									...v,
+									sku: v.sku || '',
+								}))
+							: [{ size: 'M', stock_quantity: 0, sku: '' }],
 				}
 			: {
 					name: '',
@@ -134,7 +138,14 @@ export function ProductForm({
 
 	return (
 		<form
-			onSubmit={form.handleSubmit(onSubmit)}
+			onSubmit={form.handleSubmit(onSubmit, (errors) => {
+				console.error('Validation errors:', errors)
+				// Create a list of missing fields for the alert
+				const missingFields = Object.keys(errors).join(', ')
+				alert(
+					`No se puede guardar. Revise los siguientes campos: ${missingFields}. Verifique que hay al menos una imagen y una variante.`,
+				)
+			})}
 			className="space-y-8 max-w-5xl"
 		>
 			<div className="grid gap-8 md:grid-cols-2">

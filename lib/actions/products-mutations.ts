@@ -92,31 +92,20 @@ export async function updateProduct(id: string, formData: any) {
 				// Don't update created_at
 			})
 			.eq('id', id)
+			.select()
+			.single()
 
 		if (productError) throw productError
 
 		// 2. Manage Variants
-		// Strategy: Delete existing and recreate is easiest for simple size/stock logic
-		// But unsafe if we had order history linked to specific variant IDs.
-		// For this scale, a simple upsert or delete-insert is acceptable if no orders table foreign keys block it.
-		// Let's try Upsert logic if ID is present, else Insert.
-
-		// However, handling deletions of removed variants from UI is tricky with upsert.
-		// Simplest "clean" way for this MVP level: Delete all variants for product and re-insert.
-		// WARNING: If orders link to variant_id, this will fail or cascade delete orders (bad).
-		// Since we don't have orders table yet in context, we will go with Delete-Insert for simplicity
-		// BUT safer is to Upsert existing and Delete missing.
-
-		// Let's do the safer approach:
-		// 1. Get existing variant IDs.
-		// 2. Identify variants to delete (those in DB but not in form).
-		// 3. Upsert content.
-
 		// Fetch existing
-		const { data: existingVariants } = await supabase
-			.from('product_variants')
-			.select('id')
-			.eq('product_id', id)
+		const { data: existingVariants, error: fetchVariantsError } =
+			await supabase
+				.from('product_variants')
+				.select('id')
+				.eq('product_id', id)
+
+		if (fetchVariantsError) throw fetchVariantsError
 
 		const existingIds =
 			(existingVariants as any[])?.map((v) => v.id) || []
@@ -129,10 +118,11 @@ export async function updateProduct(id: string, formData: any) {
 
 		// Delete removed
 		if (toDeleteIds.length > 0) {
-			await supabase
+			const { error: deleteError } = await supabase
 				.from('product_variants')
 				.delete()
 				.in('id', toDeleteIds)
+			if (deleteError) throw deleteError
 		}
 
 		// Upsert (Update or Insert)
@@ -153,7 +143,10 @@ export async function updateProduct(id: string, formData: any) {
 		}
 
 		revalidatePath('/admin/products')
+		revalidatePath(`/admin/products/${id}`)
+		revalidatePath(`/producto/${id}`)
 		revalidatePath('/')
+
 		return {
 			message: 'Producto actualizado exitosamente',
 			error: false,
