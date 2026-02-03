@@ -314,7 +314,9 @@ export function ProductForm({
 
 			<Button
 				type="submit"
-				disabled={loading || (!!initialData && !form.formState.isDirty)}
+				disabled={
+					loading || (!!initialData && !form.formState.isDirty)
+				}
 				className="w-full md:w-auto"
 			>
 				{loading
