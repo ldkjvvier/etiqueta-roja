@@ -5,9 +5,8 @@ import {
 } from '@/lib/services/site-config-server'
 
 export async function Footer() {
-	const config = await getSiteConfig<ContactInfoConfig>(
-		'contact_info'
-	)
+	const config =
+		await getSiteConfig<ContactInfoConfig>('contact_info')
 
 	// Default fallbacks provided just in case, or we use dynamic values if present
 	const info = config?.value || {
@@ -139,7 +138,7 @@ export async function Footer() {
 								<a
 									href={`https://wa.me/${info.whatsapp.replace(
 										/[^0-9]/g,
-										''
+										'',
 									)}`}
 									target="_blank"
 									rel="noopener noreferrer"
@@ -157,7 +156,7 @@ export async function Footer() {
 					<div className="font-mono text-[10px] text-foreground/50 text-center space-y-1">
 						<p>================================</p>
 						<p>© {new Date().getFullYear()} ETIQUETA ROJA</p>
-						<p>BUENOS AIRES, ARGENTINA</p>
+						<p>Santiago, Chile</p>
 						<p>TODOS LOS DERECHOS RESERVADOS</p>
 						<p>================================</p>
 					</div>
