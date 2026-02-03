@@ -273,19 +273,32 @@ export function ProductDetail({
 										Selecciona tu talla
 									</h3>
 									<div className="flex flex-wrap gap-3">
-										{product.sizes.map((size) => (
-											<button
-												key={size}
-												onClick={() => setSelectedSize(size)}
-												className={`w-14 h-12 text-sm font-bold border-2 transition-all ${
-													selectedSize === size
-														? 'bg-foreground text-background border-foreground'
-														: 'bg-transparent text-foreground border-border hover:border-foreground'
-												}`}
-											>
-												{size}
-											</button>
-										))}
+										{product.sizes.map((size) => {
+											// Check individual variant stock
+											const variant = product.variants?.find(
+												(v) => v.size === size,
+											)
+											const isSizeSoldOut = variant
+												? variant.stock <= 0
+												: false
+
+											return (
+												<button
+													key={size}
+													disabled={isSizeSoldOut}
+													onClick={() => setSelectedSize(size)}
+													className={`w-14 h-12 text-sm font-bold border-2 transition-all relative ${
+														selectedSize === size
+															? 'bg-foreground text-background border-foreground'
+															: isSizeSoldOut
+																? 'bg-secondary text-muted-foreground border-transparent opacity-50 cursor-not-allowed line-through decoration-2'
+																: 'bg-transparent text-foreground border-border hover:border-foreground'
+													}`}
+												>
+													{size}
+												</button>
+											)
+										})}
 									</div>
 								</div>
 							)}
