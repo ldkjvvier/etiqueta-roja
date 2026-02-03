@@ -35,3 +35,30 @@ export async function deleteProduct(id: string) {
 		return { message: 'Unexpected error', error: true }
 	}
 }
+
+export async function validateCartStock(
+	items: { id: string; size: string }[],
+) {
+	const supabase = await createClient()
+	const productIds = Array.from(new Set(items.map((i) => i.id)))
+
+	if (productIds.length === 0) return {}
+
+	const { data: variants, error } = await supabase
+		.from('product_variants')
+		.select('product_id, size, stock_quantity')
+		.in('product_id', productIds)
+
+	if (error) {
+		console.error('Error validating stock:', error)
+		return {}
+	}
+
+	// Map results for easy lookup: "product_id-size" -> stock
+	const stockMap: Record<string, number> = {}
+	variants.forEach((v) => {
+		stockMap[`${v.product_id}-${v.size}`] = v.stock_quantity
+	})
+
+	return stockMap
+}

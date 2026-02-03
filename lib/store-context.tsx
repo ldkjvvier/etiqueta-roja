@@ -1,5 +1,6 @@
 'use client'
 import { formatPrice } from '@/lib/utils'
+import { validateCartStock } from '@/lib/actions/products'
 
 import {
 	createContext,
@@ -80,18 +81,52 @@ export function StoreProvider({
 		useState<Product | null>(null)
 	const [isLoaded, setIsLoaded] = useState(false)
 
+	const validateCart = async (items: CartItem[]) => {
+		if (items.length === 0) return
+
+		try {
+			const stockMap = await validateCartStock(
+				items.map((i) => ({ id: i.id, size: i.size })),
+			)
+
+			setCartItems((prev) =>
+				prev.map((item) => {
+					const key = `${item.id}-${item.size}`
+					const realStock = stockMap[key]
+
+					// If we got a valid stock number back, update the item
+					if (typeof realStock === 'number') {
+						return { ...item, maxStock: realStock }
+					}
+					return item
+				}),
+			)
+		} catch (error) {
+			console.error('Error verifying stock:', error)
+		}
+	}
+
 	// Load cart from localStorage on mount
 	useEffect(() => {
 		const savedCart = localStorage.getItem('etiqueta-roja-cart')
 		if (savedCart) {
 			try {
-				setCartItems(JSON.parse(savedCart))
+				const items = JSON.parse(savedCart)
+				setCartItems(items)
+				validateCart(items)
 			} catch (e) {
 				console.error('Failed to parse cart:', e)
 			}
 		}
 		setIsLoaded(true)
 	}, [])
+
+	// Re-validate when opening cart
+	useEffect(() => {
+		if (isCartOpen && cartItems.length > 0) {
+			validateCart(cartItems)
+		}
+	}, [isCartOpen])
 
 	// Save cart to localStorage whenever it changes
 	useEffect(() => {
