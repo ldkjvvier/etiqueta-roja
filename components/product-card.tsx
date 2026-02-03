@@ -49,7 +49,7 @@ export function ProductCard({ product }: { product: Product }) {
 				{/* Sale Badge */}
 				{product.originalPrice && !isSoldOut && (
 					<span className="absolute top-3 right-3 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-1 z-20">
-						SALE
+						OFERTA
 					</span>
 				)}
 			</div>
