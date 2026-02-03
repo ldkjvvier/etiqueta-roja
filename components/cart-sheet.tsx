@@ -74,6 +74,17 @@ export function CartSheet() {
 												<p className="text-muted-foreground text-xs mt-1">
 													Talla: {item.size}
 												</p>
+												{item.maxStock === 0 && (
+													<p className="text-destructive text-xs font-black mt-1 uppercase tracking-wider">
+														¡Agotado!
+													</p>
+												)}
+												{item.maxStock > 0 &&
+													item.quantity >= item.maxStock && (
+														<p className="text-destructive text-[10px] font-bold mt-1 uppercase">
+															Stock Máximo Alcanzado ({item.maxStock})
+														</p>
+													)}
 											</div>
 											<Button
 												variant="ghost"
@@ -109,6 +120,7 @@ export function CartSheet() {
 													variant="ghost"
 													size="icon"
 													className="h-8 w-8 hover:bg-secondary"
+													disabled={item.quantity >= item.maxStock}
 													onClick={() =>
 														updateQuantity(
 															item.id,
@@ -138,10 +150,15 @@ export function CartSheet() {
 							</div>
 							<Button
 								onClick={handleWhatsAppCheckout}
-								className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-lg py-6 gap-2"
+								disabled={cartItems.some(
+									(item) => item.maxStock === 0,
+								)}
+								className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-lg py-6 gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
 								<MessageCircle className="h-5 w-5" />
-								ENVIAR PEDIDO A WHATSAPP
+								{cartItems.some((item) => item.maxStock === 0)
+									? 'ELIMINA PRODUCTOS AGOTADOS'
+									: 'ENVIAR PEDIDO A WHATSAPP'}
 							</Button>
 							<p className="text-center text-xs text-muted-foreground">
 								Se abrirá WhatsApp con el resumen de tu pedido

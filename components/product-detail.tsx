@@ -83,14 +83,36 @@ export function ProductDetail({
 
 	const handleAddToCart = () => {
 		if (!selectedSize) return
+
+		// Find stock for selected size
+		let maxStock = 100 // Default fallback for static/legacy data
+		if (product.variants) {
+			const variant = product.variants.find(
+				(v) => v.size === selectedSize,
+			)
+			if (variant) {
+				maxStock = variant.stock
+			}
+		}
+
 		addToCart({
 			id: product.id,
 			name: product.name,
 			price: product.price,
 			size: selectedSize,
 			image: product.image,
+			maxStock,
 		})
 		setSelectedSize(null)
+	}
+
+	// Calculate if the specific selected size is out of stock
+	const isSelectedSizeSoldOut = () => {
+		if (!selectedSize || !product.variants) return false
+		const variant = product.variants.find(
+			(v) => v.size === selectedSize,
+		)
+		return variant ? variant.stock <= 0 : false
 	}
 
 	return (

@@ -5,6 +5,7 @@ import {
 	createContext,
 	useContext,
 	useState,
+	useEffect,
 	type ReactNode,
 } from 'react'
 
@@ -15,6 +16,12 @@ export type CartItem = {
 	size: string
 	quantity: number
 	image: string
+	maxStock: number
+}
+
+export type ProductVariant = {
+	size: string
+	stock: number
 }
 
 export type Product = {
@@ -25,6 +32,7 @@ export type Product = {
 	image: string
 	images?: string[]
 	sizes: string[]
+	variants?: ProductVariant[]
 	stockStatus: 'available' | 'low' | 'sold_out'
 	category?: string
 	description?: string
@@ -70,6 +78,30 @@ export function StoreProvider({
 	const [searchQuery, setSearchQuery] = useState('')
 	const [selectedProduct, setSelectedProduct] =
 		useState<Product | null>(null)
+	const [isLoaded, setIsLoaded] = useState(false)
+
+	// Load cart from localStorage on mount
+	useEffect(() => {
+		const savedCart = localStorage.getItem('etiqueta-roja-cart')
+		if (savedCart) {
+			try {
+				setCartItems(JSON.parse(savedCart))
+			} catch (e) {
+				console.error('Failed to parse cart:', e)
+			}
+		}
+		setIsLoaded(true)
+	}, [])
+
+	// Save cart to localStorage whenever it changes
+	useEffect(() => {
+		if (isLoaded) {
+			localStorage.setItem(
+				'etiqueta-roja-cart',
+				JSON.stringify(cartItems),
+			)
+		}
+	}, [cartItems, isLoaded])
 
 	const addToCart = (item: Omit<CartItem, 'quantity'>) => {
 		setCartItems((prev) => {
@@ -77,6 +109,10 @@ export function StoreProvider({
 				(i) => i.id === item.id && i.size === item.size,
 			)
 			if (existing) {
+				// Prevent adding more than maxStock
+				if (existing.quantity >= existing.maxStock) {
+					return prev
+				}
 				return prev.map((i) =>
 					i.id === item.id && i.size === item.size
 						? { ...i, quantity: i.quantity + 1 }
@@ -104,9 +140,14 @@ export function StoreProvider({
 			return
 		}
 		setCartItems((prev) =>
-			prev.map((i) =>
-				i.id === id && i.size === size ? { ...i, quantity } : i,
-			),
+			prev.map((i) => {
+				if (i.id === id && i.size === size) {
+					// Prevent exceeding maxStock
+					if (quantity > i.maxStock) return i
+					return { ...i, quantity }
+				}
+				return i
+			}),
 		)
 	}
 

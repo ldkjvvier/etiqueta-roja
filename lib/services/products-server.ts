@@ -12,7 +12,7 @@ function mapRowToProduct(row: ProductRow): Product {
 	// Calculate stock logic from variants
 	const totalStock = row.product_variants.reduce(
 		(acc, v) => acc + v.stock_quantity,
-		0
+		0,
 	)
 	let stockStatus: 'available' | 'low' | 'sold_out' = 'available'
 	if (totalStock === 0) stockStatus = 'sold_out'
@@ -20,8 +20,13 @@ function mapRowToProduct(row: ProductRow): Product {
 
 	// Extract sizes from variants
 	const sizes = Array.from(
-		new Set(row.product_variants.map((v) => v.size))
+		new Set(row.product_variants.map((v) => v.size)),
 	).sort()
+
+	const variants = row.product_variants.map((v) => ({
+		size: v.size,
+		stock: v.stock_quantity,
+	}))
 
 	return {
 		id: row.id,
@@ -31,6 +36,7 @@ function mapRowToProduct(row: ProductRow): Product {
 		image: row.image,
 		images: row.images,
 		sizes: sizes,
+		variants: variants,
 		stockStatus: stockStatus,
 		category: row.categories?.name || 'Uncategorized',
 		description: row.description ?? undefined,
@@ -53,14 +59,14 @@ export async function getProducts(): Promise<Product[]> {
 					size,
 					stock_quantity
 				)
-			`
+			`,
 			)
 			.order('created_at', { ascending: false })
 
 		if (error || !data || data.length === 0) {
 			console.warn(
 				'Supabase fetch failed or empty, using static data fallback:',
-				error
+				error,
 			)
 			if (error) return staticProducts
 			return []
@@ -75,7 +81,7 @@ export async function getProducts(): Promise<Product[]> {
 }
 
 export async function getProduct(
-	id: string
+	id: string,
 ): Promise<Product | null> {
 	const supabase = await createClient()
 	const { data, error } = await supabase
@@ -85,7 +91,7 @@ export async function getProduct(
 			*,
 			categories ( name, slug ),
 			product_variants ( size, stock_quantity )
-		`
+		`,
 		)
 		.eq('id', id)
 		.single()
@@ -100,7 +106,7 @@ export async function getProduct(
 }
 
 export async function getRelatedProducts(
-	excludeId: string
+	excludeId: string,
 ): Promise<Product[]> {
 	try {
 		const supabase = await createClient()
@@ -111,7 +117,7 @@ export async function getRelatedProducts(
 				*,
 				categories ( name, slug ),
 				product_variants ( size, stock_quantity )
-			`
+			`,
 			)
 			.neq('id', excludeId)
 			.limit(4)
