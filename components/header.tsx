@@ -7,6 +7,7 @@ import {
 	Sheet,
 	SheetContent,
 	SheetTrigger,
+	SheetTitle,
 } from '@/components/ui/sheet'
 import { useStore } from '@/lib/store-context'
 import { CartSheet } from './cart-sheet'
@@ -66,11 +67,13 @@ export function Header() {
 							</SheetTrigger>
 							<SheetContent
 								side="left"
-								className="w-full bg-background border-none p-0"
+								className="w-full bg-background border-none p-0 [&>button]:hidden"
 							>
 								<div className="flex flex-col h-full">
 									<div className="flex items-center justify-between p-6 border-b border-border">
-										<Logo />
+										<SheetTitle>
+											<Logo />
+										</SheetTitle>
 										<Button
 											variant="ghost"
 											size="icon"
