@@ -16,7 +16,8 @@ export async function generateMetadata({
 	params: Promise<{ id: string }>
 }): Promise<Metadata> {
 	const { id } = await params
-	const product = (await getProduct(id)) || (await getProductBySlug(id))
+	const product =
+		(await getProduct(id)) || (await getProductBySlug(id))
 	if (!product) return { title: 'Producto | ETIQUETA ROJA' }
 
 	return {

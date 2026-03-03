@@ -56,7 +56,9 @@ export function ProductDetail({
 			...(product.images || []),
 			...variantImages,
 		]
-		const validImages = allImages.filter((img): img is string => Boolean(img))
+		const validImages = allImages.filter((img): img is string =>
+			Boolean(img),
+		)
 
 		const uniqueByNormalized = new Map<string, string>()
 		for (const image of validImages) {
@@ -67,8 +69,15 @@ export function ProductDetail({
 		}
 
 		const uniqueImages = Array.from(uniqueByNormalized.values())
-		return uniqueImages.length > 0 ? uniqueImages : ['/placeholder.svg']
-	}, [product.image, product.images, product.variants, normalizeImageUrl])
+		return uniqueImages.length > 0
+			? uniqueImages
+			: ['/placeholder.svg']
+	}, [
+		product.image,
+		product.images,
+		product.variants,
+		normalizeImageUrl,
+	])
 
 	const selectedVariant = selectedSize
 		? product.variants?.find(
@@ -106,7 +115,8 @@ export function ProductDetail({
 
 			const targetNormalized = normalizeImageUrl(variantImageUrl)
 			const index = productImages.findIndex(
-				(imageUrl) => normalizeImageUrl(imageUrl) === targetNormalized,
+				(imageUrl) =>
+					normalizeImageUrl(imageUrl) === targetNormalized,
 			)
 
 			if (index >= 0) {
@@ -124,7 +134,9 @@ export function ProductDetail({
 			}
 
 			setSelectedSize(size)
-			const variant = product.variants?.find((item) => item.size === size)
+			const variant = product.variants?.find(
+				(item) => item.size === size,
+			)
 			focusVariantImage(variant?.imageUrl)
 		},
 		[focusVariantImage, product.variants, selectedSize],
@@ -336,10 +348,17 @@ export function ProductDetail({
 							{/* Size Selector */}
 							{!isSoldOut && (
 								<div className="mb-6">
-									<h3 id="size-selector-label" className="font-bold text-xs uppercase tracking-wide mb-3 text-muted-foreground">
+									<h3
+										id="size-selector-label"
+										className="font-bold text-xs uppercase tracking-wide mb-3 text-muted-foreground"
+									>
 										Selecciona tu talla
 									</h3>
-									<div className="flex flex-wrap gap-3" role="group" aria-labelledby="size-selector-label">
+									<div
+										className="flex flex-wrap gap-3"
+										role="group"
+										aria-labelledby="size-selector-label"
+									>
 										{product.sizes.map((size) => {
 											// Check individual variant stock
 											const variant = product.variants?.find(
