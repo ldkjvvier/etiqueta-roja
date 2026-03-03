@@ -93,6 +93,34 @@ interface ProductFormProps {
 	drops: DropOption[]
 }
 
+function normalizeImageKey(url: string) {
+	try {
+		const parsed = new URL(url)
+		parsed.search = ''
+		parsed.hash = ''
+		return parsed.toString()
+	} catch {
+		return url.trim()
+	}
+}
+
+function dedupeImages(urls: Array<string | null | undefined>) {
+	const uniqueByNormalized = new Map<string, string>()
+
+	for (const url of urls) {
+		if (!url) continue
+		const trimmed = url.trim()
+		if (!trimmed) continue
+
+		const normalized = normalizeImageKey(trimmed)
+		if (!uniqueByNormalized.has(normalized)) {
+			uniqueByNormalized.set(normalized, trimmed)
+		}
+	}
+
+	return Array.from(uniqueByNormalized.values())
+}
+
 export function ProductForm({
 	initialData,
 	categories,
@@ -103,9 +131,10 @@ export function ProductForm({
 
 	// Merge image column + images array for UI
 	const defaultImages = initialData
-		? [initialData.main_image, ...(initialData.images || [])].filter(
-				Boolean,
-			)
+		? dedupeImages([
+				initialData.main_image,
+				...(initialData.images || []),
+			])
 		: []
 
 	const form = useForm<ProductFormValues>({
@@ -181,11 +210,13 @@ export function ProductForm({
 	const onSubmit = async (data: ProductFormValues) => {
 		try {
 			setLoading(true)
+			const normalizedImages = dedupeImages(data.images)
 
 			// Format for backend
 			// First image is 'image', rest are 'images'
 			const payload = {
 				...data,
+				images: normalizedImages,
 				drop_id: data.drop_id === 'none' ? null : data.drop_id,
 			}
 
@@ -228,45 +259,47 @@ export function ProductForm({
 						'Verifica que haya al menos una imagen y una variante.',
 				})
 			})}
-			className="space-y-8 max-w-5xl"
+			className="space-y-6"
 		>
-			<div className="grid gap-8 md:grid-cols-2">
-				{/* Left Column: Details */}
-				<div className="space-y-6">
-					<Card>
-						<CardHeader>
-							<CardTitle>Detalles</CardTitle>
-							<CardDescription>
-								Información principal del producto
-							</CardDescription>
-						</CardHeader>
-						<CardContent className="pt-6 space-y-4">
-							<div className="space-y-2">
-								<Label>Nombre del Producto</Label>
-								<Input
-									{...form.register('name')}
-									placeholder="Ej: Oversized Hoodie Black"
-								/>
-								{form.formState.errors.name && (
-									<p className="text-red-500 text-sm">
-										{form.formState.errors.name.message}
-									</p>
-								)}
-							</div>
+			<div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+				<Card className="xl:col-span-8">
+					<CardHeader>
+						<CardTitle>Detalles</CardTitle>
+						<CardDescription>
+							Información principal del producto
+						</CardDescription>
+					</CardHeader>
+					<CardContent className="space-y-5">
+						<div className="space-y-2">
+							<Label>Nombre del Producto</Label>
+							<Input
+								{...form.register('name')}
+								placeholder="Ej: Oversized Hoodie Black"
+							/>
+							{form.formState.errors.name && (
+								<p className="text-red-500 text-sm">
+									{form.formState.errors.name.message}
+								</p>
+							)}
+						</div>
 
-							<div className="space-y-2">
-								<Label>Descripción</Label>
-								<Textarea
-									{...form.register('description')}
-									placeholder="Descripción detallada..."
-								/>
-							</div>
+						<div className="space-y-2">
+							<Label>Descripción</Label>
+							<Textarea
+								{...form.register('description')}
+								placeholder="Descripción detallada..."
+								className="min-h-28"
+							/>
+						</div>
 
+						<div className="grid gap-4 md:grid-cols-2">
 							<div className="space-y-2">
 								<Label>Categoría</Label>
 								<Select
 									onValueChange={(val) =>
-										form.setValue('category_id', val)
+										form.setValue('category_id', val, {
+											shouldDirty: true,
+										})
 									}
 									defaultValue={form.getValues('category_id')}
 								>
@@ -288,26 +321,77 @@ export function ProductForm({
 								)}
 							</div>
 
-							<div className="grid grid-cols-2 gap-4">
-								<div className="space-y-2">
-									<Label>Precio ($)</Label>
-									<Input
-										type="number"
-										step="0.01"
-										{...form.register('base_price')}
-									/>
-								</div>
-								<div className="space-y-2">
-									<Label>Precio Original (Opcional)</Label>
-									<Input
-										type="number"
-										step="0.01"
-										{...form.register('compare_at_price')}
-									/>
-								</div>
+							<div className="space-y-2">
+								<Label>Drop (Opcional)</Label>
+								<Select
+									onValueChange={(val) =>
+										form.setValue('drop_id', val, {
+											shouldDirty: true,
+										})
+									}
+									defaultValue={form.getValues('drop_id') || 'none'}
+								>
+									<SelectTrigger>
+										<SelectValue placeholder="Sin drop" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="none">Sin drop</SelectItem>
+										{drops.map((d) => (
+											<SelectItem key={d.id} value={d.id}>
+												{d.name} ({d.status})
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
+						</div>
+
+						<div className="grid gap-4 md:grid-cols-2">
+							<div className="space-y-2">
+								<Label>Precio ($)</Label>
+								<Input
+									type="number"
+									step="0.01"
+									{...form.register('base_price')}
+								/>
+							</div>
+							<div className="space-y-2">
+								<Label>Precio Original (Opcional)</Label>
+								<Input
+									type="number"
+									step="0.01"
+									{...form.register('compare_at_price')}
+								/>
+							</div>
+						</div>
+
+						<div className="grid gap-4 md:grid-cols-2">
+							<div className="space-y-2">
+								<Label>Estado</Label>
+								<Select
+									onValueChange={(val) =>
+										form.setValue(
+											'status',
+											val as 'draft' | 'active' | 'archived',
+											{ shouldDirty: true },
+										)
+									}
+									defaultValue={form.getValues('status')}
+								>
+									<SelectTrigger>
+										<SelectValue placeholder="Estado" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="draft">Borrador</SelectItem>
+										<SelectItem value="active">Activo</SelectItem>
+										<SelectItem value="archived">
+											Archivado
+										</SelectItem>
+									</SelectContent>
+								</Select>
 							</div>
 
-							<div className="flex items-center justify-between rounded-md border p-3">
+							<div className="flex items-center justify-between rounded-lg border p-3.5">
 								<div>
 									<Label htmlFor="is_customizable">
 										Producto personalizable
@@ -321,251 +405,215 @@ export function ProductForm({
 									id="is_customizable"
 									checked={form.watch('is_customizable')}
 									onCheckedChange={(checked) =>
-										form.setValue('is_customizable', checked)
+										form.setValue('is_customizable', checked, {
+											shouldDirty: true,
+										})
 									}
 								/>
 							</div>
+						</div>
+					</CardContent>
+				</Card>
 
-							<div className="grid grid-cols-2 gap-4">
-								<div className="space-y-2">
-									<Label>Drop (Opcional)</Label>
-									<Select
-										onValueChange={(val) =>
-											form.setValue('drop_id', val)
-										}
-										defaultValue={form.getValues('drop_id') || 'none'}
-									>
-										<SelectTrigger>
-											<SelectValue placeholder="Sin drop" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="none">Sin drop</SelectItem>
-											{drops.map((d) => (
-												<SelectItem key={d.id} value={d.id}>
-													{d.name} ({d.status})
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</div>
-								<div className="space-y-2">
-									<Label>Estado</Label>
-									<Select
-										onValueChange={(val) =>
-											form.setValue(
-												'status',
-												val as 'draft' | 'active' | 'archived',
-											)
-										}
-										defaultValue={form.getValues('status')}
-									>
-										<SelectTrigger>
-											<SelectValue placeholder="Estado" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="draft">Borrador</SelectItem>
-											<SelectItem value="active">Activo</SelectItem>
-											<SelectItem value="archived">
-												Archivado
-											</SelectItem>
-										</SelectContent>
-									</Select>
-								</div>
-							</div>
-						</CardContent>
-					</Card>
-
-					<Card>
-						<CardHeader>
-							<CardTitle>Imágenes</CardTitle>
-							<CardDescription>
-								La primera imagen será portada
-							</CardDescription>
-						</CardHeader>
-						<CardContent className="pt-6 space-y-4">
-							<Label>Imágenes</Label>
+				<Card className="xl:col-span-4">
+					<CardHeader>
+						<CardTitle>Imágenes</CardTitle>
+						<CardDescription>
+							La primera imagen será portada
+						</CardDescription>
+					</CardHeader>
+					<CardContent className="space-y-4">
+						<Label>Galería</Label>
+						<div className="rounded-lg border bg-muted/20 p-3">
 							<ImageUpload
-								value={form.watch('images')}
-								onChange={(urls) => form.setValue('images', urls)}
+								value={dedupeImages(form.watch('images') || [])}
+								onChange={(urls) =>
+									form.setValue('images', dedupeImages(urls), {
+										shouldDirty: true,
+									})
+								}
 							/>
-							{form.formState.errors.images && (
-								<p className="text-red-500 text-sm">
-									{form.formState.errors.images.message}
-								</p>
-							)}
-						</CardContent>
-					</Card>
-				</div>
+						</div>
+						{form.formState.errors.images && (
+							<p className="text-red-500 text-sm">
+								{form.formState.errors.images.message}
+							</p>
+						)}
+					</CardContent>
+				</Card>
 
-				{/* Right Column: Variants */}
-				<div className="space-y-6">
-					<Card>
-						<CardHeader>
+				<Card className="xl:col-span-12">
+					<CardHeader className="flex flex-row items-center justify-between gap-3">
+						<div>
 							<CardTitle>Variantes / Stock</CardTitle>
 							<CardDescription>
 								Gestiona tallas, precio y stock por variante
 							</CardDescription>
-						</CardHeader>
-						<CardContent className="pt-6">
-							<div className="flex items-center justify-between mb-4">
-								<Label className="text-base font-medium">
-									Variantes activas
-								</Label>
-								<Button
-									type="button"
-									variant="outline"
-									size="sm"
-									onClick={() =>
-										append({
-											size: '',
-											price: null,
-											stock_quantity: 0,
-											reserved_stock: 0,
-											low_stock_threshold: 5,
-											sku: '',
-											weight: null,
-											image_url: '',
-											track_inventory: true,
-										})
-									}
-								>
-									<Plus className="mr-2 h-4 w-4" /> Agregar Talle
-								</Button>
-							</div>
-
-							<div className="space-y-4">
-								{fields.map((field, index) => (
-									<div
-										key={field.id}
-										className="grid gap-4 rounded-lg border bg-muted/30 p-4 md:grid-cols-2 xl:grid-cols-4"
+						</div>
+						<Button
+							type="button"
+							variant="outline"
+							size="sm"
+							onClick={() =>
+								append({
+									size: '',
+									price: null,
+									stock_quantity: 0,
+									reserved_stock: 0,
+									low_stock_threshold: 5,
+									sku: '',
+									weight: null,
+									image_url: '',
+									track_inventory: true,
+								})
+							}
+						>
+							<Plus className="mr-2 h-4 w-4" /> Agregar Talle
+						</Button>
+					</CardHeader>
+					<CardContent className="space-y-4">
+						{fields.map((field, index) => (
+							<div
+								key={field.id}
+								className="rounded-xl border bg-muted/20 p-4"
+							>
+								<div className="mb-4 flex items-center justify-between">
+									<p className="text-sm font-medium">
+										Variante {index + 1}
+									</p>
+									<Button
+										type="button"
+										variant="ghost"
+										size="icon"
+										disabled={fields.length === 1}
+										onClick={() => remove(index)}
 									>
-										<div className="flex-1 space-y-2">
-											<Label>Talle</Label>
-											<Input
-												{...form.register(`variants.${index}.size`)}
-												placeholder="S, M, L..."
-											/>
-											{form.formState.errors.variants?.[index]
-												?.size && (
-												<p className="text-red-500 text-xs">
-													Requerido
-												</p>
-											)}
-										</div>
-										<div className="flex-1 space-y-2">
-											<Label>Precio Var.</Label>
-											<Input
-												type="number"
-												step="0.01"
-												{...form.register(`variants.${index}.price`)}
-											/>
-										</div>
-										<div className="flex-1 space-y-2">
-											<Label>Stock</Label>
-											<Input
-												type="number"
-												{...form.register(
-													`variants.${index}.stock_quantity`,
-												)}
-											/>
-											{form.formState.errors.variants?.[index]
-												?.stock_quantity && (
-												<p className="text-red-500 text-xs">
-													Requerido
-												</p>
-											)}
-										</div>
-										<div className="flex-1 space-y-2">
-											<Label>Reservado</Label>
-											<Input
-												type="number"
-												{...form.register(
-													`variants.${index}.reserved_stock`,
-												)}
-											/>
-										</div>
-										<div className="flex-1 space-y-2">
-											<Label>Umbral Bajo</Label>
-											<Input
-												type="number"
-												{...form.register(
-													`variants.${index}.low_stock_threshold`,
-												)}
-											/>
-										</div>
-										<div className="flex-1 space-y-2">
-											<Label>SKU</Label>
-											<Input
-												{...form.register(`variants.${index}.sku`)}
-												placeholder="Opcional"
-											/>
-										</div>
-										<div className="flex-1 space-y-2">
-											<Label>Peso (kg)</Label>
-											<Input
-												type="number"
-												step="0.01"
-												{...form.register(`variants.${index}.weight`)}
-											/>
-										</div>
-										<div className="flex-1 space-y-2">
-											<Label>Imagen Var.</Label>
-											<Input
-												{...form.register(
-													`variants.${index}.image_url`,
-												)}
-												placeholder="https://..."
-											/>
-										</div>
-										<div className="flex items-center gap-2 pt-7">
-											<Switch
-												checked={form.watch(
-													`variants.${index}.track_inventory`,
-												)}
-												onCheckedChange={(checked) =>
-													form.setValue(
-														`variants.${index}.track_inventory`,
-														checked,
-													)
-												}
-											/>
-											<Label>Track inv.</Label>
-										</div>
-										<Button
-											type="button"
-											variant="ghost"
-											size="icon"
-											disabled={fields.length === 1}
-											onClick={() => remove(index)}
-										>
-											<Trash className="h-4 w-4 text-red-500" />
-										</Button>
+										<Trash className="h-4 w-4 text-red-500" />
+									</Button>
+								</div>
+
+								<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+									<div className="space-y-2">
+										<Label>Talle</Label>
+										<Input
+											{...form.register(`variants.${index}.size`)}
+											placeholder="S, M, L..."
+										/>
+										{form.formState.errors.variants?.[index]
+											?.size && (
+											<p className="text-red-500 text-xs">
+												Requerido
+											</p>
+										)}
 									</div>
-								))}
+									<div className="space-y-2">
+										<Label>Precio Var.</Label>
+										<Input
+											type="number"
+											step="0.01"
+											{...form.register(`variants.${index}.price`)}
+										/>
+									</div>
+									<div className="space-y-2">
+										<Label>Stock</Label>
+										<Input
+											type="number"
+											{...form.register(
+												`variants.${index}.stock_quantity`,
+											)}
+										/>
+										{form.formState.errors.variants?.[index]
+											?.stock_quantity && (
+											<p className="text-red-500 text-xs">
+												Requerido
+											</p>
+										)}
+									</div>
+									<div className="space-y-2">
+										<Label>Reservado</Label>
+										<Input
+											type="number"
+											{...form.register(
+												`variants.${index}.reserved_stock`,
+											)}
+										/>
+									</div>
+									<div className="space-y-2">
+										<Label>Umbral Bajo</Label>
+										<Input
+											type="number"
+											{...form.register(
+												`variants.${index}.low_stock_threshold`,
+											)}
+										/>
+									</div>
+									<div className="space-y-2">
+										<Label>SKU</Label>
+										<Input
+											{...form.register(`variants.${index}.sku`)}
+											placeholder="Opcional"
+										/>
+									</div>
+									<div className="space-y-2">
+										<Label>Peso (kg)</Label>
+										<Input
+											type="number"
+											step="0.01"
+											{...form.register(`variants.${index}.weight`)}
+										/>
+									</div>
+									<div className="space-y-2">
+										<Label>Imagen Var.</Label>
+										<Input
+											{...form.register(
+												`variants.${index}.image_url`,
+											)}
+											placeholder="https://..."
+										/>
+									</div>
+								</div>
+
+								<div className="mt-4 flex items-center gap-2 rounded-md border bg-background p-3">
+									<Switch
+										checked={form.watch(
+											`variants.${index}.track_inventory`,
+										)}
+										onCheckedChange={(checked) =>
+											form.setValue(
+												`variants.${index}.track_inventory`,
+												checked,
+												{ shouldDirty: true },
+											)
+										}
+									/>
+									<Label>Track inv.</Label>
+								</div>
 							</div>
-							{form.formState.errors.variants && (
-								<p className="text-red-500 text-sm mt-2">
-									{form.formState.errors.variants.message}
-								</p>
-							)}
-						</CardContent>
-					</Card>
-				</div>
+						))}
+						{form.formState.errors.variants && (
+							<p className="text-red-500 text-sm">
+								{form.formState.errors.variants.message}
+							</p>
+						)}
+					</CardContent>
+				</Card>
 			</div>
 
-			<Button
-				type="submit"
-				disabled={
-					loading || (!!initialData && !form.formState.isDirty)
-				}
-				className="w-full md:w-auto"
-			>
-				{loading
-					? 'Guardando...'
-					: initialData
-						? 'Actualizar Producto'
-						: 'Crear Producto'}
-			</Button>
+			<div className="flex justify-end">
+				<Button
+					type="submit"
+					disabled={
+						loading || (!!initialData && !form.formState.isDirty)
+					}
+					className="w-full md:w-auto"
+				>
+					{loading
+						? 'Guardando...'
+						: initialData
+							? 'Actualizar Producto'
+							: 'Crear Producto'}
+				</Button>
+			</div>
 		</form>
 	)
 }
