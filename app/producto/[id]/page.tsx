@@ -6,6 +6,7 @@ import { Footer } from '@/components/footer'
 import { ProductDetail } from '@/components/product-detail'
 import {
 	getProduct,
+	getProductBySlug,
 	getRelatedProducts,
 } from '@/lib/services/products-server'
 
@@ -15,7 +16,7 @@ export async function generateMetadata({
 	params: Promise<{ id: string }>
 }): Promise<Metadata> {
 	const { id } = await params
-	const product = await getProduct(id)
+	const product = (await getProduct(id)) || (await getProductBySlug(id))
 	if (!product) return { title: 'Producto | ETIQUETA ROJA' }
 
 	return {
@@ -32,17 +33,18 @@ export default async function ProductPage({
 	params: Promise<{ id: string }>
 }) {
 	const { id } = await params
-	const product = await getProduct(id)
+	const productById = await getProduct(id)
+	const product = productById || (await getProductBySlug(id))
 
 	if (!product) {
 		notFound()
 	}
 
-	if (product.slug) {
+	if (productById && product.slug && product.slug !== id) {
 		redirect(`/producto/${product.slug}`)
 	}
 
-	const relatedProducts = await getRelatedProducts(id)
+	const relatedProducts = await getRelatedProducts(product.id)
 
 	return (
 		<div className="min-h-screen flex flex-col">

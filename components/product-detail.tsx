@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import useEmblaCarousel from 'embla-carousel-react'
 import {
@@ -33,15 +33,42 @@ export function ProductDetail({
 
 	const isSoldOut = product.stockStatus === 'sold_out'
 
-	// Get product images or fallback
-	// Combine main image with gallery images, ensuring main image is first
-	const allImages = [product.image, ...(product.images || [])]
-	const validImages = allImages.filter((img) => !!img)
-	// Remove duplicates (in case main image is also in gallery)
-	const uniqueImages = Array.from(new Set(validImages))
+	const normalizeImageUrl = useCallback((url: string) => {
+		try {
+			const parsed = new URL(url)
+			parsed.search = ''
+			parsed.hash = ''
+			return parsed.toString()
+		} catch {
+			return url
+		}
+	}, [])
 
-	const productImages =
-		uniqueImages.length > 0 ? uniqueImages : ['/placeholder.svg']
+	// Get product images or fallback
+	// Combine main image + gallery + variant images so selecting size can focus its photo.
+	const productImages = useMemo(() => {
+		const variantImages = (product.variants || [])
+			.map((variant) => variant.imageUrl)
+			.filter((image): image is string => Boolean(image))
+
+		const allImages = [
+			product.image,
+			...(product.images || []),
+			...variantImages,
+		]
+		const validImages = allImages.filter((img): img is string => Boolean(img))
+
+		const uniqueByNormalized = new Map<string, string>()
+		for (const image of validImages) {
+			const normalized = normalizeImageUrl(image)
+			if (!uniqueByNormalized.has(normalized)) {
+				uniqueByNormalized.set(normalized, image)
+			}
+		}
+
+		const uniqueImages = Array.from(uniqueByNormalized.values())
+		return uniqueImages.length > 0 ? uniqueImages : ['/placeholder.svg']
+	}, [product.image, product.images, product.variants, normalizeImageUrl])
 
 	const selectedVariant = selectedSize
 		? product.variants?.find(
@@ -72,6 +99,36 @@ export function ProductDetail({
 	const scrollNext = useCallback(() => {
 		emblaApi?.scrollNext()
 	}, [emblaApi])
+
+	const focusVariantImage = useCallback(
+		(variantImageUrl?: string | null) => {
+			if (!variantImageUrl) return
+
+			const targetNormalized = normalizeImageUrl(variantImageUrl)
+			const index = productImages.findIndex(
+				(imageUrl) => normalizeImageUrl(imageUrl) === targetNormalized,
+			)
+
+			if (index >= 0) {
+				scrollTo(index)
+			}
+		},
+		[normalizeImageUrl, productImages, scrollTo],
+	)
+
+	const handleToggleSize = useCallback(
+		(size: string) => {
+			if (selectedSize === size) {
+				setSelectedSize(null)
+				return
+			}
+
+			setSelectedSize(size)
+			const variant = product.variants?.find((item) => item.size === size)
+			focusVariantImage(variant?.imageUrl)
+		},
+		[focusVariantImage, product.variants, selectedSize],
+	)
 
 	useEffect(() => {
 		if (!emblaApi) return
@@ -114,24 +171,11 @@ export function ProductDetail({
 		setSelectedSize(null)
 	}
 
-	// Calculate if the specific selected size is out of stock
-	const isSelectedSizeSoldOut = () => {
-		if (!selectedSize || !product.variants) return false
-		const variant = product.variants.find(
-			(v) => v.size === selectedSize,
-		)
-		return variant ? variant.stock <= 0 : false
-	}
-
 	useEffect(() => {
-		if (!selectedVariant?.imageUrl) return
-		const index = productImages.findIndex(
-			(imageUrl) => imageUrl === selectedVariant.imageUrl,
-		)
-		if (index >= 0) {
-			scrollTo(index)
-		}
-	}, [selectedVariant?.imageUrl, productImages, scrollTo])
+		if (selectedImageIndex < productImages.length) return
+		setSelectedImageIndex(0)
+		emblaApi?.scrollTo(0)
+	}, [selectedImageIndex, productImages.length, emblaApi])
 
 	return (
 		<div className="min-h-screen bg-background">
@@ -191,6 +235,7 @@ export function ProductDetail({
 							{productImages.length > 1 && (
 								<>
 									<button
+										type="button"
 										onClick={scrollPrev}
 										className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-background/90 border border-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
 										aria-label="Previous image"
@@ -198,6 +243,7 @@ export function ProductDetail({
 										<ChevronLeft className="w-5 h-5" />
 									</button>
 									<button
+										type="button"
 										onClick={scrollNext}
 										className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-background/90 border border-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
 										aria-label="Next image"
@@ -233,7 +279,10 @@ export function ProductDetail({
 								{productImages.map((img, index) => (
 									<button
 										key={index}
+										type="button"
 										onClick={() => scrollTo(index)}
+										aria-label={`Ver imagen ${index + 1} de ${productImages.length}`}
+										aria-pressed={selectedImageIndex === index}
 										className={`relative aspect-square bg-secondary overflow-hidden border-2 transition-colors shrink-0 ${
 											selectedImageIndex === index
 												? 'border-foreground'
@@ -287,10 +336,10 @@ export function ProductDetail({
 							{/* Size Selector */}
 							{!isSoldOut && (
 								<div className="mb-6">
-									<h3 className="font-bold text-xs uppercase tracking-wide mb-3 text-muted-foreground">
+									<h3 id="size-selector-label" className="font-bold text-xs uppercase tracking-wide mb-3 text-muted-foreground">
 										Selecciona tu talla
 									</h3>
-									<div className="flex flex-wrap gap-3">
+									<div className="flex flex-wrap gap-3" role="group" aria-labelledby="size-selector-label">
 										{product.sizes.map((size) => {
 											// Check individual variant stock
 											const variant = product.variants?.find(
@@ -303,8 +352,11 @@ export function ProductDetail({
 											return (
 												<button
 													key={size}
+													type="button"
 													disabled={isSizeSoldOut}
-													onClick={() => setSelectedSize(size)}
+													onClick={() => handleToggleSize(size)}
+													aria-pressed={selectedSize === size}
+													aria-label={`Talla ${size}${isSizeSoldOut ? ' agotada' : ''}`}
 													className={`w-14 h-12 text-sm font-bold border-2 transition-all relative ${
 														selectedSize === size
 															? 'bg-foreground text-background border-foreground'
