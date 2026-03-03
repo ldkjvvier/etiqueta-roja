@@ -217,6 +217,30 @@ CREATE TABLE public.daily_metrics (
   total_orders INTEGER DEFAULT 0 CHECK (total_orders >= 0),
   PRIMARY KEY (store_id, date)
 );
+--1️⃣3️⃣ SITE CONFIG (Escalable: banner, redes y futuras features)
+CREATE TABLE public.site_config (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  store_id UUID NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
+  key TEXT NOT NULL,
+  value JSONB NOT NULL DEFAULT '{}'::jsonb,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  visibility TEXT NOT NULL DEFAULT 'public'
+    CHECK (visibility IN ('public', 'private', 'internal')),
+  description TEXT,
+  updated_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(store_id, key)
+);
+
+CREATE INDEX idx_site_config_store_key
+ON public.site_config(store_id, key);
+
+CREATE INDEX idx_site_config_store_visibility
+ON public.site_config(store_id, is_active, visibility);
+
+CREATE INDEX idx_site_config_value_gin
+ON public.site_config USING GIN(value jsonb_path_ops);
 --🔐 RLS COMPLETO (PRODUCCIÓN REAL)
 --Activar RLS en TODAS las tablas multi-tenant:
 
@@ -226,6 +250,7 @@ ALTER TABLE drops ENABLE ROW LEVEL SECURITY;
 ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE product_variants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE site_config ENABLE ROW LEVEL SECURITY;
 --Política Pública (solo productos activos)
 CREATE POLICY "Public view active products"
 ON public.products
@@ -244,5 +269,19 @@ USING (
   public.is_store_admin(store_id)
   AND deleted_at IS NULL
 );
+
+CREATE POLICY "Public view active site config"
+ON public.site_config
+FOR SELECT
+USING (
+  is_active = true
+  AND visibility = 'public'
+);
+
+CREATE POLICY "Admin manage own store site config"
+ON public.site_config
+FOR ALL
+USING (public.is_store_admin(store_id))
+WITH CHECK (public.is_store_admin(store_id));
 ```
 
