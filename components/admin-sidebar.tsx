@@ -8,12 +8,18 @@ import {
 	Settings,
 	LogOut,
 	Tags,
+	Users,
+	Receipt,
+	Zap,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
 	{ href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
 	{ href: '/admin/products', label: 'Products', icon: Package },
+	{ href: '/admin/drops', label: 'Drops', icon: Zap },
+	{ href: '/admin/orders', label: 'Orders', icon: Receipt },
+	{ href: '/admin/customers', label: 'Customers', icon: Users },
 	{ href: '/admin/categories', label: 'Categories', icon: Tags },
 	{ href: '/admin/config', label: 'Site Config', icon: Settings },
 ]
@@ -39,7 +45,10 @@ export function AdminSidebar() {
 			<nav className="flex-1 p-4">
 				<ul className="space-y-1">
 					{navItems.map((item) => {
-						const isActive = pathname === item.href
+						const isActive =
+							pathname === item.href ||
+							(item.href !== '/admin' &&
+								pathname.startsWith(item.href))
 						return (
 							<li key={item.href}>
 								<Link

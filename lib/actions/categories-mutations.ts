@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { getAdminStoreContext } from '@/lib/services/admin-context'
 
 function generateSlug(name: string): string {
 	return name
@@ -14,6 +15,7 @@ function generateSlug(name: string): string {
 
 export async function createCategory(formData: any) {
 	const supabase = await createClient()
+	const store = await getAdminStoreContext()
 
 	const {
 		data: { user },
@@ -26,10 +28,11 @@ export async function createCategory(formData: any) {
 		const { data, error } = await supabase
 			.from('categories')
 			.insert({
+				store_id: store.id,
 				name: formData.name,
 				slug: slug,
 				description: formData.description || null,
-				image: formData.image || null,
+				image_url: formData.image || null,
 			} as any)
 			.select()
 			.single()
@@ -50,6 +53,7 @@ export async function createCategory(formData: any) {
 
 export async function updateCategory(id: string, formData: any) {
 	const supabase = await createClient()
+	const store = await getAdminStoreContext()
 
 	const {
 		data: { user },
@@ -60,7 +64,7 @@ export async function updateCategory(id: string, formData: any) {
 		const updates: any = {
 			name: formData.name,
 			description: formData.description || null,
-			image: formData.image || null,
+			image_url: formData.image || null,
 		}
 
 		// Only update slug if explicitly changed to avoid breaking SEO links unnecessarily,
@@ -73,6 +77,7 @@ export async function updateCategory(id: string, formData: any) {
 
 		const { error } = await (supabase.from('categories') as any)
 			.update(updates)
+			.eq('store_id', store.id)
 			.eq('id', id)
 
 		if (error) throw error
@@ -94,6 +99,7 @@ export async function updateCategory(id: string, formData: any) {
 
 export async function deleteCategory(id: string) {
 	const supabase = await createClient()
+	const store = await getAdminStoreContext()
 
 	const {
 		data: { user },
@@ -104,6 +110,7 @@ export async function deleteCategory(id: string) {
 		const { error } = await supabase
 			.from('categories')
 			.delete()
+			.eq('store_id', store.id)
 			.eq('id', id)
 
 		if (error) throw error

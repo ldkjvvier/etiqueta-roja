@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import {
 	MoreHorizontal,
@@ -51,7 +51,15 @@ export function ProductTable({
 }: ProductTableProps) {
 	const router = useRouter()
 	const pathname = usePathname()
-	const [isPending, startTransition] = useTransition()
+	const [searchTerm, setSearchTerm] = useState(search)
+
+	useEffect(() => {
+		const timeoutId = setTimeout(() => {
+			handleSearch(searchTerm)
+		}, 350)
+
+		return () => clearTimeout(timeoutId)
+	}, [searchTerm])
 
 	// Search Handler
 	const handleSearch = (term: string) => {
@@ -91,8 +99,8 @@ export function ProductTable({
 						type="search"
 						placeholder="Buscar productos..."
 						className="pl-8"
-						defaultValue={search}
-						onChange={(e) => handleSearch(e.target.value)}
+						value={searchTerm}
+						onChange={(e) => setSearchTerm(e.target.value)}
 					/>
 				</div>
 				<Button onClick={() => router.push('/admin/products/new')}>
@@ -105,7 +113,7 @@ export function ProductTable({
 				<Table>
 					<TableHeader>
 						<TableRow>
-							<TableHead className="w-[80px] hidden md:table-cell">
+							<TableHead className="w-20 hidden md:table-cell">
 								Imagen
 							</TableHead>
 							<TableHead>Nombre</TableHead>
@@ -113,6 +121,9 @@ export function ProductTable({
 								Categoría
 							</TableHead>
 							<TableHead>Precio</TableHead>
+							<TableHead className="hidden lg:table-cell">
+								Estado
+							</TableHead>
 							<TableHead className="hidden md:table-cell">
 								Stock
 							</TableHead>
@@ -132,7 +143,7 @@ export function ProductTable({
 									<TableCell className="hidden md:table-cell">
 										<div className="relative h-12 w-12 overflow-hidden rounded-md border">
 											<Image
-												src={product.image}
+												src={product.main_image}
 												alt={product.name}
 												fill
 												className="object-cover"
@@ -142,37 +153,41 @@ export function ProductTable({
 									<TableCell className="font-medium">
 										{product.name}
 										<div className="md:hidden text-xs text-muted-foreground mt-1">
-											{product.total_stock} unidades
+											{product.available_stock} disponibles
 										</div>
 									</TableCell>
 									<TableCell className="hidden md:table-cell">
 										<Badge variant="outline" className="font-mono">
-											{product.category?.name || 'Sin Categoría'}
+											{product.category_name || 'Sin Categoría'}
 										</Badge>
 									</TableCell>
 									<TableCell>
 										<div className="flex flex-col">
-											<span>{formatPrice(product.price)}</span>
-											{product.original_price && (
+											<span>{formatPrice(product.base_price)}</span>
+											{product.compare_at_price && (
 												<span className="text-xs text-muted-foreground line-through">
-													{formatPrice(product.original_price)}
+													{formatPrice(product.compare_at_price)}
 												</span>
 											)}
 										</div>
 									</TableCell>
+									<TableCell className="hidden lg:table-cell">
+										<Badge variant="outline">{product.status}</Badge>
+									</TableCell>
 									<TableCell className="hidden md:table-cell">
-										{product.total_stock === 0 ? (
+										{product.available_stock === 0 ? (
 											<Badge variant="destructive">Agotado</Badge>
-										) : product.total_stock < 10 ? (
+										) : product.low_stock_alert ? (
 											<Badge
 												variant="secondary"
 												className="text-orange-600 border-orange-200 bg-orange-50"
 											>
-												Bajo: {product.total_stock}
+												Bajo: {product.available_stock}
 											</Badge>
 										) : (
 											<span className="text-sm">
-												{product.total_stock} unidades
+												{product.available_stock} disp. /{' '}
+												{product.reserved_stock} res.
 											</span>
 										)}
 									</TableCell>

@@ -25,16 +25,21 @@ import {
 	createProduct,
 	updateProduct,
 } from '@/lib/actions/products-mutations'
-import { Category } from '@/lib/services/products-admin-fetcher'
+import {
+	Category,
+	DropOption,
+} from '@/lib/services/products-admin-fetcher'
 
 const formSchema = z.object({
 	name: z
 		.string()
 		.min(2, 'El nombre debe tener al menos 2 caracteres'),
 	description: z.string().optional(),
-	price: z.coerce.number().min(0.01),
-	original_price: z.coerce.number().optional().nullable(),
+	base_price: z.coerce.number().min(0.01),
+	compare_at_price: z.coerce.number().optional().nullable(),
 	category_id: z.string().min(1, 'Selecciona una categoría'),
+	drop_id: z.string().optional().nullable(),
+	status: z.enum(['draft', 'active', 'archived']),
 	images: z.array(z.string()).min(1, 'Sube al menos una imagen'),
 	variants: z
 		.array(
@@ -42,6 +47,8 @@ const formSchema = z.object({
 				id: z.string().optional(),
 				size: z.string().min(1, 'Talla requerida'),
 				stock_quantity: z.coerce.number().min(0),
+				reserved_stock: z.coerce.number().min(0),
+				low_stock_threshold: z.coerce.number().min(0),
 				sku: z.string().optional().nullable(),
 			}),
 		)
@@ -53,18 +60,20 @@ type ProductFormValues = z.infer<typeof formSchema>
 interface ProductFormProps {
 	initialData?: any
 	categories: Category[]
+	drops: DropOption[]
 }
 
 export function ProductForm({
 	initialData,
 	categories,
+	drops,
 }: ProductFormProps) {
 	const router = useRouter()
 	const [loading, setLoading] = useState(false)
 
 	// Merge image column + images array for UI
 	const defaultImages = initialData
-		? [initialData.image, ...(initialData.images || [])].filter(
+		? [initialData.main_image, ...(initialData.images || [])].filter(
 				Boolean,
 			)
 		: []
@@ -75,26 +84,48 @@ export function ProductForm({
 			? {
 					name: initialData.name,
 					description: initialData.description || '',
-					price: initialData.price,
-					original_price: initialData.original_price,
+					base_price: initialData.base_price,
+					compare_at_price: initialData.compare_at_price,
 					category_id: initialData.category_id || '',
+					drop_id: initialData.drop_id || 'none',
+					status: initialData.status || 'draft',
 					images: defaultImages,
 					variants:
 						initialData.variants && initialData.variants.length > 0
 							? initialData.variants.map((v: any) => ({
 									...v,
+									reserved_stock: v.reserved_stock || 0,
+									low_stock_threshold: v.low_stock_threshold || 5,
 									sku: v.sku || '',
 								}))
-							: [{ size: 'M', stock_quantity: 0, sku: '' }],
+							: [
+									{
+										size: 'M',
+										stock_quantity: 0,
+										reserved_stock: 0,
+										low_stock_threshold: 5,
+										sku: '',
+									},
+								],
 				}
 			: {
 					name: '',
 					description: '',
-					price: 0,
-					original_price: null,
+					base_price: 0,
+					compare_at_price: null,
 					category_id: '',
+					drop_id: 'none',
+					status: 'draft',
 					images: [],
-					variants: [{ size: 'M', stock_quantity: 0, sku: '' }],
+					variants: [
+						{
+							size: 'M',
+							stock_quantity: 0,
+							reserved_stock: 0,
+							low_stock_threshold: 5,
+							sku: '',
+						},
+					],
 				},
 	})
 
@@ -109,11 +140,9 @@ export function ProductForm({
 
 			// Format for backend
 			// First image is 'image', rest are 'images'
-			const [mainImage, ...galleryImages] = data.images
 			const payload = {
 				...data,
-				image: mainImage,
-				images: galleryImages,
+				drop_id: data.drop_id === 'none' ? null : data.drop_id,
 			}
 
 			let result
@@ -206,7 +235,7 @@ export function ProductForm({
 									<Input
 										type="number"
 										step="0.01"
-										{...form.register('price')}
+										{...form.register('base_price')}
 									/>
 								</div>
 								<div className="space-y-2">
@@ -214,8 +243,55 @@ export function ProductForm({
 									<Input
 										type="number"
 										step="0.01"
-										{...form.register('original_price')}
+										{...form.register('compare_at_price')}
 									/>
+								</div>
+							</div>
+
+							<div className="grid grid-cols-2 gap-4">
+								<div className="space-y-2">
+									<Label>Drop (Opcional)</Label>
+									<Select
+										onValueChange={(val) =>
+											form.setValue('drop_id', val)
+										}
+										defaultValue={form.getValues('drop_id') || 'none'}
+									>
+										<SelectTrigger>
+											<SelectValue placeholder="Sin drop" />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value="none">Sin drop</SelectItem>
+											{drops.map((d) => (
+												<SelectItem key={d.id} value={d.id}>
+													{d.name} ({d.status})
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								</div>
+								<div className="space-y-2">
+									<Label>Estado</Label>
+									<Select
+										onValueChange={(val) =>
+											form.setValue(
+												'status',
+												val as 'draft' | 'active' | 'archived',
+											)
+										}
+										defaultValue={form.getValues('status')}
+									>
+										<SelectTrigger>
+											<SelectValue placeholder="Estado" />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value="draft">Borrador</SelectItem>
+											<SelectItem value="active">Activo</SelectItem>
+											<SelectItem value="archived">
+												Archivado
+											</SelectItem>
+										</SelectContent>
+									</Select>
 								</div>
 							</div>
 						</CardContent>
@@ -250,7 +326,13 @@ export function ProductForm({
 									variant="outline"
 									size="sm"
 									onClick={() =>
-										append({ size: '', stock_quantity: 0, sku: '' })
+										append({
+											size: '',
+											stock_quantity: 0,
+											reserved_stock: 0,
+											low_stock_threshold: 5,
+											sku: '',
+										})
 									}
 								>
 									<Plus className="mr-2 h-4 w-4" /> Agregar Talle
@@ -290,6 +372,31 @@ export function ProductForm({
 													Requerido
 												</p>
 											)}
+										</div>
+										<div className="flex-1 space-y-2">
+											<Label>Reservado</Label>
+											<Input
+												type="number"
+												{...form.register(
+													`variants.${index}.reserved_stock`,
+												)}
+											/>
+										</div>
+										<div className="flex-1 space-y-2">
+											<Label>Umbral Bajo</Label>
+											<Input
+												type="number"
+												{...form.register(
+													`variants.${index}.low_stock_threshold`,
+												)}
+											/>
+										</div>
+										<div className="flex-1 space-y-2">
+											<Label>SKU</Label>
+											<Input
+												{...form.register(`variants.${index}.sku`)}
+												placeholder="Opcional"
+											/>
 										</div>
 										<Button
 											type="button"

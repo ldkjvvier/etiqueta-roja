@@ -60,7 +60,7 @@ export function CategoryForm({ initialData }: CategoryFormProps) {
 					name: initialData.name,
 					slug: initialData.slug,
 					description: initialData.description || '',
-					image: initialData.image || '',
+					image: initialData.image_url || '',
 				}
 			: {
 					name: '',

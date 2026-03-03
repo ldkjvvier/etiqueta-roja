@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { Header } from '@/components/header'
 import { PromoBanner } from '@/components/promo-banner'
 import { Footer } from '@/components/footer'
@@ -36,6 +36,10 @@ export default async function ProductPage({
 
 	if (!product) {
 		notFound()
+	}
+
+	if (product.slug) {
+		redirect(`/producto/${product.slug}`)
 	}
 
 	const relatedProducts = await getRelatedProducts(id)

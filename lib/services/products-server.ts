@@ -1,137 +1,170 @@
 import { createClient } from '@/lib/supabase/server'
 import type { Product } from '@/lib/store-context'
-import { Database } from '@/lib/supabase/types'
-import { products as staticProducts } from '@/lib/products'
+import { getAdminStoreContext } from '@/lib/services/admin-context'
 
-type ProductRow = Database['public']['Tables']['products']['Row'] & {
-	categories: Database['public']['Tables']['categories']['Row'] | null
-	product_variants: Database['public']['Tables']['product_variants']['Row'][]
+type VariantRow = {
+	id: string
+	combination_key: string
+	stock_quantity: number
+	reserved_stock: number
+	low_stock_threshold: number
+	price: number | null
+	image_url: string | null
+	sku: string | null
+}
+
+type ProductRow = {
+	id: string
+	slug: string
+	name: string
+	description: string | null
+	base_price: number
+	compare_at_price: number | null
+	main_image: string
+	category: { name: string | null } | null
+	variants: VariantRow[]
+	gallery: Array<{ image_url: string; display_order: number }>
+}
+
+function parseSizeFromCombinationKey(combinationKey: string) {
+	const [, rawValue] = (combinationKey || '').split(':')
+	return rawValue?.replace(/-/g, ' ').toUpperCase() || 'UNICA'
 }
 
 function mapRowToProduct(row: ProductRow): Product {
-	// Calculate stock logic from variants
-	const totalStock = row.product_variants.reduce(
-		(acc, v) => acc + v.stock_quantity,
+	const mappedVariants = (row.variants ?? []).map((variant) => {
+		const size = parseSizeFromCombinationKey(variant.combination_key)
+		const availableStock = Math.max(
+			(variant.stock_quantity || 0) - (variant.reserved_stock || 0),
+			0,
+		)
+
+		return {
+			id: variant.id,
+			size,
+			stock: availableStock,
+			stockQuantity: variant.stock_quantity || 0,
+			reservedStock: variant.reserved_stock || 0,
+			lowStockThreshold: variant.low_stock_threshold || 0,
+			combinationKey: variant.combination_key,
+			price: variant.price,
+			imageUrl: variant.image_url,
+			sku: variant.sku,
+		}
+	})
+
+	const totalAvailable = mappedVariants.reduce(
+		(acc, variant) => acc + variant.stock,
 		0,
 	)
-	let stockStatus: 'available' | 'low' | 'sold_out' = 'available'
-	if (totalStock === 0) stockStatus = 'sold_out'
-	else if (totalStock < 5) stockStatus = 'low'
+	const lowStock = mappedVariants.some(
+		(variant) =>
+			variant.stock > 0 && variant.stock <= variant.lowStockThreshold,
+	)
 
-	// Extract sizes from variants
-	const sizes = Array.from(
-		new Set(row.product_variants.map((v) => v.size)),
-	).sort()
+	const galleryImages = (row.gallery ?? [])
+		.sort((a, b) => a.display_order - b.display_order)
+		.map((image) => image.image_url)
 
-	const variants = row.product_variants.map((v) => ({
-		size: v.size,
-		stock: v.stock_quantity,
-	}))
+	const allImages = [row.main_image, ...galleryImages].filter(Boolean)
+	const uniqueImages = Array.from(new Set(allImages))
 
 	return {
 		id: row.id,
+		slug: row.slug,
 		name: row.name,
-		price: row.price,
-		originalPrice: row.original_price ?? undefined,
-		image: row.image,
-		images: row.images,
-		sizes: sizes,
-		variants: variants,
-		stockStatus: stockStatus,
-		category: row.categories?.name || 'Uncategorized',
+		price: row.base_price,
+		originalPrice: row.compare_at_price ?? undefined,
+		image: row.main_image,
+		images: uniqueImages,
+		sizes: mappedVariants.map((variant) => variant.size),
+		variants: mappedVariants,
+		stockStatus:
+			totalAvailable === 0
+				? 'sold_out'
+				: lowStock
+					? 'low'
+					: 'available',
+		category: row.category?.name || 'Uncategorized',
 		description: row.description ?? undefined,
 	}
 }
 
+function getPublicProductsBaseQuery(db: any, storeId: string) {
+	return db
+		.from('products')
+		.select(
+			`id,slug,name,description,base_price,compare_at_price,main_image,category:categories(name),variants:product_variants(id,combination_key,stock_quantity,reserved_stock,low_stock_threshold,price,image_url,sku),gallery:product_images(image_url,display_order)`,
+		)
+		.eq('store_id', storeId)
+		.eq('status', 'active')
+		.is('deleted_at', null)
+}
+
 export async function getProducts(): Promise<Product[]> {
-	try {
-		const supabase = await createClient()
-		const { data, error } = await supabase
-			.from('products')
-			.select(
-				`
-				*,
-				categories (
-					name,
-					slug
-				),
-				product_variants (
-					size,
-					stock_quantity
-				)
-			`,
-			)
-			.order('created_at', { ascending: false })
+	const supabase = await createClient()
+	const db = supabase as any
+	const store = await getAdminStoreContext()
+	const query = getPublicProductsBaseQuery(db, store.id)
+	const { data, error } = await query.order('created_at', {
+		ascending: false,
+	})
 
-		if (error || !data || data.length === 0) {
-			console.warn(
-				'Supabase fetch failed or empty, using static data fallback:',
-				error,
-			)
-			if (error) return staticProducts
-			return []
-		}
-
-		// @ts-ignore - Supabase types for joined queries are tricky to auto-infer sometimes
-		return data.map(mapRowToProduct)
-	} catch (e) {
-		console.error('Exception fetching products:', e)
-		return staticProducts
+	if (error || !data) {
+		console.error('Error fetching public products:', error)
+		return []
 	}
+
+	return (data as ProductRow[]).map(mapRowToProduct)
 }
 
 export async function getProduct(
 	id: string,
 ): Promise<Product | null> {
 	const supabase = await createClient()
-	const { data, error } = await supabase
-		.from('products')
-		.select(
-			`
-			*,
-			categories ( name, slug ),
-			product_variants ( size, stock_quantity )
-		`,
-		)
-		.eq('id', id)
-		.single()
+	const db = supabase as any
+	const store = await getAdminStoreContext()
+	const query = getPublicProductsBaseQuery(db, store.id)
+	const { data, error } = await query.eq('id', id).maybeSingle()
 
 	if (error || !data) {
-		// Fallback to static
-		const p = staticProducts.find((p) => p.id === id)
-		return p || null
+		return null
 	}
-	// @ts-ignore
-	return mapRowToProduct(data)
+
+	return mapRowToProduct(data as ProductRow)
+}
+
+export async function getProductBySlug(
+	slug: string,
+): Promise<Product | null> {
+	const supabase = await createClient()
+	const db = supabase as any
+	const store = await getAdminStoreContext()
+	const query = getPublicProductsBaseQuery(db, store.id)
+	const { data, error } = await query.eq('slug', slug).maybeSingle()
+
+	if (error || !data) {
+		return null
+	}
+
+	return mapRowToProduct(data as ProductRow)
 }
 
 export async function getRelatedProducts(
 	excludeId: string,
 ): Promise<Product[]> {
-	try {
-		const supabase = await createClient()
-		const { data, error } = await supabase
-			.from('products')
-			.select(
-				`
-				*,
-				categories ( name, slug ),
-				product_variants ( size, stock_quantity )
-			`,
-			)
-			.neq('id', excludeId)
-			.limit(4)
+	const supabase = await createClient()
+	const db = supabase as any
+	const store = await getAdminStoreContext()
+	const query = getPublicProductsBaseQuery(db, store.id)
+	const { data, error } = await query
+		.neq('id', excludeId)
+		.order('created_at', { ascending: false })
+		.limit(4)
 
-		if (error || !data) {
-			return staticProducts
-				.filter((p) => p.id !== excludeId)
-				.slice(0, 4)
-		}
-		// @ts-ignore
-		return data.map(mapRowToProduct)
-	} catch {
-		return staticProducts
-			.filter((p) => p.id !== excludeId)
-			.slice(0, 4)
+	if (error || !data) {
+		return []
 	}
+
+	return (data as ProductRow[]).map(mapRowToProduct)
 }

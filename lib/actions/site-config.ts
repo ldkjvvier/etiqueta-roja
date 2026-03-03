@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { getAdminStoreContext } from '@/lib/services/admin-context'
 import {
 	PromoBannerConfig,
 	ContactInfoConfig,
@@ -9,9 +10,10 @@ import {
 
 export async function updatePromoBanner(
 	prevState: any,
-	formData: FormData
+	formData: FormData,
 ) {
 	const supabase = await createClient()
+	const store = await getAdminStoreContext()
 
 	// Check auth
 	const {
@@ -32,12 +34,15 @@ export async function updatePromoBanner(
 
 	const { error } = await supabase.from('site_config').upsert(
 		{
+			store_id: store.id,
 			key: 'promo_banner',
 			value,
 			is_active: isActive,
+			visibility: 'public',
+			updated_by: user.id,
 			updated_at: new Date().toISOString(),
 		} as any,
-		{ onConflict: 'key' }
+		{ onConflict: 'store_id,key' },
 	)
 
 	if (error) {
@@ -54,9 +59,10 @@ export async function updatePromoBanner(
 
 export async function updateContactInfo(
 	prevState: any,
-	formData: FormData
+	formData: FormData,
 ) {
 	const supabase = await createClient()
+	const store = await getAdminStoreContext()
 
 	// Check auth
 	const {
@@ -80,12 +86,15 @@ export async function updateContactInfo(
 
 	const { error } = await supabase.from('site_config').upsert(
 		{
+			store_id: store.id,
 			key: 'contact_info',
 			value,
 			is_active: true,
+			visibility: 'public',
+			updated_by: user.id,
 			updated_at: new Date().toISOString(),
 		} as any,
-		{ onConflict: 'key' }
+		{ onConflict: 'store_id,key' },
 	)
 
 	if (error) {

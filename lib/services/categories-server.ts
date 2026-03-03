@@ -1,17 +1,24 @@
 import { createClient } from '@/lib/supabase/server'
-import { Database } from '@/lib/supabase/types'
+import { getAdminStoreContext } from '@/lib/services/admin-context'
 
-export type Category =
-	Database['public']['Tables']['categories']['Row']
+export type Category = {
+	id: string
+	name: string
+	slug: string
+	description: string | null
+	image_url: string | null
+	created_at: string
+}
 
 export const getCategories = async () => {
 	const supabase = await createClient()
+	const store = await getAdminStoreContext()
 
-	// Sort by name or created_at? Let's do name for now for dropdowns
 	const { data, error } = await supabase
 		.from('categories')
-		.select('*')
-		.order('name')
+		.select('id,name,slug,description,image_url,created_at')
+		.eq('store_id', store.id)
+		.order('name', { ascending: true })
 
 	if (error) {
 		console.error('Error fetching categories:', error)
@@ -23,11 +30,13 @@ export const getCategories = async () => {
 
 export const getCategoryById = async (id: string) => {
 	const supabase = await createClient()
+	const store = await getAdminStoreContext()
 	const { data, error } = await supabase
 		.from('categories')
-		.select('*')
+		.select('id,name,slug,description,image_url,created_at')
 		.eq('id', id)
-		.single()
+		.eq('store_id', store.id)
+		.maybeSingle()
 
 	if (error) return null
 	return data

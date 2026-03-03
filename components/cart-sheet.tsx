@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Minus, Plus, X, MessageCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -10,6 +11,7 @@ import {
 } from '@/components/ui/sheet'
 import { useStore } from '@/lib/store-context'
 import { formatPrice } from '@/lib/utils'
+import { createPendingOrderFromCart } from '@/lib/actions/checkout'
 
 export function CartSheet() {
 	const {
@@ -17,13 +19,60 @@ export function CartSheet() {
 		isCartOpen,
 		setIsCartOpen,
 		removeFromCart,
+		clearCart,
 		updateQuantity,
 		cartTotal,
+		whatsappNumber,
 		generateWhatsAppMessage,
 	} = useStore()
+	const [checkoutLoading, setCheckoutLoading] = useState(false)
+	const [checkoutError, setCheckoutError] = useState<string | null>(
+		null,
+	)
 
 	const handleWhatsAppCheckout = () => {
-		window.open(generateWhatsAppMessage(), '_blank')
+		setCheckoutError(null)
+		setCheckoutLoading(true)
+
+		createPendingOrderFromCart({
+			items: cartItems.map((item) => ({
+				id: item.id,
+				name: item.name,
+				size: item.size,
+				quantity: item.quantity,
+				price: item.price,
+			})),
+			whatsappNumber,
+		})
+			.then((result) => {
+				if (result.error) {
+					setCheckoutError(
+						result.message || 'No se pudo crear la orden',
+					)
+					return
+				}
+
+				if (result.orderNumber) {
+					window.alert(
+						`Pedido ${result.orderNumber} creado correctamente`,
+					)
+				}
+
+				if (result.whatsappUrl) {
+					window.open(result.whatsappUrl, '_blank')
+				} else {
+					window.open(generateWhatsAppMessage(), '_blank')
+				}
+
+				clearCart()
+				setIsCartOpen(false)
+			})
+			.catch(() => {
+				setCheckoutError('No se pudo crear la orden')
+			})
+			.finally(() => {
+				setCheckoutLoading(false)
+			})
 	}
 
 	return (
@@ -150,16 +199,24 @@ export function CartSheet() {
 							</div>
 							<Button
 								onClick={handleWhatsAppCheckout}
-								disabled={cartItems.some(
-									(item) => item.maxStock === 0,
-								)}
+								disabled={
+									checkoutLoading ||
+									cartItems.some((item) => item.maxStock === 0)
+								}
 								className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-lg py-6 gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
 								<MessageCircle className="h-5 w-5" />
-								{cartItems.some((item) => item.maxStock === 0)
-									? 'ELIMINA PRODUCTOS AGOTADOS'
-									: 'ENVIAR PEDIDO A WHATSAPP'}
+								{checkoutLoading
+									? 'PROCESANDO...'
+									: cartItems.some((item) => item.maxStock === 0)
+										? 'ELIMINA PRODUCTOS AGOTADOS'
+										: 'ENVIAR PEDIDO A WHATSAPP'}
 							</Button>
+							{checkoutError && (
+								<p className="text-center text-xs text-destructive">
+									{checkoutError}
+								</p>
+							)}
 							<p className="text-center text-xs text-muted-foreground">
 								Se abrirá WhatsApp con el resumen de tu pedido
 							</p>

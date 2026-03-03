@@ -103,7 +103,11 @@ export function ProductCard({ product }: { product: Product }) {
 
 	return (
 		<Link
-			href={`/producto/${product.id}`}
+			href={
+				product.slug
+					? `/producto/${product.slug}`
+					: `/producto/${product.id}`
+			}
 			className={className}
 			aria-label={`Ver detalles de ${product.name}`}
 		>

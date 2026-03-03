@@ -43,6 +43,16 @@ export function ProductDetail({
 	const productImages =
 		uniqueImages.length > 0 ? uniqueImages : ['/placeholder.svg']
 
+	const selectedVariant = selectedSize
+		? product.variants?.find(
+				(variant) => variant.size === selectedSize,
+			)
+		: null
+	const displayedPrice =
+		selectedVariant?.price && selectedVariant.price > 0
+			? selectedVariant.price
+			: product.price
+
 	// Get recommended products (exclude current product)
 	const recommendedProducts = relatedProducts
 
@@ -84,23 +94,19 @@ export function ProductDetail({
 	const handleAddToCart = () => {
 		if (!selectedSize) return
 
-		// Find stock for selected size
-		let maxStock = 100 // Default fallback for static/legacy data
-		if (product.variants) {
-			const variant = product.variants.find(
-				(v) => v.size === selectedSize,
-			)
-			if (variant) {
-				maxStock = variant.stock
-			}
-		}
+		const maxStock = selectedVariant?.stock ?? 0
+
+		const unitPrice =
+			selectedVariant?.price && selectedVariant.price > 0
+				? selectedVariant.price
+				: product.price
 
 		addToCart({
 			id: product.id,
 			name: product.name,
-			price: product.price,
+			price: unitPrice,
 			size: selectedSize,
-			image: product.image,
+			image: selectedVariant?.imageUrl || product.image,
 			maxStock,
 		})
 		setSelectedSize(null)
@@ -114,6 +120,16 @@ export function ProductDetail({
 		)
 		return variant ? variant.stock <= 0 : false
 	}
+
+	useEffect(() => {
+		if (!selectedVariant?.imageUrl) return
+		const index = productImages.findIndex(
+			(imageUrl) => imageUrl === selectedVariant.imageUrl,
+		)
+		if (index >= 0) {
+			scrollTo(index)
+		}
+	}, [selectedVariant?.imageUrl, productImages, scrollTo])
 
 	return (
 		<div className="min-h-screen bg-background">
@@ -244,7 +260,7 @@ export function ProductDetail({
 
 						<div className="flex items-center gap-3 mb-4">
 							<span className="text-2xl md:text-3xl lg:text-4xl font-black">
-								{formatPrice(product.price)}
+								{formatPrice(displayedPrice)}
 							</span>
 							{product.originalPrice && (
 								<span className="text-xl text-muted-foreground line-through">

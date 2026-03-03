@@ -79,7 +79,7 @@ export function CategoriesClient({ data }: CategoriesClientProps) {
 							<TableHead>Nombre</TableHead>
 							<TableHead>Slug</TableHead>
 							<TableHead>Descripción</TableHead>
-							<TableHead className="w-[100px]">Acciones</TableHead>
+							<TableHead className="w-25">Acciones</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
@@ -87,10 +87,10 @@ export function CategoriesClient({ data }: CategoriesClientProps) {
 							<TableRow key={category.id}>
 								<TableCell className="font-medium">
 									<div className="flex items-center gap-3">
-										{category.image && (
+										{category.image_url && (
 											<div className="h-10 w-10 relative overflow-hidden rounded-md border">
 												<Image
-													src={category.image}
+													src={category.image_url}
 													alt={category.name}
 													fill
 													className="object-cover"

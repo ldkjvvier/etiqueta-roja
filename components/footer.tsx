@@ -8,7 +8,7 @@ export async function Footer() {
 	const config =
 		await getSiteConfig<ContactInfoConfig>('contact_info')
 
-	// Default fallbacks provided just in case, or we use dynamic values if present
+	// Valores de respaldo si la configuración dinámica aún no está disponible.
 	const info = config?.value || {
 		whatsapp: '+56912345678',
 		instagram: 'https://instagram.com/etiquetaroja',

@@ -1,5 +1,6 @@
 import {
 	getCategories,
+	getDrops,
 	getProductById,
 } from '@/lib/services/products-admin-fetcher'
 import { ProductForm } from '@/components/admin/product-form'
@@ -12,8 +13,11 @@ export default async function ProductPage({
 	params: Promise<{ id: string }>
 }) {
 	const { id } = await params
-	const product = await getProductById(id)
-	const categories = await getCategories()
+	const [product, categories, drops] = await Promise.all([
+		getProductById(id),
+		getCategories(),
+		getDrops(),
+	])
 
 	if (!product) {
 		notFound()
@@ -22,7 +26,11 @@ export default async function ProductPage({
 	return (
 		<div className="space-y-6">
 			<h1 className="text-3xl font-bold">Editar Producto</h1>
-			<ProductForm categories={categories} initialData={product} />
+			<ProductForm
+				categories={categories}
+				drops={drops}
+				initialData={product}
+			/>
 		</div>
 	)
 }

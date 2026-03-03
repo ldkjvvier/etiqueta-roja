@@ -1,38 +1,13 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { revalidatePath } from 'next/cache'
+import { archiveProductV3 } from '@/lib/actions/products-admin'
 
 export async function deleteProduct(id: string) {
-	const supabase = await createClient()
-
-	// Auth check
-	const {
-		data: { user },
-	} = await supabase.auth.getUser()
-	if (!user) {
-		return { message: 'Unauthorized', error: true }
-	}
-
-	try {
-		// Delete related variants first (Postgres CASCADE might handle this, but good to be explicit if not)
-		// Actually, normally we rely on DB definition ON DELETE CASCADE.
-		// Assuming schema has it. If not, we would delete from product_variants where product_id = id
-
-		const { error } = await supabase
-			.from('products')
-			.delete()
-			.eq('id', id)
-
-		if (error) {
-			console.error('Error deleting product:', error)
-			return { message: 'Error deleting product', error: true }
-		}
-
-		revalidatePath('/admin/products')
-		return { message: 'Product deleted successfully', error: false }
-	} catch (e) {
-		return { message: 'Unexpected error', error: true }
+	const result = await archiveProductV3(id)
+	return {
+		message: result.message,
+		error: result.error,
 	}
 }
 
@@ -40,13 +15,17 @@ export async function validateCartStock(
 	items: { id: string; size: string }[],
 ) {
 	const supabase = await createClient()
+	const normalize = (value: string) =>
+		(value || '').trim().toLowerCase().replace(/\s+/g, '-')
 	const productIds = Array.from(new Set(items.map((i) => i.id)))
 
 	if (productIds.length === 0) return {}
 
 	const { data: variants, error } = await supabase
 		.from('product_variants')
-		.select('product_id, size, stock_quantity')
+		.select(
+			'product_id, combination_key, stock_quantity, reserved_stock',
+		)
 		.in('product_id', productIds)
 
 	if (error) {
@@ -56,8 +35,12 @@ export async function validateCartStock(
 
 	// Map results for easy lookup: "product_id-size" -> stock
 	const stockMap: Record<string, number> = {}
-	variants.forEach((v) => {
-		stockMap[`${v.product_id}-${v.size}`] = v.stock_quantity
+	;(variants as any[]).forEach((v: any) => {
+		const size = (v.combination_key || '').split(':')[1] || ''
+		stockMap[`${v.product_id}-${normalize(size)}`] = Math.max(
+			(v.stock_quantity || 0) - (v.reserved_stock || 0),
+			0,
+		)
 	})
 
 	return stockMap

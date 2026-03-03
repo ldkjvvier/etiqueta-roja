@@ -1,10 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import {
-	getDashboardStats,
-	getRecentProducts,
-	getTopViewedProducts,
-} from '@/lib/services/dashboard-server'
+import { getAdminDashboardBundle } from '@/lib/services/dashboard-server'
 import { StatsGrid } from '@/components/admin/dashboard/stats-grid'
 import { RecentProducts } from '@/components/admin/dashboard/recent-products'
 import { TopProducts } from '@/components/admin/dashboard/top-products'
@@ -20,12 +16,8 @@ export default async function AdminDashboard() {
 		redirect('/admin/login')
 	}
 
-	// Fetch all data in parallel
-	const [stats, recentProducts, topViewed] = await Promise.all([
-		getDashboardStats(),
-		getRecentProducts(),
-		getTopViewedProducts(),
-	])
+	const { stats, recentProducts, topViewed } =
+		await getAdminDashboardBundle()
 
 	return (
 		<div className="flex-1 space-y-4 p-8 pt-6">

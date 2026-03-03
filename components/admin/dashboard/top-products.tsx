@@ -46,7 +46,7 @@ export function TopProducts({
 				<Table>
 					<TableHeader>
 						<TableRow>
-							<TableHead className="w-[80px]"></TableHead>
+							<TableHead className="w-20"></TableHead>
 							<TableHead>Nombre</TableHead>
 							<TableHead className="text-right">Vistas</TableHead>
 						</TableRow>

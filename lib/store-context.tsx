@@ -21,12 +21,21 @@ export type CartItem = {
 }
 
 export type ProductVariant = {
+	id: string
 	size: string
 	stock: number
+	stockQuantity?: number
+	reservedStock?: number
+	lowStockThreshold?: number
+	combinationKey?: string
+	price?: number | null
+	imageUrl?: string | null
+	sku?: string | null
 }
 
 export type Product = {
 	id: string
+	slug?: string
 	name: string
 	price: number
 	originalPrice?: number
@@ -43,6 +52,7 @@ type StoreContextType = {
 	cartItems: CartItem[]
 	addToCart: (item: Omit<CartItem, 'quantity'>) => void
 	removeFromCart: (id: string, size: string) => void
+	clearCart: () => void
 	updateQuantity: (id: string, size: string, quantity: number) => void
 	cartCount: number
 	cartTotal: number
@@ -54,6 +64,7 @@ type StoreContextType = {
 	setSearchQuery: (query: string) => void
 	selectedProduct: Product | null
 	setSelectedProduct: (product: Product | null) => void
+	whatsappNumber: string
 	generateWhatsAppMessage: (
 		product?: Product,
 		size?: string,
@@ -73,6 +84,10 @@ export function StoreProvider({
 	children,
 	whatsappNumber = '5491123456789',
 }: StoreProviderProps) {
+	const sanitizedWhatsappNumber = whatsappNumber.replace(
+		/[^0-9]/g,
+		'',
+	)
 	const [cartItems, setCartItems] = useState<CartItem[]>([])
 	const [isCartOpen, setIsCartOpen] = useState(false)
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -83,6 +98,8 @@ export function StoreProvider({
 
 	const validateCart = async (items: CartItem[]) => {
 		if (items.length === 0) return
+		const normalize = (value: string) =>
+			(value || '').trim().toLowerCase().replace(/\s+/g, '-')
 
 		try {
 			const stockMap = await validateCartStock(
@@ -91,7 +108,7 @@ export function StoreProvider({
 
 			setCartItems((prev) =>
 				prev.map((item) => {
-					const key = `${item.id}-${item.size}`
+					const key = `${item.id}-${normalize(item.size)}`
 					const realStock = stockMap[key]
 
 					// If we got a valid stock number back, update the item
@@ -165,6 +182,10 @@ export function StoreProvider({
 		)
 	}
 
+	const clearCart = () => {
+		setCartItems([])
+	}
+
 	const updateQuantity = (
 		id: string,
 		size: string,
@@ -190,7 +211,7 @@ export function StoreProvider({
 		product?: Product,
 		size?: string,
 	) => {
-		const cleanNumber = whatsappNumber.replace(/[^0-9]/g, '')
+		const cleanNumber = sanitizedWhatsappNumber
 
 		if (product && size) {
 			// Single product order
@@ -231,6 +252,7 @@ export function StoreProvider({
 				cartItems,
 				addToCart,
 				removeFromCart,
+				clearCart,
 				updateQuantity,
 				cartCount,
 				cartTotal,
@@ -242,6 +264,7 @@ export function StoreProvider({
 				setSearchQuery,
 				selectedProduct,
 				setSelectedProduct,
+				whatsappNumber: sanitizedWhatsappNumber,
 				generateWhatsAppMessage,
 			}}
 		>

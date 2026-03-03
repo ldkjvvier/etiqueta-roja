@@ -1,114 +1,71 @@
-import { createClient } from '@/lib/supabase/server'
-import { formatPrice } from '@/lib/utils'
+import {
+	getDashboardMetrics,
+	getRecentProducts as getRecentProductsV3,
+} from '@/lib/services/analytics'
 
-export async function getDashboardStats() {
-	const supabase = await createClient()
-
-	// 1. Total Products
-	const { count: productsCount, error: productsError } =
-		await supabase
-			.from('products')
-			.select('*', { count: 'exact', head: true })
-
-	// 2. Total Categories
-	const { count: categoriesCount, error: categoriesError } =
-		await supabase
-			.from('categories')
-			.select('*', { count: 'exact', head: true })
-
-	// 3. Inventory Value & Stock Issues
-	// We need to fetch variants to calculate total stock and identify low stock items
-	const { data: variants } = await supabase.from('product_variants')
-		.select(`
-            stock_quantity,
-            product_id,
-            product:products (
-                id,
-                name,
-                price
-            )
-        `)
-
-	let totalStockItems = 0
-	let totalInventoryValue = 0
-	let lowStockCount = 0 // Products with total stock < 5
-	let outOfStockCount = 0 // Products with 0 stock
-
-	// Group variants by product to check stock levels per product
-	const productStockMap = new Map<string, number>()
-
-	// We also need prices which are on the product, joined above
-	const productPriceMap = new Map<string, number>()
-
-	variants?.forEach((v: any) => {
-		const qty = v.stock_quantity || 0
-		totalStockItems += qty
-
-		// Calculate value
-		const price = v.product?.price || 0
-		totalInventoryValue += price * qty
-
-		// Map for aggregation
-		const pId = v.product_id
-		const currentStock = productStockMap.get(pId) || 0
-		productStockMap.set(pId, currentStock + qty)
-	})
-
-	// Analyze stock levels
-	// Note: This only counts products THAT HAVE VARIANTS. Products without variants (if any) are skipped.
-	// Assuming all products have at least one variant created.
-	for (const stock of productStockMap.values()) {
-		if (stock === 0) outOfStockCount++
-		else if (stock < 5) lowStockCount++
-	}
+export async function getAdminDashboardBundle() {
+	const [stats, recentRows] = await Promise.all([
+		getDashboardMetrics(),
+		getRecentProductsV3(5),
+	])
 
 	return {
-		productsCount: productsCount || 0,
-		categoriesCount: categoriesCount || 0,
-		totalStockItems,
-		totalInventoryValue,
-		lowStockCount,
-		outOfStockCount,
+		stats: {
+			productsCount: stats.productsCount,
+			categoriesCount: stats.categoriesCount,
+			totalStockItems: stats.totalStockItems,
+			totalInventoryValue: 0,
+			lowStockCount: stats.lowStockCount,
+			outOfStockCount: stats.outOfStockCount,
+		},
+		recentProducts: recentRows.map((row: any) => ({
+			id: row.id,
+			name: row.name,
+			price: row.base_price,
+			image: row.main_image,
+			created_at: row.created_at,
+		})),
+		topViewed: stats.topProducts.map((product) => ({
+			id: product.id,
+			name: product.name,
+			price: product.base_price,
+			image: product.main_image,
+			views: product.views,
+		})),
+	}
+}
+
+export async function getDashboardStats() {
+	const stats = await getDashboardMetrics()
+
+	return {
+		productsCount: stats.productsCount,
+		categoriesCount: stats.categoriesCount,
+		totalStockItems: stats.totalStockItems,
+		totalInventoryValue: 0,
+		lowStockCount: stats.lowStockCount,
+		outOfStockCount: stats.outOfStockCount,
 	}
 }
 
 export async function getRecentProducts() {
-	const supabase = await createClient()
-
-	const { data } = await supabase
-		.from('products')
-		.select('*')
-		.order('created_at', { ascending: false })
-		.limit(5)
-
-	return data || []
+	const rows = await getRecentProductsV3(5)
+	return rows.map((row: any) => ({
+		id: row.id,
+		name: row.name,
+		price: row.base_price,
+		image: row.main_image,
+		created_at: row.created_at,
+	}))
 }
 
 export async function getTopViewedProducts() {
-	const supabase = await createClient()
-
-	// Try to select with ordering by views
-	// If column doesn't exist, this might throw or return error.
-	// We handle it gracefully.
-	try {
-		const { data, error } = await supabase
-			.from('products')
-			.select('*')
-			// @ts-ignore - 'views' might not be in types yet
-			.order('views', { ascending: false })
-			.limit(5)
-
-		if (error) {
-			// If error (likely column missing), return nothing or fallback
-			console.warn(
-				'Could not fetch top viewed products (column might be missing):',
-				error.message,
-			)
-			return []
-		}
-
-		return data || []
-	} catch (e) {
-		return []
-	}
+	const stats = await getDashboardMetrics()
+	return stats.topProducts.map((product) => ({
+		id: product.id,
+		name: product.name,
+		price: product.base_price,
+		image: product.main_image,
+		views: product.views,
+	}))
 }
