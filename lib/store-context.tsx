@@ -24,6 +24,7 @@ export type ProductVariant = {
 	id: string
 	size: string
 	stock: number
+	trackInventory?: boolean
 	stockQuantity?: number
 	reservedStock?: number
 	lowStockThreshold?: number

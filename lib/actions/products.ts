@@ -24,9 +24,11 @@ export async function validateCartStock(
 	const { data: variants, error } = await supabase
 		.from('product_variants')
 		.select(
-			'product_id, combination_key, stock_quantity, reserved_stock',
+			'product_id, combination_key, stock_quantity, reserved_stock, track_inventory',
 		)
 		.in('product_id', productIds)
+		.eq('is_active', true)
+		.is('deleted_at', null)
 
 	if (error) {
 		console.error('Error validating stock:', error)
@@ -37,10 +39,13 @@ export async function validateCartStock(
 	const stockMap: Record<string, number> = {}
 	;(variants as any[]).forEach((v: any) => {
 		const size = (v.combination_key || '').split(':')[1] || ''
-		stockMap[`${v.product_id}-${normalize(size)}`] = Math.max(
-			(v.stock_quantity || 0) - (v.reserved_stock || 0),
-			0,
-		)
+		stockMap[`${v.product_id}-${normalize(size)}`] =
+			v.track_inventory === false
+				? Number.MAX_SAFE_INTEGER
+				: Math.max(
+						(v.stock_quantity || 0) - (v.reserved_stock || 0),
+						0,
+					)
 	})
 
 	return stockMap

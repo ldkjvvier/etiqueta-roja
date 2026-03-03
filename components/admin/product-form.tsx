@@ -20,6 +20,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { Switch } from '@/components/ui/switch'
 import { ImageUpload } from '@/components/admin/image-upload'
 import {
 	createProduct,
@@ -30,13 +31,30 @@ import {
 	DropOption,
 } from '@/lib/services/products-admin-fetcher'
 
+const optionalNullableNumber = z.preprocess((value) => {
+	if (value === '' || value === null || value === undefined) {
+		return null
+	}
+	const casted = Number(value)
+	return Number.isNaN(casted) ? null : casted
+}, z.number().min(0).nullable().optional())
+
+const optionalNullableUrl = z.preprocess((value) => {
+	if (value === '' || value === null || value === undefined) {
+		return null
+	}
+	return value
+}, z.string().url().nullable().optional())
+
 const formSchema = z.object({
+	// Cambiado: exponer campo existente en DB para personalización.
+	is_customizable: z.boolean().default(false),
 	name: z
 		.string()
 		.min(2, 'El nombre debe tener al menos 2 caracteres'),
 	description: z.string().optional(),
 	base_price: z.coerce.number().min(0.01),
-	compare_at_price: z.coerce.number().optional().nullable(),
+	compare_at_price: optionalNullableNumber,
 	category_id: z.string().min(1, 'Selecciona una categoría'),
 	drop_id: z.string().optional().nullable(),
 	status: z.enum(['draft', 'active', 'archived']),
@@ -46,10 +64,16 @@ const formSchema = z.object({
 			z.object({
 				id: z.string().optional(),
 				size: z.string().min(1, 'Talla requerida'),
+				// Cambiado: aprovechar precio por variante del modelo actual.
+				price: optionalNullableNumber,
 				stock_quantity: z.coerce.number().min(0),
 				reserved_stock: z.coerce.number().min(0),
 				low_stock_threshold: z.coerce.number().min(0),
 				sku: z.string().optional().nullable(),
+				// Cambiado: exponer columnas huérfanas de variantes.
+				weight: optionalNullableNumber,
+				image_url: optionalNullableUrl,
+				track_inventory: z.boolean().default(true),
 			}),
 		)
 		.min(1, 'Agrega al menos una variante (talla/stock)'),
@@ -82,6 +106,7 @@ export function ProductForm({
 		resolver: zodResolver(formSchema),
 		defaultValues: initialData
 			? {
+					is_customizable: Boolean(initialData.is_customizable),
 					name: initialData.name,
 					description: initialData.description || '',
 					base_price: initialData.base_price,
@@ -94,21 +119,30 @@ export function ProductForm({
 						initialData.variants && initialData.variants.length > 0
 							? initialData.variants.map((v: any) => ({
 									...v,
+									price: v.price ?? null,
 									reserved_stock: v.reserved_stock || 0,
 									low_stock_threshold: v.low_stock_threshold || 5,
 									sku: v.sku || '',
+									weight: v.weight ?? null,
+									image_url: v.image_url ?? '',
+									track_inventory: v.track_inventory ?? true,
 								}))
 							: [
 									{
 										size: 'M',
+										price: null,
 										stock_quantity: 0,
 										reserved_stock: 0,
 										low_stock_threshold: 5,
 										sku: '',
+										weight: null,
+										image_url: '',
+										track_inventory: true,
 									},
 								],
 				}
 			: {
+					is_customizable: false,
 					name: '',
 					description: '',
 					base_price: 0,
@@ -120,10 +154,14 @@ export function ProductForm({
 					variants: [
 						{
 							size: 'M',
+							price: null,
 							stock_quantity: 0,
 							reserved_stock: 0,
 							low_stock_threshold: 5,
 							sku: '',
+							weight: null,
+							image_url: '',
+							track_inventory: true,
 						},
 					],
 				},
@@ -248,6 +286,25 @@ export function ProductForm({
 								</div>
 							</div>
 
+							<div className="flex items-center justify-between rounded-md border p-3">
+								<div>
+									<Label htmlFor="is_customizable">
+										Producto personalizable
+									</Label>
+									<p className="text-xs text-muted-foreground">
+										Habilita customización para checkout/venta
+										asistida.
+									</p>
+								</div>
+								<Switch
+									id="is_customizable"
+									checked={form.watch('is_customizable')}
+									onCheckedChange={(checked) =>
+										form.setValue('is_customizable', checked)
+									}
+								/>
+							</div>
+
 							<div className="grid grid-cols-2 gap-4">
 								<div className="space-y-2">
 									<Label>Drop (Opcional)</Label>
@@ -328,10 +385,14 @@ export function ProductForm({
 									onClick={() =>
 										append({
 											size: '',
+											price: null,
 											stock_quantity: 0,
 											reserved_stock: 0,
 											low_stock_threshold: 5,
 											sku: '',
+											weight: null,
+											image_url: '',
+											track_inventory: true,
 										})
 									}
 								>
@@ -357,6 +418,14 @@ export function ProductForm({
 													Requerido
 												</p>
 											)}
+										</div>
+										<div className="flex-1 space-y-2">
+											<Label>Precio Var.</Label>
+											<Input
+												type="number"
+												step="0.01"
+												{...form.register(`variants.${index}.price`)}
+											/>
 										</div>
 										<div className="flex-1 space-y-2">
 											<Label>Stock</Label>
@@ -397,6 +466,37 @@ export function ProductForm({
 												{...form.register(`variants.${index}.sku`)}
 												placeholder="Opcional"
 											/>
+										</div>
+										<div className="flex-1 space-y-2">
+											<Label>Peso (kg)</Label>
+											<Input
+												type="number"
+												step="0.01"
+												{...form.register(`variants.${index}.weight`)}
+											/>
+										</div>
+										<div className="flex-1 space-y-2">
+											<Label>Imagen Var.</Label>
+											<Input
+												{...form.register(
+													`variants.${index}.image_url`,
+												)}
+												placeholder="https://..."
+											/>
+										</div>
+										<div className="flex items-center gap-2 pb-2">
+											<Switch
+												checked={form.watch(
+													`variants.${index}.track_inventory`,
+												)}
+												onCheckedChange={(checked) =>
+													form.setValue(
+														`variants.${index}.track_inventory`,
+														checked,
+													)
+												}
+											/>
+											<Label>Track inv.</Label>
 										</div>
 										<Button
 											type="button"

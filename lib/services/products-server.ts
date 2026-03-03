@@ -8,6 +8,7 @@ type VariantRow = {
 	stock_quantity: number
 	reserved_stock: number
 	low_stock_threshold: number
+	track_inventory: boolean | null
 	price: number | null
 	image_url: string | null
 	sku: string | null
@@ -34,15 +35,20 @@ function parseSizeFromCombinationKey(combinationKey: string) {
 function mapRowToProduct(row: ProductRow): Product {
 	const mappedVariants = (row.variants ?? []).map((variant) => {
 		const size = parseSizeFromCombinationKey(variant.combination_key)
-		const availableStock = Math.max(
-			(variant.stock_quantity || 0) - (variant.reserved_stock || 0),
-			0,
-		)
+		const trackInventory = variant.track_inventory !== false
+		const availableStock = trackInventory
+			? Math.max(
+					(variant.stock_quantity || 0) -
+						(variant.reserved_stock || 0),
+					0,
+				)
+			: Number.MAX_SAFE_INTEGER
 
 		return {
 			id: variant.id,
 			size,
 			stock: availableStock,
+			trackInventory,
 			stockQuantity: variant.stock_quantity || 0,
 			reservedStock: variant.reserved_stock || 0,
 			lowStockThreshold: variant.low_stock_threshold || 0,
@@ -59,7 +65,9 @@ function mapRowToProduct(row: ProductRow): Product {
 	)
 	const lowStock = mappedVariants.some(
 		(variant) =>
-			variant.stock > 0 && variant.stock <= variant.lowStockThreshold,
+			variant.trackInventory !== false &&
+			variant.stock > 0 &&
+			variant.stock <= variant.lowStockThreshold,
 	)
 
 	const galleryImages = (row.gallery ?? [])
@@ -94,7 +102,7 @@ function getPublicProductsBaseQuery(db: any, storeId: string) {
 	return db
 		.from('products')
 		.select(
-			`id,slug,name,description,base_price,compare_at_price,main_image,category:categories(name),variants:product_variants(id,combination_key,stock_quantity,reserved_stock,low_stock_threshold,price,image_url,sku),gallery:product_images(image_url,display_order)`,
+			`id,slug,name,description,base_price,compare_at_price,main_image,category:categories(name),variants:product_variants(id,combination_key,stock_quantity,reserved_stock,low_stock_threshold,track_inventory,price,image_url,sku),gallery:product_images(image_url,display_order)`,
 		)
 		.eq('store_id', storeId)
 		.eq('status', 'active')

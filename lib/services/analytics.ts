@@ -36,7 +36,7 @@ export async function getDashboardMetrics() {
 		db
 			.from('product_variants')
 			.select(
-				'stock_quantity,reserved_stock,low_stock_threshold,product:products!inner(store_id,deleted_at)',
+				'stock_quantity,reserved_stock,low_stock_threshold,track_inventory,product:products!inner(store_id,deleted_at)',
 			)
 			.eq('product.store_id', store.id)
 			.is('product.deleted_at', null)
@@ -73,6 +73,9 @@ export async function getDashboardMetrics() {
 			},
 			variant: any,
 		) => {
+			if (variant.track_inventory === false) {
+				return acc
+			}
 			const available = Math.max(
 				(variant.stock_quantity || 0) - (variant.reserved_stock || 0),
 				0,

@@ -7,10 +7,14 @@ import { getAdminStoreContext } from '@/lib/services/admin-context'
 type ProductVariantInput = {
 	id?: string
 	size: string
+	price?: number | null
 	stock_quantity: number
 	reserved_stock?: number
 	low_stock_threshold?: number
 	sku?: string | null
+	weight?: number | null
+	image_url?: string | null
+	track_inventory?: boolean
 }
 
 type ProductMutationPayload = {
@@ -172,11 +176,6 @@ async function upsertVariantGraph(
 		throw new Error('No se pudo resolver option_id de variantes')
 	}
 
-	const { data: existingVariants } = await supabase
-		.from('product_variants')
-		.select('id')
-		.eq('product_id', productId)
-
 	const { data: existingVariantsWithKeys } = await supabase
 		.from('product_variants')
 		.select('id,combination_key')
@@ -265,11 +264,23 @@ async function upsertVariantGraph(
 			product_id: productId,
 			sku: variant.sku || null,
 			combination_key: combinationKey,
-			price: null,
+			// Cambiado: persistir columnas de variante soportadas por el nuevo modelo.
+			price:
+				variant.price === undefined || variant.price === null
+					? null
+					: Number(variant.price),
 			stock_quantity: Number(variant.stock_quantity || 0),
 			reserved_stock: Number(variant.reserved_stock || 0),
 			low_stock_threshold: Number(variant.low_stock_threshold ?? 5),
-			track_inventory: true,
+			weight:
+				variant.weight === undefined || variant.weight === null
+					? null
+					: Number(variant.weight),
+			image_url: variant.image_url || null,
+			track_inventory:
+				variant.track_inventory === undefined
+					? true
+					: Boolean(variant.track_inventory),
 			is_active: true,
 			deleted_at: null,
 		}

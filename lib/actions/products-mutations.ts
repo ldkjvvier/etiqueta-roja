@@ -20,10 +20,21 @@ export async function createProduct(formData: any) {
 		variants: (formData.variants || []).map((variant: any) => ({
 			id: variant.id,
 			size: variant.size,
+			// Cambiado: soportar pricing/imagen/peso por variante.
+			price:
+				variant.price === '' || variant.price == null
+					? null
+					: Number(variant.price),
 			stock_quantity: Number(variant.stock_quantity || 0),
 			reserved_stock: Number(variant.reserved_stock || 0),
 			low_stock_threshold: Number(variant.low_stock_threshold ?? 5),
 			sku: variant.sku || null,
+			weight:
+				variant.weight === '' || variant.weight == null
+					? null
+					: Number(variant.weight),
+			image_url: variant.image_url || null,
+			track_inventory: Boolean(variant.track_inventory),
 		})),
 	})
 }
@@ -43,10 +54,21 @@ export async function updateProduct(id: string, formData: any) {
 		variants: (formData.variants || []).map((variant: any) => ({
 			id: variant.id,
 			size: variant.size,
+			// Cambiado: soportar pricing/imagen/peso por variante.
+			price:
+				variant.price === '' || variant.price == null
+					? null
+					: Number(variant.price),
 			stock_quantity: Number(variant.stock_quantity || 0),
 			reserved_stock: Number(variant.reserved_stock || 0),
 			low_stock_threshold: Number(variant.low_stock_threshold ?? 5),
 			sku: variant.sku || null,
+			weight:
+				variant.weight === '' || variant.weight == null
+					? null
+					: Number(variant.weight),
+			image_url: variant.image_url || null,
+			track_inventory: Boolean(variant.track_inventory),
 		})),
 	})
 }

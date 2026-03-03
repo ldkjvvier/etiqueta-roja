@@ -28,73 +28,37 @@ function generateOrderNumber() {
 	return `ER-${yy}${mm}${dd}-${rand}`
 }
 
-async function reserveVariantStock(
+async function createOrderWithRetry(
 	db: any,
-	variantId: string,
-	quantity: number,
+	payload: {
+		store_id: string
+		customer_id: string
+		status: 'pending'
+		total_amount: number
+		shipping_address: Record<string, unknown>
+	},
 ) {
 	for (let attempt = 0; attempt < 3; attempt++) {
-		const { data: variant, error: variantError } = await db
-			.from('product_variants')
-			.select('id,stock_quantity,reserved_stock')
-			.eq('id', variantId)
-			.eq('is_active', true)
-			.is('deleted_at', null)
-			.maybeSingle()
+		const orderNumber = generateOrderNumber()
+		const { data, error } = await db
+			.from('orders')
+			.insert({ ...payload, order_number: orderNumber })
+			.select('id,order_number')
+			.single()
 
-		if (variantError || !variant) {
-			throw new Error('Variante no disponible')
+		if (!error && data) {
+			return { data, error: null }
 		}
 
-		const currentReserved = variant.reserved_stock || 0
-		const available = Math.max(
-			(variant.stock_quantity || 0) - currentReserved,
-			0,
-		)
-		if (available < quantity) {
-			throw new Error('Stock insuficiente para una o más variantes')
-		}
-
-		const { data: updated, error: updateError } = await db
-			.from('product_variants')
-			.update({
-				reserved_stock: currentReserved + quantity,
-			})
-			.eq('id', variantId)
-			.eq('reserved_stock', currentReserved)
-			.select('id')
-			.maybeSingle()
-
-		if (!updateError && updated) {
-			return
+		if (error?.code !== '23505') {
+			return { data: null, error }
 		}
 	}
 
-	throw new Error(
-		'No se pudo reservar stock por concurrencia. Reintenta.',
-	)
-}
-
-async function releaseVariantStock(
-	db: any,
-	variantId: string,
-	quantity: number,
-) {
-	const { data: variant } = await db
-		.from('product_variants')
-		.select('id,reserved_stock')
-		.eq('id', variantId)
-		.maybeSingle()
-
-	if (!variant) return
-
-	const currentReserved = variant.reserved_stock || 0
-	const nextReserved = Math.max(currentReserved - quantity, 0)
-
-	await db
-		.from('product_variants')
-		.update({ reserved_stock: nextReserved })
-		.eq('id', variantId)
+	return {
+		data: null,
+		error: { message: 'No se pudo generar un número de orden único' },
+	}
 }
 
 export async function createPendingOrderFromCart(input: {
@@ -108,6 +72,14 @@ export async function createPendingOrderFromCart(input: {
 	const {
 		data: { user },
 	} = await supabase.auth.getUser()
+
+	if (!user?.id) {
+		return {
+			error: true,
+			message:
+				'Debes iniciar sesión para confirmar tu pedido con la configuración actual de seguridad.',
+		}
+	}
 
 	const items = input.items || []
 	if (!items.length) {
@@ -139,7 +111,7 @@ export async function createPendingOrderFromCart(input: {
 		db
 			.from('product_variants')
 			.select(
-				'id,product_id,combination_key,stock_quantity,reserved_stock,is_active,deleted_at',
+				'id,product_id,combination_key,stock_quantity,reserved_stock,track_inventory,is_active,deleted_at',
 			)
 			.in('product_id', distinctProductIds)
 			.eq('is_active', true)
@@ -189,11 +161,15 @@ export async function createPendingOrderFromCart(input: {
 			}
 		}
 
-		const available = Math.max(
-			(variant.stock_quantity || 0) - (variant.reserved_stock || 0),
-			0,
-		)
-		if (available < item.quantity) {
+		const trackInventory = variant.track_inventory !== false
+		const available = trackInventory
+			? Math.max(
+					(variant.stock_quantity || 0) -
+						(variant.reserved_stock || 0),
+					0,
+				)
+			: Number.MAX_SAFE_INTEGER
+		if (trackInventory && available < item.quantity) {
 			return {
 				error: true,
 				message: `Stock insuficiente para ${item.name} (${item.size})`,
@@ -210,67 +186,42 @@ export async function createPendingOrderFromCart(input: {
 		})
 	}
 
-	const reserved: Array<{ variantId: string; quantity: number }> = []
 	try {
-		for (const item of resolvedItems) {
-			await reserveVariantStock(db, item.variantId, item.quantity)
-			reserved.push({
-				variantId: item.variantId,
-				quantity: item.quantity,
-			})
-		}
-
-		const orderNumber = generateOrderNumber()
 		const totalAmount = resolvedItems.reduce(
 			(acc, item) => acc + item.unitPrice * item.quantity,
 			0,
 		)
 
-		let customerId: string | null = null
-		const customerEmail =
-			user?.email || `guest+${Date.now()}@etiquetaroja.local`
+		const customerEmail = user.email || ''
 
-		if (user?.id) {
-			const { data: existingCustomer } = await db
-				.from('customers')
-				.select('id')
-				.eq('store_id', store.id)
-				.eq('auth_user_id', user.id)
-				.is('deleted_at', null)
-				.maybeSingle()
+		const { data: customer } = await db
+			.from('customers')
+			.select('id,email')
+			.eq('store_id', store.id)
+			.eq('auth_user_id', user.id)
+			.is('deleted_at', null)
+			.maybeSingle()
 
-			if (existingCustomer?.id) {
-				customerId = existingCustomer.id
-			} else {
-				const { data: newCustomer } = await db
-					.from('customers')
-					.insert({
-						store_id: store.id,
-						auth_user_id: user.id,
-						email: customerEmail,
-					})
-					.select('id')
-					.single()
-
-				customerId = newCustomer?.id || null
+		if (!customer?.id) {
+			return {
+				error: true,
+				message:
+					'No encontramos tu perfil de cliente para esta tienda. Contacta al administrador para habilitar tu cuenta.',
 			}
 		}
 
-		const { data: order, error: orderError } = await db
-			.from('orders')
-			.insert({
+		const { data: order, error: orderError } =
+			await createOrderWithRetry(db, {
 				store_id: store.id,
-				customer_id: customerId,
-				order_number: orderNumber,
+				customer_id: customer.id,
 				status: 'pending',
 				total_amount: totalAmount,
 				shipping_address: {
 					channel: 'whatsapp',
-					customerEmail,
+					customerEmail: customer.email || customerEmail,
+					authUserId: user.id,
 				},
 			})
-			.select('id,order_number')
-			.single()
 
 		if (orderError || !order) {
 			throw new Error('No se pudo crear la orden')
@@ -319,10 +270,6 @@ export async function createPendingOrderFromCart(input: {
 			whatsappUrl,
 		}
 	} catch (error: any) {
-		for (const item of reserved.reverse()) {
-			await releaseVariantStock(db, item.variantId, item.quantity)
-		}
-
 		return {
 			error: true,
 			message: error?.message || 'No se pudo procesar el checkout',

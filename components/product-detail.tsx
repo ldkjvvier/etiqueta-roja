@@ -49,7 +49,8 @@ export function ProductDetail({
 			)
 		: null
 	const displayedPrice =
-		selectedVariant?.price && selectedVariant.price > 0
+		selectedVariant?.price !== null &&
+		selectedVariant?.price !== undefined
 			? selectedVariant.price
 			: product.price
 
@@ -97,7 +98,8 @@ export function ProductDetail({
 		const maxStock = selectedVariant?.stock ?? 0
 
 		const unitPrice =
-			selectedVariant?.price && selectedVariant.price > 0
+			selectedVariant?.price !== null &&
+			selectedVariant?.price !== undefined
 				? selectedVariant.price
 				: product.price
 

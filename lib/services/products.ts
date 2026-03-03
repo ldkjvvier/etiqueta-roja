@@ -21,6 +21,7 @@ export type AdminProductRow = {
 		stock_quantity: number
 		reserved_stock: number
 		low_stock_threshold: number
+		track_inventory: boolean | null
 		is_active: boolean
 		deleted_at: string | null
 	}>
@@ -64,7 +65,7 @@ export async function getAdminProductsPage({
 	let request = db
 		.from('products')
 		.select(
-			`id,name,slug,base_price,compare_at_price,main_image,status,category_id,drop_id,deleted_at,created_at,updated_at,category:categories(name),drop:drops(name,status),variants:product_variants(id,stock_quantity,reserved_stock,low_stock_threshold,is_active,deleted_at)`,
+			`id,name,slug,base_price,compare_at_price,main_image,status,category_id,drop_id,deleted_at,created_at,updated_at,category:categories(name),drop:drops(name,status),variants:product_variants(id,stock_quantity,reserved_stock,low_stock_threshold,track_inventory,is_active,deleted_at)`,
 			{ count: 'exact' },
 		)
 		.eq('store_id', store.id)
@@ -105,15 +106,18 @@ export async function getAdminProductsPage({
 			const availableStock = activeVariants.reduce(
 				(acc, variant) =>
 					acc +
-					Math.max(
-						(variant.stock_quantity || 0) -
-							(variant.reserved_stock || 0),
-						0,
-					),
+					(variant.track_inventory === false
+						? 0
+						: Math.max(
+								(variant.stock_quantity || 0) -
+									(variant.reserved_stock || 0),
+								0,
+							)),
 				0,
 			)
 			const lowStockAlert = activeVariants.some(
 				(variant) =>
+					variant.track_inventory !== false &&
 					Math.max(
 						(variant.stock_quantity || 0) -
 							(variant.reserved_stock || 0),
@@ -175,7 +179,7 @@ export async function getAdminProductById(id: string) {
 			db
 				.from('product_variants')
 				.select(
-					'id,sku,combination_key,price,stock_quantity,reserved_stock,low_stock_threshold,is_active,deleted_at',
+					'id,sku,combination_key,price,weight,image_url,track_inventory,stock_quantity,reserved_stock,low_stock_threshold,is_active,deleted_at',
 				)
 				.eq('product_id', id)
 				.order('combination_key', { ascending: true }),
@@ -216,10 +220,15 @@ export async function getAdminProductById(id: string) {
 			return {
 				id: variant.id,
 				size: option?.value ?? variant.combination_key,
+				// Cambiado: exponer columnas de variantes para edición en UI.
+				price: variant.price,
 				stock_quantity: variant.stock_quantity,
 				reserved_stock: variant.reserved_stock,
 				low_stock_threshold: variant.low_stock_threshold,
 				sku: variant.sku,
+				weight: variant.weight,
+				image_url: variant.image_url,
+				track_inventory: variant.track_inventory,
 			}
 		})
 
