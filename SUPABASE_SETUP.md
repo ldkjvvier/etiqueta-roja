@@ -1,17 +1,3 @@
-# Configuración de Supabase para Etiqueta Roja (V2 - Estructura Escalable)
-
-Sigue estos pasos para configurar tu proyecto en Supabase con la arquitectura profesional de E-commerce.
-
-## 1. Crear Proyecto
-Ve a [Supabase](https://supabase.com/) y crea un nuevo proyecto.
-
-## 2. Ejecutar SQL
-Ve al **SQL Editor** en tu dashboard de Supabase.
-
-> **Importante:** Si estás migrando desde la V1, deberás respaldar y borrar tus tablas antiguas (`products`) antes de ejecutar esto, o migrar los datos manualmente.
-
-Ejecuta el siguiente script completo:
-
 ```sql
 -- ==========================================
 -- 1. Tablas Base (Categorías y Configuración)
@@ -118,50 +104,18 @@ insert into categories (name, slug) values
 ('Accesorios', 'accesorios')
 on conflict (slug) do nothing;
 
--- NOTA: Para insertar productos de prueba, usa la interfaz gráfica o un script específico una vez tengas los IDs de las categorías.
-```
-
-## 3. Variables de Entorno
-Crea un archivo `.env.local` en la raíz de tu proyecto.
-
-```bash
-NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key
-```
-
-## 4. Estructura de Datos Explicada
-
-### `products`
-Esta tabla contiene la información "estática" y de marketing del producto.
-- `image`: Es la portada. SIEMPRE debe tener valor.
-- `images`: Array de fotos extra para la galería.
-
-### `product_variants`
-Aquí vive el stock real.
-- Si un producto tiene tallas S y M, tendrás 2 filas aquí vinculadas al mismo `product_id`.
-- El frontend suma automáticamente `stock_quantity` de todas las variantes para saber si el producto está "Agotado" o "Disponible".
-
-## 5. Scripts Adicionales (Storage y Analytics)
-
-Ejecuta este bloque si estás actualizando tu base de datos:
-
-```sql
 -- ==========================================
--- 5. Actualización de Políticas de Storage
+-- 6. Actualización de Políticas de Storage y Analytics
 -- ==========================================
 
--- Permitir a usuarios autenticados (admin) ACTUALIZAR y ELIMINAR imágenes
+-- Permitir a usuarios autenticados (admin) ACTUALIZAR y ELIMINAR imágenes (Reasegura permisos)
 drop policy if exists "Admin update images" on storage.objects;
 create policy "Admin update images" on storage.objects for update with check ( bucket_id = 'products' and auth.role() = 'authenticated' );
 
 drop policy if exists "Admin delete images" on storage.objects;
 create policy "Admin delete images" on storage.objects for delete using ( bucket_id = 'products' and auth.role() = 'authenticated' );
 
--- ==========================================
--- 6. Analytics (Vistas de Productos "Pro" - Por Día)
--- ==========================================
-
--- 1. Tabla para guardar vistas por día (Histórico)
+-- Tabla para guardar vistas por día (Histórico)
 create table if not exists public.product_views_daily (
   product_id uuid references public.products(id) on delete cascade not null,
   date date default current_date not null,
@@ -169,16 +123,15 @@ create table if not exists public.product_views_daily (
   primary key (product_id, date)
 );
 
--- Habilitar RLS
+-- Habilitar RLS para vistas
 alter table public.product_views_daily enable row level security;
 create policy "Public view daily stats" on public.product_views_daily for select using (true);
 
--- 2. Asegurar que existe la columnas 'views' en 'products' para acceso rápido (Total)
+-- Asegurar que existe la columnas 'views' en 'products' para acceso rápido (Total)
 ALTER TABLE public.products 
 ADD COLUMN IF NOT EXISTS views INTEGER DEFAULT 0;
 
--- 3. Función optimizada (Actualiza ambos contadores)
--- Corrección: Se renombró el parámetro a 'p_product_id' para evitar ambigüedad con nombre de columnas
+-- Función optimizada (Actualiza ambos contadores)
 CREATE OR REPLACE FUNCTION increment_product_view(p_product_id UUID)
 RETURNS VOID AS $$
 BEGIN
