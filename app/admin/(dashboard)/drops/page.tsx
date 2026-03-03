@@ -1,6 +1,7 @@
 import { getAdminDrops } from '@/lib/services/drops'
 import { advanceDropStatus } from '@/lib/actions/drops-admin'
 import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 import {
 	Table,
 	TableBody,
@@ -38,11 +39,16 @@ export default async function AdminDropsPage({
 
 	return (
 		<div className="space-y-6">
-			<div>
-				<h1 className="text-3xl font-bold tracking-tight">Drops</h1>
-				<p className="text-muted-foreground">
-					Gestiona lanzamientos limitados sin cálculos en frontend.
-				</p>
+			<div className="flex items-end justify-between gap-4">
+				<div>
+					<h1 className="text-3xl font-bold tracking-tight">Drops</h1>
+					<p className="text-muted-foreground">
+						Gestiona lanzamientos limitados sin cálculos en frontend.
+					</p>
+				</div>
+				<Button asChild>
+					<Link href="/admin/drops/new">Nuevo Drop</Link>
+				</Button>
 			</div>
 
 			<div className="rounded-md border bg-white">
@@ -56,7 +62,7 @@ export default async function AdminDropsPage({
 							<TableHead>Estado</TableHead>
 							<TableHead>Inicio</TableHead>
 							<TableHead>Fin</TableHead>
-							<TableHead className="text-right">Acción</TableHead>
+							<TableHead className="text-right">Acciones</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
@@ -94,24 +100,31 @@ export default async function AdminDropsPage({
 										: '—'}
 								</TableCell>
 								<TableCell className="text-right">
-									<form action={advanceDropStatus}>
-										<input
-											type="hidden"
-											name="dropId"
-											value={drop.id}
-										/>
-										<Button
-											size="sm"
-											variant="outline"
-											disabled={drop.status === 'ended'}
-										>
-											{drop.status === 'scheduled'
-												? 'Pasar a live'
-												: drop.status === 'live'
-													? 'Finalizar'
-													: 'Cerrado'}
+									<div className="flex justify-end gap-2">
+										<Button asChild size="sm" variant="secondary">
+											<Link href={`/admin/drops/${drop.id}`}>
+												Editar
+											</Link>
 										</Button>
-									</form>
+										<form action={advanceDropStatus}>
+											<input
+												type="hidden"
+												name="dropId"
+												value={drop.id}
+											/>
+											<Button
+												size="sm"
+												variant="outline"
+												disabled={drop.status === 'ended'}
+											>
+												{drop.status === 'scheduled'
+													? 'Pasar a live'
+													: drop.status === 'live'
+														? 'Finalizar'
+														: 'Cerrado'}
+											</Button>
+										</form>
+									</div>
 								</TableCell>
 							</TableRow>
 						))}

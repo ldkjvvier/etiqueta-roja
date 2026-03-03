@@ -7,6 +7,18 @@ export interface GetAdminDropsParams {
 	status?: 'scheduled' | 'live' | 'ended' | 'all'
 }
 
+export interface AdminDrop {
+	id: string
+	name: string
+	slug: string
+	description: string | null
+	cover_image: string | null
+	status: 'scheduled' | 'live' | 'ended'
+	start_time: string
+	end_time: string | null
+	created_at: string
+}
+
 export async function getAdminDrops({
 	page = 1,
 	limit = 20,
@@ -42,8 +54,29 @@ export async function getAdminDrops({
 	}
 
 	return {
-		items: data ?? [],
+		items: (data ?? []) as AdminDrop[],
 		totalCount: count ?? 0,
 		totalPages: Math.ceil((count ?? 0) / limit),
 	}
+}
+
+export async function getAdminDropById(id: string) {
+	const supabase = await createClient()
+	const db = supabase as any
+	const store = await getAdminStoreContext()
+
+	const { data, error } = await db
+		.from('drops')
+		.select(
+			'id,name,slug,description,cover_image,status,start_time,end_time,created_at',
+		)
+		.eq('id', id)
+		.eq('store_id', store.id)
+		.maybeSingle()
+
+	if (error || !data) {
+		return null
+	}
+
+	return data as AdminDrop
 }
