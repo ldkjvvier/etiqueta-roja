@@ -6,12 +6,10 @@ import {
 import { PromoBannerForm, ContactInfoForm } from './config-forms'
 
 export default async function ConfigPage() {
-	const promoConfig = await getSiteConfig<PromoBannerConfig>(
-		'promo_banner'
-	)
-	const contactConfig = await getSiteConfig<ContactInfoConfig>(
-		'contact_info'
-	)
+	const promoConfig =
+		await getSiteConfig<PromoBannerConfig>('promo_banner')
+	const contactConfig =
+		await getSiteConfig<ContactInfoConfig>('contact_info')
 
 	return (
 		<div className="max-w-4xl space-y-8">
@@ -20,9 +18,13 @@ export default async function ConfigPage() {
 			<PromoBannerForm
 				initialData={promoConfig?.value}
 				isActive={promoConfig?.is_active}
+				initialDescription={promoConfig?.description}
 			/>
 
-			<ContactInfoForm initialData={contactConfig?.value} />
+			<ContactInfoForm
+				initialData={contactConfig?.value}
+				initialDescription={contactConfig?.description}
+			/>
 		</div>
 	)
 }

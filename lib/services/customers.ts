@@ -22,9 +22,12 @@ export async function getAdminCustomers({
 
 	let request = db
 		.from('customers')
-		.select('id,email,first_name,last_name,total_spent,created_at', {
-			count: 'exact',
-		})
+		.select(
+			'id,email,first_name,last_name,phone,total_spent,created_at',
+			{
+				count: 'exact',
+			},
+		)
 		.eq('store_id', store.id)
 		.is('deleted_at', null)
 

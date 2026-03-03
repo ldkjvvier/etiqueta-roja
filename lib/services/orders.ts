@@ -28,7 +28,7 @@ export async function getAdminOrders({
 	let request = db
 		.from('orders')
 		.select(
-			'id,order_number,status,total_amount,created_at,customer:customers(first_name,last_name,email),items:order_items(count)',
+			'id,order_number,status,total_amount,shipping_address,created_at,customer:customers(first_name,last_name,email),items:order_items(count)',
 			{
 				count: 'exact',
 			},
@@ -48,12 +48,35 @@ export async function getAdminOrders({
 		return { items: [], totalCount: 0, totalPages: 0 }
 	}
 
+	const formatShippingSummary = (shippingAddress: unknown) => {
+		if (!shippingAddress || typeof shippingAddress !== 'object') {
+			return '—'
+		}
+
+		const shipping = shippingAddress as Record<string, unknown>
+		const parts = [
+			shipping.address,
+			shipping.addressLine1,
+			shipping.city,
+			shipping.comuna,
+			shipping.region,
+			shipping.channel,
+			shipping.customerEmail,
+		]
+			.filter((value): value is string => typeof value === 'string')
+			.map((value) => value.trim())
+			.filter(Boolean)
+
+		return parts.length > 0 ? parts.join(' · ') : '—'
+	}
+
 	const items = (data ?? []).map((row: any) => ({
 		id: row.id,
 		order_number: row.order_number,
 		status: row.status,
 		total_amount: row.total_amount,
 		created_at: row.created_at,
+		shipping_summary: formatShippingSummary(row.shipping_address),
 		customer_name:
 			[row.customer?.first_name, row.customer?.last_name]
 				.filter(Boolean)

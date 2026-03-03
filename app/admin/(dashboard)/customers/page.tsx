@@ -51,6 +51,7 @@ export default async function AdminCustomersPage({
 						<TableRow>
 							<TableHead>Nombre</TableHead>
 							<TableHead>Email</TableHead>
+							<TableHead>Teléfono</TableHead>
 							<TableHead>Total gastado</TableHead>
 							<TableHead>Alta</TableHead>
 						</TableRow>
@@ -64,6 +65,7 @@ export default async function AdminCustomersPage({
 										.join(' ') || '—'}
 								</TableCell>
 								<TableCell>{customer.email}</TableCell>
+								<TableCell>{customer.phone || '—'}</TableCell>
 								<TableCell>
 									$
 									{Number(customer.total_spent || 0).toLocaleString(
@@ -79,7 +81,7 @@ export default async function AdminCustomersPage({
 						))}
 						{items.length === 0 && (
 							<TableRow>
-								<TableCell colSpan={4} className="h-24 text-center">
+								<TableCell colSpan={5} className="h-24 text-center">
 									No hay clientes.
 								</TableCell>
 							</TableRow>

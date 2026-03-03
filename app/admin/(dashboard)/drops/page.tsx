@@ -50,6 +50,9 @@ export default async function AdminDropsPage({
 					<TableHeader>
 						<TableRow>
 							<TableHead>Nombre</TableHead>
+							<TableHead>Slug</TableHead>
+							<TableHead>Descripción</TableHead>
+							<TableHead>Portada</TableHead>
 							<TableHead>Estado</TableHead>
 							<TableHead>Inicio</TableHead>
 							<TableHead>Fin</TableHead>
@@ -61,6 +64,23 @@ export default async function AdminDropsPage({
 							<TableRow key={drop.id}>
 								<TableCell className="font-medium">
 									{drop.name}
+								</TableCell>
+								<TableCell className="font-mono text-xs">
+									{drop.slug}
+								</TableCell>
+								<TableCell className="max-w-70 truncate text-muted-foreground">
+									{drop.description || '—'}
+								</TableCell>
+								<TableCell>
+									{drop.cover_image ? (
+										<img
+											src={drop.cover_image}
+											alt={`Portada ${drop.name}`}
+											className="h-10 w-10 rounded object-cover border"
+										/>
+									) : (
+										'—'
+									)}
 								</TableCell>
 								<TableCell>
 									<Badge variant="outline">{drop.status}</Badge>
@@ -97,7 +117,7 @@ export default async function AdminDropsPage({
 						))}
 						{items.length === 0 && (
 							<TableRow>
-								<TableCell colSpan={5} className="h-24 text-center">
+								<TableCell colSpan={8} className="h-24 text-center">
 									No hay drops.
 								</TableCell>
 							</TableRow>

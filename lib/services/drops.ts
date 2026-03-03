@@ -20,9 +20,12 @@ export async function getAdminDrops({
 
 	let request = db
 		.from('drops')
-		.select('id,name,slug,status,start_time,end_time,created_at', {
-			count: 'exact',
-		})
+		.select(
+			'id,name,slug,description,cover_image,status,start_time,end_time,created_at',
+			{
+				count: 'exact',
+			},
+		)
 		.eq('store_id', store.id)
 
 	if (status !== 'all') {

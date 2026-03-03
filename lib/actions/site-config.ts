@@ -26,6 +26,7 @@ export async function updatePromoBanner(
 	const message = formData.get('message') as string
 	const link = formData.get('link') as string
 	const isActive = formData.get('is_active') === 'on'
+	const description = (formData.get('description') as string) || null
 
 	const value: PromoBannerConfig = {
 		message,
@@ -37,6 +38,7 @@ export async function updatePromoBanner(
 			store_id: store.id,
 			key: 'promo_banner',
 			value,
+			description,
 			is_active: isActive,
 			visibility: 'public',
 			updated_by: user.id,
@@ -76,6 +78,7 @@ export async function updateContactInfo(
 	const instagram = formData.get('instagram') as string
 	const tiktok = formData.get('tiktok') as string
 	const email = formData.get('email') as string
+	const description = (formData.get('description') as string) || null
 
 	const value: ContactInfoConfig = {
 		whatsapp,
@@ -89,6 +92,7 @@ export async function updateContactInfo(
 			store_id: store.id,
 			key: 'contact_info',
 			value,
+			description,
 			is_active: true,
 			visibility: 'public',
 			updated_by: user.id,

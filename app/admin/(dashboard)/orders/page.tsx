@@ -58,6 +58,7 @@ export default async function AdminOrdersPage({
 						<TableRow>
 							<TableHead># Orden</TableHead>
 							<TableHead>Cliente</TableHead>
+							<TableHead>Entrega</TableHead>
 							<TableHead>Estado</TableHead>
 							<TableHead>Items</TableHead>
 							<TableHead>Total</TableHead>
@@ -72,6 +73,9 @@ export default async function AdminOrdersPage({
 									{order.order_number}
 								</TableCell>
 								<TableCell>{order.customer_name}</TableCell>
+								<TableCell className="max-w-70 truncate text-muted-foreground">
+									{order.shipping_summary}
+								</TableCell>
 								<TableCell>
 									<Badge variant="outline">{order.status}</Badge>
 								</TableCell>
@@ -110,7 +114,7 @@ export default async function AdminOrdersPage({
 						))}
 						{items.length === 0 && (
 							<TableRow>
-								<TableCell colSpan={7} className="h-24 text-center">
+								<TableCell colSpan={8} className="h-24 text-center">
 									No hay órdenes.
 								</TableCell>
 							</TableRow>

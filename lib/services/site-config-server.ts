@@ -25,15 +25,17 @@ function isDynamicServerUsageError(error: unknown) {
 	)
 }
 
-export async function getSiteConfig<T>(
-	key: string,
-): Promise<{ value: T; is_active: boolean } | null> {
+export async function getSiteConfig<T>(key: string): Promise<{
+	value: T
+	is_active: boolean
+	description: string | null
+} | null> {
 	try {
 		const supabase = await createClient()
 		const store = await getAdminStoreContext()
 		const { data, error } = await supabase
 			.from('site_config')
-			.select('value, is_active')
+			.select('value, is_active, description')
 			.eq('store_id', store.id)
 			.eq('key', key)
 			.maybeSingle()
@@ -54,6 +56,7 @@ export async function getSiteConfig<T>(
 		return {
 			value: (data as any).value as unknown as T,
 			is_active: (data as any).is_active ?? true,
+			description: (data as any).description ?? null,
 		}
 	} catch (e) {
 		if (!isDynamicServerUsageError(e)) {

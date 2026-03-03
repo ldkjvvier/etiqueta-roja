@@ -27,13 +27,15 @@ const initialState = { message: '', error: false }
 export function PromoBannerForm({
 	initialData,
 	isActive,
+	initialDescription,
 }: {
 	initialData?: PromoBannerConfig
 	isActive?: boolean
+	initialDescription?: string | null
 }) {
 	const [state, formAction, isPending] = useActionState(
 		updatePromoBanner,
-		initialState
+		initialState,
 	)
 
 	return (
@@ -75,6 +77,16 @@ export function PromoBannerForm({
 							placeholder="Ej: /producto/oferta"
 						/>
 					</div>
+
+					<div className="space-y-2">
+						<Label htmlFor="description">Descripción interna</Label>
+						<Input
+							id="description"
+							name="description"
+							defaultValue={initialDescription ?? ''}
+							placeholder="Ayuda interna para admins"
+						/>
+					</div>
 				</CardContent>
 				<CardFooter>
 					<Button type="submit" disabled={isPending}>
@@ -97,12 +109,14 @@ export function PromoBannerForm({
 
 export function ContactInfoForm({
 	initialData,
+	initialDescription,
 }: {
 	initialData?: ContactInfoConfig
+	initialDescription?: string | null
 }) {
 	const [state, formAction, isPending] = useActionState(
 		updateContactInfo,
-		initialState
+		initialState,
 	)
 
 	return (
@@ -151,6 +165,15 @@ export function ContactInfoForm({
 								type="email"
 								defaultValue={initialData?.email ?? ''}
 								placeholder="contacto@ejemplo.com"
+							/>
+						</div>
+						<div className="space-y-2 md:col-span-2">
+							<Label htmlFor="description">Descripción interna</Label>
+							<Input
+								id="description"
+								name="description"
+								defaultValue={initialDescription ?? ''}
+								placeholder="Contexto interno del bloque"
 							/>
 						</div>
 					</div>
