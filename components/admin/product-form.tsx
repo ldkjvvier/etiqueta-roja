@@ -18,14 +18,20 @@ import {
 	SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { ImageUpload } from '@/components/admin/image-upload'
 import {
 	createProduct,
 	updateProduct,
 } from '@/lib/actions/products-mutations'
+import { toast } from 'sonner'
 import {
 	Category,
 	DropOption,
@@ -191,13 +197,19 @@ export function ProductForm({
 			}
 
 			if (result.error) {
-				alert(result.message)
+				toast.error('No se pudo guardar', {
+					description: result.message,
+				})
 			} else {
+				toast.success(
+					initialData ? 'Producto actualizado' : 'Producto creado',
+				)
 				router.push('/admin/products')
 				router.refresh()
 			}
 		} catch (error) {
 			console.error(error)
+			toast.error('Ocurrió un error inesperado')
 		} finally {
 			setLoading(false)
 		}
@@ -207,11 +219,14 @@ export function ProductForm({
 		<form
 			onSubmit={form.handleSubmit(onSubmit, (errors) => {
 				console.error('Validation errors:', errors)
-				// Create a list of missing fields for the alert
-				const missingFields = Object.keys(errors).join(', ')
-				alert(
-					`No se puede guardar. Revise los siguientes campos: ${missingFields}. Verifique que hay al menos una imagen y una variante.`,
-				)
+				const missingFields = Object.keys(errors)
+					.map((field) => field.replaceAll('_', ' '))
+					.join(', ')
+				toast.error('Revisa los campos obligatorios', {
+					description:
+						missingFields ||
+						'Verifica que haya al menos una imagen y una variante.',
+				})
 			})}
 			className="space-y-8 max-w-5xl"
 		>
@@ -219,6 +234,12 @@ export function ProductForm({
 				{/* Left Column: Details */}
 				<div className="space-y-6">
 					<Card>
+						<CardHeader>
+							<CardTitle>Detalles</CardTitle>
+							<CardDescription>
+								Información principal del producto
+							</CardDescription>
+						</CardHeader>
 						<CardContent className="pt-6 space-y-4">
 							<div className="space-y-2">
 								<Label>Nombre del Producto</Label>
@@ -355,8 +376,14 @@ export function ProductForm({
 					</Card>
 
 					<Card>
+						<CardHeader>
+							<CardTitle>Imágenes</CardTitle>
+							<CardDescription>
+								La primera imagen será portada
+							</CardDescription>
+						</CardHeader>
 						<CardContent className="pt-6 space-y-4">
-							<Label>Imagenes</Label>
+							<Label>Imágenes</Label>
 							<ImageUpload
 								value={form.watch('images')}
 								onChange={(urls) => form.setValue('images', urls)}
@@ -373,10 +400,16 @@ export function ProductForm({
 				{/* Right Column: Variants */}
 				<div className="space-y-6">
 					<Card>
+						<CardHeader>
+							<CardTitle>Variantes / Stock</CardTitle>
+							<CardDescription>
+								Gestiona tallas, precio y stock por variante
+							</CardDescription>
+						</CardHeader>
 						<CardContent className="pt-6">
 							<div className="flex items-center justify-between mb-4">
-								<Label className="text-lg font-bold">
-									Variantes / Stock
+								<Label className="text-base font-medium">
+									Variantes activas
 								</Label>
 								<Button
 									type="button"
@@ -404,7 +437,7 @@ export function ProductForm({
 								{fields.map((field, index) => (
 									<div
 										key={field.id}
-										className="flex gap-4 items-end border p-4 rounded-lg bg-gray-50/50"
+										className="grid gap-4 rounded-lg border bg-muted/30 p-4 md:grid-cols-2 xl:grid-cols-4"
 									>
 										<div className="flex-1 space-y-2">
 											<Label>Talle</Label>
@@ -484,7 +517,7 @@ export function ProductForm({
 												placeholder="https://..."
 											/>
 										</div>
-										<div className="flex items-center gap-2 pb-2">
+										<div className="flex items-center gap-2 pt-7">
 											<Switch
 												checked={form.watch(
 													`variants.${index}.track_inventory`,
@@ -502,6 +535,7 @@ export function ProductForm({
 											type="button"
 											variant="ghost"
 											size="icon"
+											disabled={fields.length === 1}
 											onClick={() => remove(index)}
 										>
 											<Trash className="h-4 w-4 text-red-500" />

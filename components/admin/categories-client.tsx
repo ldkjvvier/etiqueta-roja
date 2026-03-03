@@ -2,12 +2,10 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Edit, MoreHorizontal, Plus, Trash } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import {
 	Table,
 	TableBody,
@@ -79,7 +77,7 @@ export function CategoriesClient({ data }: CategoriesClientProps) {
 							<TableHead>Nombre</TableHead>
 							<TableHead>Slug</TableHead>
 							<TableHead>Descripción</TableHead>
-							<TableHead className="w-25">Acciones</TableHead>
+							<TableHead className="w-24">Acciones</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>

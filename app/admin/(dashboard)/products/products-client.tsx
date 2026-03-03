@@ -33,6 +33,7 @@ import { Badge } from '@/components/ui/badge'
 import { deleteProduct } from '@/lib/actions/products'
 import type { AdminProduct } from '@/lib/services/products-admin'
 import { formatPrice } from '@/lib/utils'
+import { toast } from 'sonner'
 
 interface ProductTableProps {
 	products: AdminProduct[]
@@ -83,9 +84,22 @@ export function ProductTable({
 	// Delete Handler
 	const handleDelete = async (id: string) => {
 		if (
-			confirm('¿Estás seguro de que deseas eliminar este producto?')
+			confirm(
+				'¿Eliminar producto de forma permanente? Esta acción borra imágenes y relaciones de catálogo.',
+			)
 		) {
-			await deleteProduct(id)
+			const result = await deleteProduct(id)
+			if (result.error) {
+				toast.error('No se pudo eliminar', {
+					description: result.message,
+				})
+				return
+			}
+
+			toast.success('Producto eliminado', {
+				description: result.message,
+			})
+			router.refresh()
 		}
 	}
 

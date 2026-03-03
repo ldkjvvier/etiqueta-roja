@@ -133,6 +133,26 @@ async function replaceProductImages(
 	await supabase.from('product_images').insert(rows)
 }
 
+function extractStoragePathFromPublicUrl(
+	url: string,
+	bucket: string,
+) {
+	try {
+		const parsed = new URL(url)
+		const marker = `/storage/v1/object/public/${bucket}/`
+		const markerIndex = parsed.pathname.indexOf(marker)
+		if (markerIndex === -1) return null
+
+		const encodedPath = parsed.pathname.slice(
+			markerIndex + marker.length,
+		)
+		const decodedPath = decodeURIComponent(encodedPath)
+		return decodedPath || null
+	} catch {
+		return null
+	}
+}
+
 async function upsertVariantGraph(
 	supabase: any,
 	productId: string,
@@ -459,6 +479,137 @@ export async function archiveProductV3(id: string) {
 	revalidatePath('/admin')
 	revalidatePath('/admin/products')
 	return { error: false, message: 'Producto archivado' }
+}
+
+export async function hardDeleteProductV3(id: string) {
+	const supabase = await createClient()
+	const db = supabase as any
+	const store = await getAdminStoreContext()
+
+	const {
+		data: { user },
+	} = await supabase.auth.getUser()
+	if (!user) return { error: true, message: 'Unauthorized' }
+
+	try {
+		const { data: product, error: productError } = await db
+			.from('products')
+			.select('id,main_image')
+			.eq('id', id)
+			.eq('store_id', store.id)
+			.maybeSingle()
+
+		if (productError) {
+			throw productError
+		}
+
+		if (!product) {
+			return {
+				error: true,
+				message: 'Producto no encontrado o sin acceso',
+			}
+		}
+
+		const [{ data: gallery }, { data: variants }, { data: options }] =
+			await Promise.all([
+				db
+					.from('product_images')
+					.select('image_url')
+					.eq('product_id', id),
+				db
+					.from('product_variants')
+					.select('id,image_url')
+					.eq('product_id', id),
+				db.from('product_options').select('id').eq('product_id', id),
+			])
+
+		const variantIds = (variants ?? []).map((row: any) => row.id)
+		const optionIds = (options ?? []).map((row: any) => row.id)
+
+		const imageUrls = Array.from(
+			new Set(
+				[
+					product.main_image,
+					...(gallery ?? []).map((row: any) => row.image_url),
+					...(variants ?? []).map((row: any) => row.image_url),
+				]
+					.filter((url): url is string => typeof url === 'string')
+					.filter(Boolean),
+			),
+		)
+
+		const storagePaths = Array.from(
+			new Set(
+				imageUrls
+					.map((url) =>
+						extractStoragePathFromPublicUrl(url, 'products'),
+					)
+					.filter((path): path is string => Boolean(path)),
+			),
+		)
+
+		if (variantIds.length) {
+			await db
+				.from('order_items')
+				.update({ variant_id: null })
+				.in('variant_id', variantIds)
+
+			await db
+				.from('variant_option_values')
+				.delete()
+				.in('variant_id', variantIds)
+		}
+
+		if (optionIds.length) {
+			await db
+				.from('product_option_values')
+				.delete()
+				.in('option_id', optionIds)
+		}
+
+		await Promise.all([
+			db.from('product_variants').delete().eq('product_id', id),
+			db.from('product_options').delete().eq('product_id', id),
+			db.from('product_images').delete().eq('product_id', id),
+			db.from('product_views_daily').delete().eq('product_id', id),
+		])
+
+		const { error: deleteProductError } = await db
+			.from('products')
+			.delete()
+			.eq('id', id)
+			.eq('store_id', store.id)
+
+		if (deleteProductError) {
+			throw deleteProductError
+		}
+
+		let storageWarning: string | null = null
+		if (storagePaths.length) {
+			const { error: storageError } = await supabase.storage
+				.from('products')
+				.remove(storagePaths)
+
+			if (storageError) {
+				storageWarning =
+					'El producto se eliminó, pero algunas imágenes no pudieron borrarse del bucket.'
+			}
+		}
+
+		revalidatePath('/admin')
+		revalidatePath('/admin/products')
+		return {
+			error: false,
+			message:
+				storageWarning ||
+				'Producto eliminado permanentemente (catálogo + imágenes).',
+		}
+	} catch (error: any) {
+		return {
+			error: true,
+			message: error?.message || 'Error eliminando producto',
+		}
+	}
 }
 
 export async function toggleProductStatusV3(

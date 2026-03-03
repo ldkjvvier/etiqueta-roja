@@ -1,10 +1,10 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { archiveProductV3 } from '@/lib/actions/products-admin'
+import { hardDeleteProductV3 } from '@/lib/actions/products-admin'
 
 export async function deleteProduct(id: string) {
-	const result = await archiveProductV3(id)
+	const result = await hardDeleteProductV3(id)
 	return {
 		message: result.message,
 		error: result.error,
