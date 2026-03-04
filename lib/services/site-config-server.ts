@@ -13,6 +13,49 @@ export interface ContactInfoConfig {
 	email: string
 }
 
+export interface HomeHeroBannerConfig {
+	badge: string
+	title: string
+	description: string
+	cta_text: string
+	cta_link: string
+	background_image: string
+	background_image_mobile?: string
+	background_video_url?: string
+	linked_drop_id?: string
+	drop_ended_text?: string
+	drop_live_badge_text?: string
+	drop_countdown_bg_color?: string
+	drop_countdown_text_color?: string
+	drop_live_badge_bg_color?: string
+	drop_live_badge_text_color?: string
+	drop_display_mode?:
+		| 'auto'
+		| 'message-only'
+		| 'countdown-only'
+		| 'badge-only'
+		| 'hidden'
+	drop_message_template_scheduled?: string
+	drop_message_template_live?: string
+	drop_message_template_ended?: string
+	drop_text_alignment?: 'left' | 'center' | 'right'
+	drop_date_format?: 'short' | 'long' | 'full'
+	drop_show_cta_scheduled?: boolean
+	drop_show_cta_live?: boolean
+	drop_show_cta_ended?: boolean
+	drop_show_countdown?: boolean
+	drop_show_live_badge?: boolean
+	title_color: string
+	description_color?: string
+	badge_color: string
+	button_bg_color: string
+	button_text_color: string
+	title_font_weight?: 'bold' | 'black' | 'outline'
+	overlay_opacity: number
+	content_alignment: 'left' | 'center' | 'right'
+	banner_height: 'normal' | 'large' | 'fullscreen'
+}
+
 function isDynamicServerUsageError(error: unknown) {
 	if (!error || typeof error !== 'object') return false
 	const digest = (error as { digest?: string }).digest
