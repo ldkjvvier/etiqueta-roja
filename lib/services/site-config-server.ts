@@ -45,6 +45,22 @@ export interface HomeHeroBannerConfig {
 	drop_show_cta_ended?: boolean
 	drop_show_countdown?: boolean
 	drop_show_live_badge?: boolean
+	hero_badge_pos_x?: number
+	hero_badge_pos_y?: number
+	hero_title_pos_x?: number
+	hero_title_pos_y?: number
+	hero_description_pos_x?: number
+	hero_description_pos_y?: number
+	hero_drop_message_pos_x?: number
+	hero_drop_message_pos_y?: number
+	hero_countdown_pos_x?: number
+	hero_countdown_pos_y?: number
+	hero_live_badge_pos_x?: number
+	hero_live_badge_pos_y?: number
+	hero_text_pos_x?: number
+	hero_text_pos_y?: number
+	hero_cta_pos_x?: number
+	hero_cta_pos_y?: number
 	title_color: string
 	description_color?: string
 	badge_color: string

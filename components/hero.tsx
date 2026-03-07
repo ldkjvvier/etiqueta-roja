@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { HeroDropCountdown } from '@/components/HeroDropCountdown'
+import { HeroBannerLayout } from '@/components/hero-studio/HeroBannerLayout'
 import { getHeroLinkedDropSummary } from '@/lib/services/drops-server'
 import {
 	getSiteConfig,
@@ -36,6 +37,22 @@ const fallback: HomeHeroBannerConfig = {
 	drop_show_cta_ended: true,
 	drop_show_countdown: true,
 	drop_show_live_badge: true,
+	hero_badge_pos_x: 50,
+	hero_badge_pos_y: 30,
+	hero_title_pos_x: 50,
+	hero_title_pos_y: 44,
+	hero_description_pos_x: 50,
+	hero_description_pos_y: 58,
+	hero_drop_message_pos_x: 50,
+	hero_drop_message_pos_y: 68,
+	hero_countdown_pos_x: 50,
+	hero_countdown_pos_y: 76,
+	hero_live_badge_pos_x: 50,
+	hero_live_badge_pos_y: 76,
+	hero_text_pos_x: 50,
+	hero_text_pos_y: 48,
+	hero_cta_pos_x: 50,
+	hero_cta_pos_y: 78,
 	title_color: '#111111',
 	description_color: '#6B7280',
 	badge_color: '#E62727',
@@ -55,15 +72,6 @@ function isLikelyExternalVideoUrl(url: string) {
 	} catch {
 		return false
 	}
-}
-
-function isEmbeddableVideoUrl(url: string) {
-	const normalized = url.toLowerCase()
-	return (
-		normalized.includes('vimeo.com') ||
-		normalized.includes('youtube.com') ||
-		normalized.includes('youtu.be')
-	)
 }
 
 function formatDropDate(
@@ -134,6 +142,78 @@ function normalizeHeroConfig(
 	return {
 		...fallback,
 		...(value || {}),
+		hero_badge_pos_x:
+			typeof value?.hero_badge_pos_x === 'number'
+				? Math.max(0, Math.min(100, value.hero_badge_pos_x))
+				: fallback.hero_badge_pos_x,
+		hero_badge_pos_y:
+			typeof value?.hero_badge_pos_y === 'number'
+				? Math.max(0, Math.min(100, value.hero_badge_pos_y))
+				: fallback.hero_badge_pos_y,
+		hero_title_pos_x:
+			typeof value?.hero_title_pos_x === 'number'
+				? Math.max(0, Math.min(100, value.hero_title_pos_x))
+				: typeof value?.hero_text_pos_x === 'number'
+					? Math.max(0, Math.min(100, value.hero_text_pos_x))
+					: fallback.hero_title_pos_x,
+		hero_title_pos_y:
+			typeof value?.hero_title_pos_y === 'number'
+				? Math.max(0, Math.min(100, value.hero_title_pos_y))
+				: typeof value?.hero_text_pos_y === 'number'
+					? Math.max(0, Math.min(100, value.hero_text_pos_y))
+					: fallback.hero_title_pos_y,
+		hero_description_pos_x:
+			typeof value?.hero_description_pos_x === 'number'
+				? Math.max(0, Math.min(100, value.hero_description_pos_x))
+				: typeof value?.hero_text_pos_x === 'number'
+					? Math.max(0, Math.min(100, value.hero_text_pos_x))
+					: fallback.hero_description_pos_x,
+		hero_description_pos_y:
+			typeof value?.hero_description_pos_y === 'number'
+				? Math.max(0, Math.min(100, value.hero_description_pos_y))
+				: typeof value?.hero_text_pos_y === 'number'
+					? Math.max(0, Math.min(100, value.hero_text_pos_y))
+					: fallback.hero_description_pos_y,
+		hero_drop_message_pos_x:
+			typeof value?.hero_drop_message_pos_x === 'number'
+				? Math.max(0, Math.min(100, value.hero_drop_message_pos_x))
+				: fallback.hero_drop_message_pos_x,
+		hero_drop_message_pos_y:
+			typeof value?.hero_drop_message_pos_y === 'number'
+				? Math.max(0, Math.min(100, value.hero_drop_message_pos_y))
+				: fallback.hero_drop_message_pos_y,
+		hero_countdown_pos_x:
+			typeof value?.hero_countdown_pos_x === 'number'
+				? Math.max(0, Math.min(100, value.hero_countdown_pos_x))
+				: fallback.hero_countdown_pos_x,
+		hero_countdown_pos_y:
+			typeof value?.hero_countdown_pos_y === 'number'
+				? Math.max(0, Math.min(100, value.hero_countdown_pos_y))
+				: fallback.hero_countdown_pos_y,
+		hero_live_badge_pos_x:
+			typeof value?.hero_live_badge_pos_x === 'number'
+				? Math.max(0, Math.min(100, value.hero_live_badge_pos_x))
+				: fallback.hero_live_badge_pos_x,
+		hero_live_badge_pos_y:
+			typeof value?.hero_live_badge_pos_y === 'number'
+				? Math.max(0, Math.min(100, value.hero_live_badge_pos_y))
+				: fallback.hero_live_badge_pos_y,
+		hero_text_pos_x:
+			typeof value?.hero_text_pos_x === 'number'
+				? Math.max(0, Math.min(100, value.hero_text_pos_x))
+				: fallback.hero_text_pos_x,
+		hero_text_pos_y:
+			typeof value?.hero_text_pos_y === 'number'
+				? Math.max(0, Math.min(100, value.hero_text_pos_y))
+				: fallback.hero_text_pos_y,
+		hero_cta_pos_x:
+			typeof value?.hero_cta_pos_x === 'number'
+				? Math.max(0, Math.min(100, value.hero_cta_pos_x))
+				: fallback.hero_cta_pos_x,
+		hero_cta_pos_y:
+			typeof value?.hero_cta_pos_y === 'number'
+				? Math.max(0, Math.min(100, value.hero_cta_pos_y))
+				: fallback.hero_cta_pos_y,
 		background_image_mobile:
 			value?.background_image_mobile || fallback.background_image,
 		background_video_url:
@@ -161,13 +241,13 @@ function normalizeHeroConfig(
 		drop_display_mode:
 			value?.drop_display_mode || fallback.drop_display_mode,
 		drop_message_template_scheduled:
-			value?.drop_message_template_scheduled ||
+			value?.drop_message_template_scheduled ??
 			fallback.drop_message_template_scheduled,
 		drop_message_template_live:
-			value?.drop_message_template_live ||
+			value?.drop_message_template_live ??
 			fallback.drop_message_template_live,
 		drop_message_template_ended:
-			value?.drop_message_template_ended ||
+			value?.drop_message_template_ended ??
 			fallback.drop_message_template_ended,
 		drop_text_alignment:
 			value?.drop_text_alignment === 'center' ||
@@ -367,149 +447,139 @@ export async function Hero() {
 			: 'black'
 
 	return (
-		<section className="relative overflow-hidden border-b border-border bg-secondary">
-			{value.background_video_url ? (
-				isEmbeddableVideoUrl(value.background_video_url) ? (
-					<iframe
-						src={value.background_video_url}
-						className="pointer-events-none absolute inset-0 h-full w-full"
-						title="Hero background video"
-						allow="autoplay; fullscreen; picture-in-picture"
-						loading="lazy"
-					/>
-				) : (
-					<video
-						className="pointer-events-none absolute inset-0 h-full w-full object-cover"
-						autoPlay
-						loop
-						muted
-						playsInline
-						preload="metadata"
+		<HeroBannerLayout
+			bannerHeight={value.banner_height}
+			overlayOpacity={value.overlay_opacity}
+			backgroundImage={value.background_image}
+			backgroundImageMobile={
+				value.background_image_mobile || value.background_image
+			}
+			backgroundVideoUrl={value.background_video_url}
+			renderEmbeddableVideo
+			showBottomBorder
+		>
+					{value.badge && (
+						<p
+							className={`absolute text-sm font-bold tracking-widest ${alignmentClassBySetting[value.content_alignment]}`}
+							style={{
+								left: `${value.hero_badge_pos_x}%`,
+								top: `${value.hero_badge_pos_y}%`,
+								transform: 'translate(-50%, -50%)',
+								color: value.badge_color,
+							}}
+						>
+							{value.badge}
+						</p>
+					)}
+
+					<h1
+						className={`absolute max-w-2xl text-balance text-5xl leading-none tracking-tighter md:text-7xl lg:text-8xl ${titleWeightClassBySetting[titleFontWeight]} ${alignmentClassBySetting[value.content_alignment]}`}
+						style={{
+							left: `${value.hero_title_pos_x}%`,
+							top: `${value.hero_title_pos_y}%`,
+							transform: 'translate(-50%, -50%)',
+							color: value.title_color,
+						}}
 					>
-						<source src={value.background_video_url} />
-					</video>
-				)
-			) : value.background_image ? (
-				<>
-					<picture>
-						<source
-							media="(max-width: 767px)"
-							srcSet={
-								value.background_image_mobile ||
-								value.background_image
-							}
-						/>
-						<img
-							src={value.background_image}
-							alt="Hero background"
-							className="absolute inset-0 h-full w-full object-cover"
-							loading="eager"
-						/>
-					</picture>
-				</>
-			) : null}
+						{value.title}
+					</h1>
 
-			<div
-				className="absolute inset-0 z-0 bg-black"
-				style={{ opacity: value.overlay_opacity / 100 }}
-			/>
+					{value.description && (
+						<p
+							className={`absolute max-w-xl text-lg md:text-xl ${alignmentClassBySetting[value.content_alignment]}`}
+							style={{
+								left: `${value.hero_description_pos_x}%`,
+								top: `${value.hero_description_pos_y}%`,
+								transform: 'translate(-50%, -50%)',
+								color: value.description_color,
+							}}
+						>
+							{value.description}
+						</p>
+					)}
 
-			<div className="relative z-10 container mx-auto px-4">
-				<div
-					className={`flex ${heightClassBySetting[value.banner_height]} flex-col justify-center py-14`}
-				>
-					<div
-						className={`flex w-full flex-col ${alignmentClassBySetting[value.content_alignment]}`}
-					>
-						<div className="max-w-2xl">
-							{value.badge && (
-								<p
-									className="mb-4 text-sm font-bold tracking-widest"
-									style={{ color: value.badge_color }}
-								>
-									{value.badge}
-								</p>
-							)}
+					{shouldShowDropMessage && resolvedDropMessage && (
+						<p
+							className={`absolute max-w-lg text-sm font-semibold tracking-wide text-white/90 ${dropTextAlignmentClass}`}
+							style={{
+								left: `${value.hero_drop_message_pos_x}%`,
+								top: `${value.hero_drop_message_pos_y}%`,
+								transform: 'translate(-50%, -50%)',
+							}}
+						>
+							{resolvedDropMessage}
+						</p>
+					)}
 
-							<h1
-								className={`mb-6 text-balance text-5xl leading-none tracking-tighter md:text-7xl lg:text-8xl ${titleWeightClassBySetting[titleFontWeight]}`}
-								style={{ color: value.title_color }}
-							>
-								{value.title}
-							</h1>
-
-							{value.description && (
-								<p
-									className="mb-8 max-w-xl text-lg md:text-xl"
-									style={{ color: value.description_color }}
-								>
-									{value.description}
-								</p>
-							)}
-
-							<div
-								className={`mb-3 flex flex-col ${dropTextAlignmentClass}`}
-							>
-								{shouldShowDropMessage && resolvedDropMessage && (
-									<p className="mb-3 text-sm font-semibold tracking-wide text-white/90">
-										{resolvedDropMessage}
-									</p>
-								)}
-
-								{shouldShowCountdown && linkedDrop?.start_time && (
-									<HeroDropCountdown
-										targetDate={linkedDrop.start_time}
-										containerBgColor={value.drop_countdown_bg_color}
-										unitBgColor="rgba(0,0,0,0.35)"
-										textColor={value.drop_countdown_text_color}
-									/>
-								)}
-
-								{shouldShowLiveBadge && (
-									<span
-										className="mb-3 inline-flex w-fit rounded-md px-3 py-1 text-xs font-bold tracking-wider"
-										style={{
-											backgroundColor: value.drop_live_badge_bg_color,
-											color: value.drop_live_badge_text_color,
-										}}
-									>
-										{value.drop_live_badge_text}
-									</span>
-								)}
-							</div>
-
-							{shouldShowCta &&
-								(ctaDisabled ? (
-									<Button
-										disabled
-										tabIndex={-1}
-										aria-disabled="true"
-										className="cursor-not-allowed px-10 py-6 text-base font-bold opacity-80"
-										style={{
-											backgroundColor: value.button_bg_color,
-											color: value.button_text_color,
-										}}
-									>
-										{ctaLabel}
-									</Button>
-								) : (
-									<Button
-										asChild
-										className="px-10 py-6 text-base font-bold"
-										style={{
-											backgroundColor: value.button_bg_color,
-											color: value.button_text_color,
-										}}
-									>
-										<Link href={value.cta_link}>{ctaLabel}</Link>
-									</Button>
-								))}
+					{shouldShowCountdown && linkedDrop?.start_time && (
+						<div
+							className="absolute"
+							style={{
+								left: `${value.hero_countdown_pos_x}%`,
+								top: `${value.hero_countdown_pos_y}%`,
+								transform: 'translate(-50%, -50%)',
+							}}
+						>
+							<HeroDropCountdown
+								targetDate={linkedDrop.start_time}
+								containerBgColor={value.drop_countdown_bg_color}
+								unitBgColor="rgba(0,0,0,0.35)"
+								textColor={value.drop_countdown_text_color}
+							/>
 						</div>
-					</div>
-				</div>
-			</div>
+					)}
 
-			<div className="absolute bottom-0 left-0 right-0 h-px bg-foreground" />
-		</section>
+					{shouldShowLiveBadge && (
+						<span
+							className="absolute inline-flex w-fit rounded-md px-3 py-1 text-xs font-bold tracking-wider"
+							style={{
+								left: `${value.hero_live_badge_pos_x}%`,
+								top: `${value.hero_live_badge_pos_y}%`,
+								transform: 'translate(-50%, -50%)',
+								backgroundColor: value.drop_live_badge_bg_color,
+								color: value.drop_live_badge_text_color,
+							}}
+						>
+							{value.drop_live_badge_text}
+						</span>
+					)}
+
+					{shouldShowCta && (
+						<div
+							className="absolute"
+							style={{
+								left: `${value.hero_cta_pos_x}%`,
+								top: `${value.hero_cta_pos_y}%`,
+								transform: 'translate(-50%, -50%)',
+							}}
+						>
+							{ctaDisabled ? (
+								<Button
+									disabled
+									tabIndex={-1}
+									aria-disabled="true"
+									className="cursor-not-allowed px-10 py-6 text-base font-bold opacity-80"
+									style={{
+										backgroundColor: value.button_bg_color,
+										color: value.button_text_color,
+									}}
+								>
+									{ctaLabel}
+								</Button>
+							) : (
+								<Button
+									asChild
+									className="px-10 py-6 text-base font-bold"
+									style={{
+										backgroundColor: value.button_bg_color,
+										color: value.button_text_color,
+									}}
+								>
+									<Link href={value.cta_link}>{ctaLabel}</Link>
+								</Button>
+							)}
+						</div>
+					)}
+		</HeroBannerLayout>
 	)
 }
