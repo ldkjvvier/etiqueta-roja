@@ -458,128 +458,128 @@ export async function Hero() {
 			renderEmbeddableVideo
 			showBottomBorder
 		>
-					{value.badge && (
-						<p
-							className={`absolute text-sm font-bold tracking-widest ${alignmentClassBySetting[value.content_alignment]}`}
+			{value.badge && (
+				<p
+					className={`absolute text-sm font-bold tracking-widest ${alignmentClassBySetting[value.content_alignment]}`}
+					style={{
+						left: `${value.hero_badge_pos_x}%`,
+						top: `${value.hero_badge_pos_y}%`,
+						transform: 'translate(-50%, -50%)',
+						color: value.badge_color,
+					}}
+				>
+					{value.badge}
+				</p>
+			)}
+
+			<h1
+				className={`absolute max-w-2xl text-balance text-5xl leading-none tracking-tighter md:text-7xl lg:text-8xl ${titleWeightClassBySetting[titleFontWeight]} ${alignmentClassBySetting[value.content_alignment]}`}
+				style={{
+					left: `${value.hero_title_pos_x}%`,
+					top: `${value.hero_title_pos_y}%`,
+					transform: 'translate(-50%, -50%)',
+					color: value.title_color,
+				}}
+			>
+				{value.title}
+			</h1>
+
+			{value.description && (
+				<p
+					className={`absolute max-w-xl text-lg md:text-xl ${alignmentClassBySetting[value.content_alignment]}`}
+					style={{
+						left: `${value.hero_description_pos_x}%`,
+						top: `${value.hero_description_pos_y}%`,
+						transform: 'translate(-50%, -50%)',
+						color: value.description_color,
+					}}
+				>
+					{value.description}
+				</p>
+			)}
+
+			{shouldShowDropMessage && resolvedDropMessage && (
+				<p
+					className={`absolute max-w-lg text-sm font-semibold tracking-wide text-white/90 ${dropTextAlignmentClass}`}
+					style={{
+						left: `${value.hero_drop_message_pos_x}%`,
+						top: `${value.hero_drop_message_pos_y}%`,
+						transform: 'translate(-50%, -50%)',
+					}}
+				>
+					{resolvedDropMessage}
+				</p>
+			)}
+
+			{shouldShowCountdown && linkedDrop?.start_time && (
+				<div
+					className="absolute"
+					style={{
+						left: `${value.hero_countdown_pos_x}%`,
+						top: `${value.hero_countdown_pos_y}%`,
+						transform: 'translate(-50%, -50%)',
+					}}
+				>
+					<HeroDropCountdown
+						targetDate={linkedDrop.start_time}
+						containerBgColor={value.drop_countdown_bg_color}
+						unitBgColor="rgba(0,0,0,0.35)"
+						textColor={value.drop_countdown_text_color}
+					/>
+				</div>
+			)}
+
+			{shouldShowLiveBadge && (
+				<span
+					className="absolute inline-flex w-fit rounded-md px-3 py-1 text-xs font-bold tracking-wider"
+					style={{
+						left: `${value.hero_live_badge_pos_x}%`,
+						top: `${value.hero_live_badge_pos_y}%`,
+						transform: 'translate(-50%, -50%)',
+						backgroundColor: value.drop_live_badge_bg_color,
+						color: value.drop_live_badge_text_color,
+					}}
+				>
+					{value.drop_live_badge_text}
+				</span>
+			)}
+
+			{shouldShowCta && (
+				<div
+					className="absolute"
+					style={{
+						left: `${value.hero_cta_pos_x}%`,
+						top: `${value.hero_cta_pos_y}%`,
+						transform: 'translate(-50%, -50%)',
+					}}
+				>
+					{ctaDisabled ? (
+						<Button
+							disabled
+							tabIndex={-1}
+							aria-disabled="true"
+							className="cursor-not-allowed px-10 py-6 text-base font-bold opacity-80"
 							style={{
-								left: `${value.hero_badge_pos_x}%`,
-								top: `${value.hero_badge_pos_y}%`,
-								transform: 'translate(-50%, -50%)',
-								color: value.badge_color,
+								backgroundColor: value.button_bg_color,
+								color: value.button_text_color,
 							}}
 						>
-							{value.badge}
-						</p>
-					)}
-
-					<h1
-						className={`absolute max-w-2xl text-balance text-5xl leading-none tracking-tighter md:text-7xl lg:text-8xl ${titleWeightClassBySetting[titleFontWeight]} ${alignmentClassBySetting[value.content_alignment]}`}
-						style={{
-							left: `${value.hero_title_pos_x}%`,
-							top: `${value.hero_title_pos_y}%`,
-							transform: 'translate(-50%, -50%)',
-							color: value.title_color,
-						}}
-					>
-						{value.title}
-					</h1>
-
-					{value.description && (
-						<p
-							className={`absolute max-w-xl text-lg md:text-xl ${alignmentClassBySetting[value.content_alignment]}`}
+							{ctaLabel}
+						</Button>
+					) : (
+						<Button
+							asChild
+							className="px-10 py-6 text-base font-bold"
 							style={{
-								left: `${value.hero_description_pos_x}%`,
-								top: `${value.hero_description_pos_y}%`,
-								transform: 'translate(-50%, -50%)',
-								color: value.description_color,
+								backgroundColor: value.button_bg_color,
+								color: value.button_text_color,
 							}}
 						>
-							{value.description}
-						</p>
+							<Link href={value.cta_link}>{ctaLabel}</Link>
+						</Button>
 					)}
-
-					{shouldShowDropMessage && resolvedDropMessage && (
-						<p
-							className={`absolute max-w-lg text-sm font-semibold tracking-wide text-white/90 ${dropTextAlignmentClass}`}
-							style={{
-								left: `${value.hero_drop_message_pos_x}%`,
-								top: `${value.hero_drop_message_pos_y}%`,
-								transform: 'translate(-50%, -50%)',
-							}}
-						>
-							{resolvedDropMessage}
-						</p>
-					)}
-
-					{shouldShowCountdown && linkedDrop?.start_time && (
-						<div
-							className="absolute"
-							style={{
-								left: `${value.hero_countdown_pos_x}%`,
-								top: `${value.hero_countdown_pos_y}%`,
-								transform: 'translate(-50%, -50%)',
-							}}
-						>
-							<HeroDropCountdown
-								targetDate={linkedDrop.start_time}
-								containerBgColor={value.drop_countdown_bg_color}
-								unitBgColor="rgba(0,0,0,0.35)"
-								textColor={value.drop_countdown_text_color}
-							/>
-						</div>
-					)}
-
-					{shouldShowLiveBadge && (
-						<span
-							className="absolute inline-flex w-fit rounded-md px-3 py-1 text-xs font-bold tracking-wider"
-							style={{
-								left: `${value.hero_live_badge_pos_x}%`,
-								top: `${value.hero_live_badge_pos_y}%`,
-								transform: 'translate(-50%, -50%)',
-								backgroundColor: value.drop_live_badge_bg_color,
-								color: value.drop_live_badge_text_color,
-							}}
-						>
-							{value.drop_live_badge_text}
-						</span>
-					)}
-
-					{shouldShowCta && (
-						<div
-							className="absolute"
-							style={{
-								left: `${value.hero_cta_pos_x}%`,
-								top: `${value.hero_cta_pos_y}%`,
-								transform: 'translate(-50%, -50%)',
-							}}
-						>
-							{ctaDisabled ? (
-								<Button
-									disabled
-									tabIndex={-1}
-									aria-disabled="true"
-									className="cursor-not-allowed px-10 py-6 text-base font-bold opacity-80"
-									style={{
-										backgroundColor: value.button_bg_color,
-										color: value.button_text_color,
-									}}
-								>
-									{ctaLabel}
-								</Button>
-							) : (
-								<Button
-									asChild
-									className="px-10 py-6 text-base font-bold"
-									style={{
-										backgroundColor: value.button_bg_color,
-										color: value.button_text_color,
-									}}
-								>
-									<Link href={value.cta_link}>{ctaLabel}</Link>
-								</Button>
-							)}
-						</div>
-					)}
+				</div>
+			)}
 		</HeroBannerLayout>
 	)
 }

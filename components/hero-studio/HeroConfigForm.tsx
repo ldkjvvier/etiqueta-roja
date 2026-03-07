@@ -1,9 +1,14 @@
 'use client'
 
-import { HeroDropOption, HeroStudioState } from '@/types/heroStudio.types'
+import {
+	HeroDropOption,
+	HeroStudioState,
+} from '@/types/heroStudio.types'
 import { HeroControlsSidebar } from './HeroControlsSidebar'
 
-type Dispatch = React.ComponentProps<typeof HeroControlsSidebar>['dispatch']
+type Dispatch = React.ComponentProps<
+	typeof HeroControlsSidebar
+>['dispatch']
 
 interface HeroConfigFormProps {
 	state: HeroStudioState

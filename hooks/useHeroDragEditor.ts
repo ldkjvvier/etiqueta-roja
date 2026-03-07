@@ -9,7 +9,10 @@ import { clampPercent } from '@/services/heroDropService'
 
 interface UseHeroDragEditorArgs {
 	positions: HeroPositions
-	onPositionChange: (target: HeroElementType, position: HeroPosition) => void
+	onPositionChange: (
+		target: HeroElementType,
+		position: HeroPosition,
+	) => void
 	enabled: boolean
 }
 
@@ -61,7 +64,10 @@ export function useHeroDragEditor({
 	)
 
 	const onPointerDown = useCallback(
-		(target: HeroElementType, event: React.PointerEvent<HTMLDivElement>) => {
+		(
+			target: HeroElementType,
+			event: React.PointerEvent<HTMLDivElement>,
+		) => {
 			if (!enabled || !canvasRef.current) {
 				return
 			}

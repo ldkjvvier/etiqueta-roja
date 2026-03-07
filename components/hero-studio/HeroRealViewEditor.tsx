@@ -4,7 +4,10 @@ import { useEffect } from 'react'
 import { Header } from '@/components/header'
 import { StoreProvider } from '@/lib/store-context'
 import { HeroDropPreview } from '@/services/heroDropService'
-import { HeroElementType, HeroStudioState } from '@/types/heroStudio.types'
+import {
+	HeroElementType,
+	HeroStudioState,
+} from '@/types/heroStudio.types'
 import { HeroElementRenderer } from './HeroElementRenderer'
 import { Button } from '@/components/ui/button'
 import { useHeroDragEditor } from '@/hooks/useHeroDragEditor'
@@ -15,7 +18,11 @@ interface HeroRealViewEditorProps {
 	state: HeroStudioState
 	dropPreview: HeroDropPreview
 	onClose: () => void
-	onPositionChange: (target: HeroElementType, x: number, y: number) => void
+	onPositionChange: (
+		target: HeroElementType,
+		x: number,
+		y: number,
+	) => void
 }
 
 export function HeroRealViewEditor({
@@ -64,8 +71,12 @@ export function HeroRealViewEditor({
 			<div className="flex h-full flex-col overflow-hidden rounded-xl border bg-background">
 				<div className="flex items-center justify-between border-b px-4 py-3">
 					<div>
-						<p className="text-sm font-semibold">Vista real (drag habilitado)</p>
-						<p className="text-xs text-muted-foreground">Posiciona elementos como se verán en el sitio.</p>
+						<p className="text-sm font-semibold">
+							Vista real (drag habilitado)
+						</p>
+						<p className="text-xs text-muted-foreground">
+							Posiciona elementos como se verán en el sitio.
+						</p>
 					</div>
 					<Button type="button" variant="outline" onClick={onClose}>
 						Cerrar vista real

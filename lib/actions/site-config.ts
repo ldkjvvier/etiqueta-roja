@@ -170,59 +170,109 @@ export async function updateHomeHeroBanner(
 					...parsedPayload.value,
 					hero_badge_pos_x: Math.max(
 						0,
-						Math.min(100, Number(parsedPayload.value.hero_badge_pos_x ?? 50)),
+						Math.min(
+							100,
+							Number(parsedPayload.value.hero_badge_pos_x ?? 50),
+						),
 					),
 					hero_badge_pos_y: Math.max(
 						0,
-						Math.min(100, Number(parsedPayload.value.hero_badge_pos_y ?? 30)),
+						Math.min(
+							100,
+							Number(parsedPayload.value.hero_badge_pos_y ?? 30),
+						),
 					),
 					hero_title_pos_x: Math.max(
 						0,
-						Math.min(100, Number(parsedPayload.value.hero_title_pos_x ?? 50)),
+						Math.min(
+							100,
+							Number(parsedPayload.value.hero_title_pos_x ?? 50),
+						),
 					),
 					hero_title_pos_y: Math.max(
 						0,
-						Math.min(100, Number(parsedPayload.value.hero_title_pos_y ?? 44)),
+						Math.min(
+							100,
+							Number(parsedPayload.value.hero_title_pos_y ?? 44),
+						),
 					),
 					hero_description_pos_x: Math.max(
 						0,
-						Math.min(100, Number(parsedPayload.value.hero_description_pos_x ?? 50)),
+						Math.min(
+							100,
+							Number(
+								parsedPayload.value.hero_description_pos_x ?? 50,
+							),
+						),
 					),
 					hero_description_pos_y: Math.max(
 						0,
-						Math.min(100, Number(parsedPayload.value.hero_description_pos_y ?? 58)),
+						Math.min(
+							100,
+							Number(
+								parsedPayload.value.hero_description_pos_y ?? 58,
+							),
+						),
 					),
 					hero_drop_message_pos_x: Math.max(
 						0,
-						Math.min(100, Number(parsedPayload.value.hero_drop_message_pos_x ?? 50)),
+						Math.min(
+							100,
+							Number(
+								parsedPayload.value.hero_drop_message_pos_x ?? 50,
+							),
+						),
 					),
 					hero_drop_message_pos_y: Math.max(
 						0,
-						Math.min(100, Number(parsedPayload.value.hero_drop_message_pos_y ?? 68)),
+						Math.min(
+							100,
+							Number(
+								parsedPayload.value.hero_drop_message_pos_y ?? 68,
+							),
+						),
 					),
 					hero_countdown_pos_x: Math.max(
 						0,
-						Math.min(100, Number(parsedPayload.value.hero_countdown_pos_x ?? 50)),
+						Math.min(
+							100,
+							Number(parsedPayload.value.hero_countdown_pos_x ?? 50),
+						),
 					),
 					hero_countdown_pos_y: Math.max(
 						0,
-						Math.min(100, Number(parsedPayload.value.hero_countdown_pos_y ?? 76)),
+						Math.min(
+							100,
+							Number(parsedPayload.value.hero_countdown_pos_y ?? 76),
+						),
 					),
 					hero_live_badge_pos_x: Math.max(
 						0,
-						Math.min(100, Number(parsedPayload.value.hero_live_badge_pos_x ?? 50)),
+						Math.min(
+							100,
+							Number(parsedPayload.value.hero_live_badge_pos_x ?? 50),
+						),
 					),
 					hero_live_badge_pos_y: Math.max(
 						0,
-						Math.min(100, Number(parsedPayload.value.hero_live_badge_pos_y ?? 76)),
+						Math.min(
+							100,
+							Number(parsedPayload.value.hero_live_badge_pos_y ?? 76),
+						),
 					),
 					hero_cta_pos_x: Math.max(
 						0,
-						Math.min(100, Number(parsedPayload.value.hero_cta_pos_x ?? 50)),
+						Math.min(
+							100,
+							Number(parsedPayload.value.hero_cta_pos_x ?? 50),
+						),
 					),
 					hero_cta_pos_y: Math.max(
 						0,
-						Math.min(100, Number(parsedPayload.value.hero_cta_pos_y ?? 78)),
+						Math.min(
+							100,
+							Number(parsedPayload.value.hero_cta_pos_y ?? 78),
+						),
 					),
 					hero_text_pos_x: Math.max(
 						0,
@@ -248,7 +298,10 @@ export async function updateHomeHeroBanner(
 					),
 					overlay_opacity: Math.max(
 						0,
-						Math.min(100, Number(parsedPayload.value.overlay_opacity ?? 45)),
+						Math.min(
+							100,
+							Number(parsedPayload.value.overlay_opacity ?? 45),
+						),
 					),
 				}
 
@@ -257,8 +310,7 @@ export async function updateHomeHeroBanner(
 						store_id: store.id,
 						key: 'home_hero_banner',
 						value,
-						description:
-							parsedPayload.internal_description || null,
+						description: parsedPayload.internal_description || null,
 						is_active: Boolean(parsedPayload.is_active ?? true),
 						visibility: 'public',
 						updated_by: user.id,

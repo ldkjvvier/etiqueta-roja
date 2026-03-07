@@ -23,9 +23,15 @@ function HeroCanvasPreviewComponent({
 			<div className="mb-3 flex items-center justify-between gap-3">
 				<div>
 					<p className="text-sm font-semibold">Canvas Preview</p>
-					<p className="text-xs text-muted-foreground">Vista visual sin drag.</p>
+					<p className="text-xs text-muted-foreground">
+						Vista visual sin drag.
+					</p>
 				</div>
-				<Button type="button" variant="outline" onClick={onOpenRealView}>
+				<Button
+					type="button"
+					variant="outline"
+					onClick={onOpenRealView}
+				>
 					Ver vista en tamaño real
 				</Button>
 			</div>
@@ -51,13 +57,25 @@ function HeroCanvasPreviewComponent({
 			</div>
 
 			<div className="mt-3 space-y-1 text-xs text-muted-foreground">
-				{!state.isActive && <p>El banner está desactivado y no se mostrará en la home.</p>}
-				{state.dropConfig.linkedDropId && <p>Drop enlazado: {state.dropConfig.linkedDropId}</p>}
-				{dropPreview.status && <p>Estado preview drop: {dropPreview.status}</p>}
+				{!state.isActive && (
+					<p>
+						El banner está desactivado y no se mostrará en la home.
+					</p>
+				)}
+				{state.dropConfig.linkedDropId && (
+					<p>Drop enlazado: {state.dropConfig.linkedDropId}</p>
+				)}
+				{dropPreview.status && (
+					<p>Estado preview drop: {dropPreview.status}</p>
+				)}
 				<p>Modo drop: {state.dropConfig.dropDisplayMode}</p>
 				{state.cta.link && <p>Destino CTA: {state.cta.link}</p>}
-				{state.media.backgroundImageMobile && <p>Imagen mobile configurada</p>}
-				{state.media.backgroundVideoUrl && <p>Video de fondo activo</p>}
+				{state.media.backgroundImageMobile && (
+					<p>Imagen mobile configurada</p>
+				)}
+				{state.media.backgroundVideoUrl && (
+					<p>Video de fondo activo</p>
+				)}
 			</div>
 		</main>
 	)

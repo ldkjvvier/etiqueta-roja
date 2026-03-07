@@ -4,7 +4,10 @@ import { memo } from 'react'
 import { Button } from '@/components/ui/button'
 import { HeroDropCountdown } from '@/components/HeroDropCountdown'
 import { HeroDropPreview } from '@/services/heroDropService'
-import { HeroElementType, HeroStudioState } from '@/types/heroStudio.types'
+import {
+	HeroElementType,
+	HeroStudioState,
+} from '@/types/heroStudio.types'
 
 type DragPropsGetter = (target: HeroElementType) => {
 	onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void
@@ -48,8 +51,12 @@ function HeroElementRendererComponent({
 	dragTarget,
 	getDragProps,
 }: HeroElementRendererProps) {
-	const alignmentClass = getAlignmentClass(state.layout.contentAlignment)
-	const titleWeightClass = getTitleWeightClass(state.styles.titleFontWeight)
+	const alignmentClass = getAlignmentClass(
+		state.layout.contentAlignment,
+	)
+	const titleWeightClass = getTitleWeightClass(
+		state.styles.titleFontWeight,
+	)
 
 	const renderDragProps = (target: HeroElementType) => {
 		if (!dragEnabled || !getDragProps) {
@@ -112,7 +119,10 @@ function HeroElementRendererComponent({
 					onPointerDown={descriptionDragProps.onPointerDown}
 				>
 					{dragEnabled && <DragHandle label="Mover descripción" />}
-					<p className="text-lg md:text-xl" style={{ color: state.styles.descriptionColor }}>
+					<p
+						className="text-lg md:text-xl"
+						style={{ color: state.styles.descriptionColor }}
+					>
 						{state.content.description}
 					</p>
 				</div>
@@ -128,7 +138,9 @@ function HeroElementRendererComponent({
 					onPointerDown={messageDragProps.onPointerDown}
 				>
 					{dragEnabled && <DragHandle label="Mover mensaje drop" />}
-					<p className="text-sm font-semibold tracking-wide text-white/90">{dropPreview.message}</p>
+					<p className="text-sm font-semibold tracking-wide text-white/90">
+						{dropPreview.message}
+					</p>
 				</div>
 			)}
 
@@ -148,24 +160,26 @@ function HeroElementRendererComponent({
 				</div>
 			)}
 
-			{dropPreview.showLiveBadge && state.dropConfig.dropLiveBadgeText && (
-				<div
-					className={`absolute ${dragEnabled && dragTarget === 'live-badge' ? 'ring-2 ring-primary' : ''} ${dragEnabled ? 'cursor-grab active:cursor-grabbing' : ''}`}
-					style={liveBadgeDragProps.style}
-					onPointerDown={liveBadgeDragProps.onPointerDown}
-				>
-					{dragEnabled && <DragHandle label="Mover live badge" />}
-					<span
-						className="inline-flex w-fit rounded-md px-3 py-1 text-xs font-bold tracking-wider"
-						style={{
-							backgroundColor: state.dropConfig.dropLiveBadgeBgColor,
-							color: state.dropConfig.dropLiveBadgeTextColor,
-						}}
+			{dropPreview.showLiveBadge &&
+				state.dropConfig.dropLiveBadgeText && (
+					<div
+						className={`absolute ${dragEnabled && dragTarget === 'live-badge' ? 'ring-2 ring-primary' : ''} ${dragEnabled ? 'cursor-grab active:cursor-grabbing' : ''}`}
+						style={liveBadgeDragProps.style}
+						onPointerDown={liveBadgeDragProps.onPointerDown}
 					>
-						{state.dropConfig.dropLiveBadgeText}
-					</span>
-				</div>
-			)}
+						{dragEnabled && <DragHandle label="Mover live badge" />}
+						<span
+							className="inline-flex w-fit rounded-md px-3 py-1 text-xs font-bold tracking-wider"
+							style={{
+								backgroundColor:
+									state.dropConfig.dropLiveBadgeBgColor,
+								color: state.dropConfig.dropLiveBadgeTextColor,
+							}}
+						>
+							{state.dropConfig.dropLiveBadgeText}
+						</span>
+					</div>
+				)}
 
 			{dropPreview.showCta && dropPreview.ctaText && (
 				<div

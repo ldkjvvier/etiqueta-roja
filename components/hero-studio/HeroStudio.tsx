@@ -14,7 +14,10 @@ import { HeroCanvasPreview } from './HeroCanvasPreview'
 import { HeroRealViewEditor } from './HeroRealViewEditor'
 import { HeroConfigForm } from './HeroConfigForm'
 import { HeroPositionControls } from './HeroPositionControls'
-import { buildDropPreview, isValidExternalVideoUrl } from '@/services/heroDropService'
+import {
+	buildDropPreview,
+	isValidExternalVideoUrl,
+} from '@/services/heroDropService'
 import { useHeroStudioState } from '@/hooks/useHeroStudioState'
 import { HeroDropOption } from '@/types/heroStudio.types'
 import { HomeHeroBannerConfig } from '@/lib/services/site-config-server'
@@ -40,14 +43,17 @@ export function HeroStudio({
 	)
 	const [isStudioOpen, setIsStudioOpen] = useState(false)
 	const [isRealViewOpen, setIsRealViewOpen] = useState(false)
-	const [previewNowMs, setPreviewNowMs] = useState<number>(() => Date.now())
+	const [previewNowMs, setPreviewNowMs] = useState<number>(() =>
+		Date.now(),
+	)
 
-	const { state, dispatch, selectedDrop, submitPayload } = useHeroStudioState({
-		initialData,
-		isActive,
-		initialDescription,
-		dropOptions,
-	})
+	const { state, dispatch, selectedDrop, submitPayload } =
+		useHeroStudioState({
+			initialData,
+			isActive,
+			initialDescription,
+			dropOptions,
+		})
 
 	const hasInvalidVideoUrl = useMemo(
 		() => !isValidExternalVideoUrl(state.media.backgroundVideoUrl),
@@ -107,7 +113,8 @@ export function HeroStudio({
 				<CardHeader>
 					<CardTitle>Hero Banner Home</CardTitle>
 					<CardDescription>
-						Controla contenido, branding y layout desde un editor full-screen.
+						Controla contenido, branding y layout desde un editor
+						full-screen.
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
@@ -126,7 +133,9 @@ export function HeroStudio({
 					{actionState.message && (
 						<p
 							className={`text-sm ${
-								actionState.error ? 'text-destructive' : 'text-green-600'
+								actionState.error
+									? 'text-destructive'
+									: 'text-green-600'
 							}`}
 						>
 							{actionState.message}
@@ -146,7 +155,9 @@ export function HeroStudio({
 						<div className="flex items-center justify-between border-b bg-background px-5 py-3">
 							<div>
 								<p className="text-sm font-semibold">Hero Studio</p>
-								<p className="text-xs text-muted-foreground">Editor dedicado del banner principal.</p>
+								<p className="text-xs text-muted-foreground">
+									Editor dedicado del banner principal.
+								</p>
 							</div>
 							<div className="flex items-center gap-2">
 								<Button
@@ -156,7 +167,10 @@ export function HeroStudio({
 								>
 									Cerrar
 								</Button>
-								<Button type="submit" disabled={isPending || hasInvalidVideoUrl}>
+								<Button
+									type="submit"
+									disabled={isPending || hasInvalidVideoUrl}
+								>
 									{isPending ? 'Guardando...' : 'Guardar Hero'}
 								</Button>
 							</div>
@@ -167,7 +181,9 @@ export function HeroStudio({
 								state={state}
 								selectedDrop={selectedDrop}
 								dropPreview={dropPreview}
-								onResetPositions={() => dispatch({ type: 'resetPositions' })}
+								onResetPositions={() =>
+									dispatch({ type: 'resetPositions' })
+								}
 							/>
 							<HeroCanvasPreview
 								state={state}
@@ -204,7 +220,11 @@ export function HeroStudio({
 				dropPreview={dropPreview}
 				onClose={() => setIsRealViewOpen(false)}
 				onPositionChange={(target, x, y) =>
-					dispatch({ type: 'setPosition', element: target, position: { x, y } })
+					dispatch({
+						type: 'setPosition',
+						element: target,
+						position: { x, y },
+					})
 				}
 			/>
 		</>

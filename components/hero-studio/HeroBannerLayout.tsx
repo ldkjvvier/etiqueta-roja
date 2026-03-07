@@ -13,9 +13,15 @@ interface HeroBannerLayoutProps {
 	showBottomBorder?: boolean
 	renderEmbeddableVideo?: boolean
 	canvasRef?: React.Ref<HTMLDivElement>
-	onCanvasPointerMove?: (event: React.PointerEvent<HTMLDivElement>) => void
-	onCanvasPointerUp?: (event: React.PointerEvent<HTMLDivElement>) => void
-	onCanvasPointerLeave?: (event: React.PointerEvent<HTMLDivElement>) => void
+	onCanvasPointerMove?: (
+		event: React.PointerEvent<HTMLDivElement>,
+	) => void
+	onCanvasPointerUp?: (
+		event: React.PointerEvent<HTMLDivElement>,
+	) => void
+	onCanvasPointerLeave?: (
+		event: React.PointerEvent<HTMLDivElement>,
+	) => void
 	children: ReactNode
 }
 
@@ -66,7 +72,8 @@ export function HeroBannerLayout({
 			)}
 		>
 			{backgroundVideoUrl ? (
-				renderEmbeddableVideo && isEmbeddableVideoUrl(backgroundVideoUrl) ? (
+				renderEmbeddableVideo &&
+				isEmbeddableVideoUrl(backgroundVideoUrl) ? (
 					<iframe
 						src={backgroundVideoUrl}
 						className="pointer-events-none absolute inset-0 h-full w-full"
@@ -89,7 +96,10 @@ export function HeroBannerLayout({
 			) : backgroundImage ? (
 				<picture>
 					{backgroundImageMobile && (
-						<source media="(max-width: 767px)" srcSet={backgroundImageMobile} />
+						<source
+							media="(max-width: 767px)"
+							srcSet={backgroundImageMobile}
+						/>
 					)}
 					<img
 						src={backgroundImage}
@@ -105,7 +115,12 @@ export function HeroBannerLayout({
 				style={{ opacity: overlayOpacity / 100 }}
 			/>
 
-			<div className={cx('relative z-10 container mx-auto px-4', containerClassName)}>
+			<div
+				className={cx(
+					'relative z-10 container mx-auto px-4',
+					containerClassName,
+				)}
+			>
 				<div
 					ref={canvasRef}
 					className={cx(

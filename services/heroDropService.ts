@@ -56,10 +56,15 @@ function formatDate(
 		} as const,
 	}
 
-	return new Intl.DateTimeFormat(locale, optionsByMode[mode]).format(date)
+	return new Intl.DateTimeFormat(locale, optionsByMode[mode]).format(
+		date,
+	)
 }
 
-function formatTime(value: string | null | undefined, mode: '12' | '24') {
+function formatTime(
+	value: string | null | undefined,
+	mode: '12' | '24',
+) {
 	if (!value) return ''
 	const date = new Date(value)
 	if (Number.isNaN(date.getTime())) return ''
@@ -71,10 +76,16 @@ function formatTime(value: string | null | undefined, mode: '12' | '24') {
 	}).format(date)
 }
 
-function applyTemplate(template: string, params: Record<string, string>) {
-	return template.replace(/\{([a-zA-Z0-9_]+)\}/g, (_, key: string) => {
-		return params[key] ?? ''
-	})
+function applyTemplate(
+	template: string,
+	params: Record<string, string>,
+) {
+	return template.replace(
+		/\{([a-zA-Z0-9_]+)\}/g,
+		(_, key: string) => {
+			return params[key] ?? ''
+		},
+	)
 }
 
 export function resolveDropStatusForPreview(
@@ -86,11 +97,14 @@ export function resolveDropStatusForPreview(
 	}
 
 	const startMs = new Date(drop.start_time).getTime()
-	const endMs = drop.end_time ? new Date(drop.end_time).getTime() : null
+	const endMs = drop.end_time
+		? new Date(drop.end_time).getTime()
+		: null
 
 	if (!Number.isNaN(startMs)) {
 		if (nowMs < startMs) return 'scheduled'
-		if (endMs && !Number.isNaN(endMs) && nowMs >= endMs) return 'ended'
+		if (endMs && !Number.isNaN(endMs) && nowMs >= endMs)
+			return 'ended'
 		return 'live'
 	}
 
@@ -103,10 +117,16 @@ export function buildDropPreview(
 	nowMs: number,
 ): HeroDropPreview {
 	const status = resolveDropStatusForPreview(drop, nowMs)
-	const dateLabel = formatDate(drop?.start_time, state.dropConfig.dropDateFormat)
+	const dateLabel = formatDate(
+		drop?.start_time,
+		state.dropConfig.dropDateFormat,
+	)
 	const time12Label = formatTime(drop?.start_time, '12')
 	const time24Label = formatTime(drop?.start_time, '24')
-	const endDateLabel = formatDate(drop?.end_time, state.dropConfig.dropDateFormat)
+	const endDateLabel = formatDate(
+		drop?.end_time,
+		state.dropConfig.dropDateFormat,
+	)
 	const endTime12Label = formatTime(drop?.end_time, '12')
 	const endTime24Label = formatTime(drop?.end_time, '24')
 
@@ -151,11 +171,20 @@ export function buildDropPreview(
 
 	const message =
 		status === 'scheduled'
-			? applyTemplate(state.dropConfig.dropMessageTemplateScheduled, params)
+			? applyTemplate(
+					state.dropConfig.dropMessageTemplateScheduled,
+					params,
+				)
 			: status === 'live'
-				? applyTemplate(state.dropConfig.dropMessageTemplateLive, params)
+				? applyTemplate(
+						state.dropConfig.dropMessageTemplateLive,
+						params,
+					)
 				: status === 'ended'
-					? applyTemplate(state.dropConfig.dropMessageTemplateEnded, params)
+					? applyTemplate(
+							state.dropConfig.dropMessageTemplateEnded,
+							params,
+						)
 					: ''
 
 	const ctaText =
@@ -181,12 +210,14 @@ export function buildDropPreview(
 
 	const showMessage =
 		state.dropConfig.dropDisplayMode === 'message-only' ||
-		(state.dropConfig.dropDisplayMode !== 'hidden' && Boolean(message))
+		(state.dropConfig.dropDisplayMode !== 'hidden' &&
+			Boolean(message))
 
 	const showCta =
 		state.dropConfig.dropDisplayMode !== 'hidden' &&
 		Boolean(ctaText) &&
-		((status === 'scheduled' && state.dropConfig.dropShowCtaScheduled) ||
+		((status === 'scheduled' &&
+			state.dropConfig.dropShowCtaScheduled) ||
 			(status === 'live' && state.dropConfig.dropShowCtaLive) ||
 			(status === 'ended' && state.dropConfig.dropShowCtaEnded) ||
 			(!status && true))

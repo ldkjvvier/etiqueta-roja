@@ -55,7 +55,8 @@ function buildInitialState(
 		},
 		media: {
 			backgroundImage: initialData?.background_image ?? '',
-			backgroundImageMobile: initialData?.background_image_mobile ?? '',
+			backgroundImageMobile:
+				initialData?.background_image_mobile ?? '',
 			backgroundVideoUrl: initialData?.background_video_url ?? '',
 		},
 		cta: {
@@ -108,32 +109,62 @@ function buildInitialState(
 		},
 		positions: {
 			badge: {
-				x: initialData?.hero_badge_pos_x ?? HERO_DEFAULT_POSITIONS.badge.x,
-				y: initialData?.hero_badge_pos_y ?? HERO_DEFAULT_POSITIONS.badge.y,
+				x:
+					initialData?.hero_badge_pos_x ??
+					HERO_DEFAULT_POSITIONS.badge.x,
+				y:
+					initialData?.hero_badge_pos_y ??
+					HERO_DEFAULT_POSITIONS.badge.y,
 			},
 			title: {
-				x: initialData?.hero_title_pos_x ?? initialData?.hero_text_pos_x ?? HERO_DEFAULT_POSITIONS.title.x,
-				y: initialData?.hero_title_pos_y ?? initialData?.hero_text_pos_y ?? HERO_DEFAULT_POSITIONS.title.y,
+				x:
+					initialData?.hero_title_pos_x ??
+					initialData?.hero_text_pos_x ??
+					HERO_DEFAULT_POSITIONS.title.x,
+				y:
+					initialData?.hero_title_pos_y ??
+					initialData?.hero_text_pos_y ??
+					HERO_DEFAULT_POSITIONS.title.y,
 			},
 			description: {
-				x: initialData?.hero_description_pos_x ?? initialData?.hero_text_pos_x ?? HERO_DEFAULT_POSITIONS.description.x,
-				y: initialData?.hero_description_pos_y ?? initialData?.hero_text_pos_y ?? HERO_DEFAULT_POSITIONS.description.y,
+				x:
+					initialData?.hero_description_pos_x ??
+					initialData?.hero_text_pos_x ??
+					HERO_DEFAULT_POSITIONS.description.x,
+				y:
+					initialData?.hero_description_pos_y ??
+					initialData?.hero_text_pos_y ??
+					HERO_DEFAULT_POSITIONS.description.y,
 			},
 			'drop-message': {
-				x: initialData?.hero_drop_message_pos_x ?? HERO_DEFAULT_POSITIONS['drop-message'].x,
-				y: initialData?.hero_drop_message_pos_y ?? HERO_DEFAULT_POSITIONS['drop-message'].y,
+				x:
+					initialData?.hero_drop_message_pos_x ??
+					HERO_DEFAULT_POSITIONS['drop-message'].x,
+				y:
+					initialData?.hero_drop_message_pos_y ??
+					HERO_DEFAULT_POSITIONS['drop-message'].y,
 			},
 			countdown: {
-				x: initialData?.hero_countdown_pos_x ?? HERO_DEFAULT_POSITIONS.countdown.x,
-				y: initialData?.hero_countdown_pos_y ?? HERO_DEFAULT_POSITIONS.countdown.y,
+				x:
+					initialData?.hero_countdown_pos_x ??
+					HERO_DEFAULT_POSITIONS.countdown.x,
+				y:
+					initialData?.hero_countdown_pos_y ??
+					HERO_DEFAULT_POSITIONS.countdown.y,
 			},
 			'live-badge': {
-				x: initialData?.hero_live_badge_pos_x ?? HERO_DEFAULT_POSITIONS['live-badge'].x,
-				y: initialData?.hero_live_badge_pos_y ?? HERO_DEFAULT_POSITIONS['live-badge'].y,
+				x:
+					initialData?.hero_live_badge_pos_x ??
+					HERO_DEFAULT_POSITIONS['live-badge'].x,
+				y:
+					initialData?.hero_live_badge_pos_y ??
+					HERO_DEFAULT_POSITIONS['live-badge'].y,
 			},
 			cta: {
-				x: initialData?.hero_cta_pos_x ?? HERO_DEFAULT_POSITIONS.cta.x,
-				y: initialData?.hero_cta_pos_y ?? HERO_DEFAULT_POSITIONS.cta.y,
+				x:
+					initialData?.hero_cta_pos_x ?? HERO_DEFAULT_POSITIONS.cta.x,
+				y:
+					initialData?.hero_cta_pos_y ?? HERO_DEFAULT_POSITIONS.cta.y,
 			},
 		},
 	}
@@ -216,10 +247,14 @@ export function useHeroStudioState({
 				linked_drop_id: state.dropConfig.linkedDropId,
 				drop_ended_text: state.dropConfig.dropEndedText,
 				drop_live_badge_text: state.dropConfig.dropLiveBadgeText,
-				drop_countdown_bg_color: state.dropConfig.dropCountdownBgColor,
-				drop_countdown_text_color: state.dropConfig.dropCountdownTextColor,
-				drop_live_badge_bg_color: state.dropConfig.dropLiveBadgeBgColor,
-				drop_live_badge_text_color: state.dropConfig.dropLiveBadgeTextColor,
+				drop_countdown_bg_color:
+					state.dropConfig.dropCountdownBgColor,
+				drop_countdown_text_color:
+					state.dropConfig.dropCountdownTextColor,
+				drop_live_badge_bg_color:
+					state.dropConfig.dropLiveBadgeBgColor,
+				drop_live_badge_text_color:
+					state.dropConfig.dropLiveBadgeTextColor,
 				drop_display_mode: state.dropConfig.dropDisplayMode,
 				drop_message_template_scheduled:
 					state.dropConfig.dropMessageTemplateScheduled,
@@ -229,7 +264,8 @@ export function useHeroStudioState({
 					state.dropConfig.dropMessageTemplateEnded,
 				drop_text_alignment: state.dropConfig.dropTextAlignment,
 				drop_date_format: state.dropConfig.dropDateFormat,
-				drop_show_cta_scheduled: state.dropConfig.dropShowCtaScheduled,
+				drop_show_cta_scheduled:
+					state.dropConfig.dropShowCtaScheduled,
 				drop_show_cta_live: state.dropConfig.dropShowCtaLive,
 				drop_show_cta_ended: state.dropConfig.dropShowCtaEnded,
 				drop_show_countdown: state.dropConfig.dropShowCountdown,
