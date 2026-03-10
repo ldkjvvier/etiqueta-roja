@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
 import { Header } from '@/components/header'
+import { AnnouncementBar } from '@/components/announcement-bar'
 import { PromoBanner } from '@/components/promo-banner'
 import { Footer } from '@/components/footer'
 import { ProductDetail } from '@/components/product-detail'
@@ -49,6 +50,7 @@ export default async function ProductPage({
 
 	return (
 		<div className="min-h-screen flex flex-col">
+			<AnnouncementBar />
 			<PromoBanner />
 			<Header />
 			<main className="flex-1">

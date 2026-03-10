@@ -1,4 +1,5 @@
 import { Header } from '@/components/header'
+import { AnnouncementBar } from '@/components/announcement-bar'
 import { PromoBanner } from '@/components/promo-banner'
 import { Hero } from '@/components/hero'
 import { ProductGrid } from '@/components/product-grid'
@@ -10,6 +11,7 @@ export default async function Home() {
 
 	return (
 		<div className="min-h-screen flex flex-col">
+			<AnnouncementBar />
 			<PromoBanner />
 			<Header />
 			<main className="flex-1">
