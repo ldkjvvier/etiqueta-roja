@@ -5,11 +5,7 @@ import {
 	HomeHeroBannerConfig,
 } from '@/lib/services/site-config-server'
 import { getAdminDrops } from '@/lib/services/drops'
-import {
-	PromoBannerForm,
-	ContactInfoForm,
-	HomeHeroBannerForm,
-} from './config-forms'
+import { ConfigDashboard } from './config-dashboard'
 
 export default async function ConfigPage() {
 	const promoConfig =
@@ -19,6 +15,13 @@ export default async function ConfigPage() {
 	const heroBannerConfig = await getSiteConfig<HomeHeroBannerConfig>(
 		'home_hero_banner',
 	)
+	const socialLinksConfig =
+		await getSiteConfig<Record<string, unknown>>('social_links')
+	const announcementBarConfig = await getSiteConfig<
+		Record<string, unknown>
+	>('announcement_bar')
+	const storeSettingsConfig =
+		await getSiteConfig<Record<string, unknown>>('store_settings')
 	const drops = await getAdminDrops({
 		page: 1,
 		limit: 100,
@@ -33,31 +36,14 @@ export default async function ConfigPage() {
 	}))
 
 	return (
-		<div className="space-y-8">
-			<h1 className="text-3xl font-bold">Configuración del Sitio</h1>
-
-			<div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-				<div className="xl:col-span-8">
-					<HomeHeroBannerForm
-						initialData={heroBannerConfig?.value}
-						isActive={heroBannerConfig?.is_active}
-						initialDescription={heroBannerConfig?.description}
-						dropOptions={dropOptions}
-					/>
-				</div>
-				<div className="space-y-6 xl:col-span-4">
-					<PromoBannerForm
-						initialData={promoConfig?.value}
-						isActive={promoConfig?.is_active}
-						initialDescription={promoConfig?.description}
-					/>
-
-					<ContactInfoForm
-						initialData={contactConfig?.value}
-						initialDescription={contactConfig?.description}
-					/>
-				</div>
-			</div>
-		</div>
+		<ConfigDashboard
+			promoConfig={promoConfig}
+			contactConfig={contactConfig}
+			heroBannerConfig={heroBannerConfig}
+			socialLinksConfig={socialLinksConfig}
+			announcementBarConfig={announcementBarConfig}
+			storeSettingsConfig={storeSettingsConfig}
+			dropOptions={dropOptions}
+		/>
 	)
 }

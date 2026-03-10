@@ -177,6 +177,8 @@ export function ProductDetail({
 			name: product.name,
 			price: unitPrice,
 			size: selectedSize,
+			variantId: selectedVariant?.id,
+			combinationKey: selectedVariant?.combinationKey,
 			image: selectedVariant?.imageUrl || product.image,
 			maxStock,
 		})

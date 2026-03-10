@@ -1,4 +1,5 @@
 import { HomeHeroBannerConfig } from '@/lib/services/site-config-server'
+import { HeroCTAConfig } from '@/lib/services/site-config-server'
 
 export type HeroDropStatus = 'scheduled' | 'live' | 'ended'
 
@@ -66,8 +67,20 @@ export interface HeroStudioState {
 		backgroundVideoUrl: string
 	}
 	cta: {
-		text: string
-		link: string
+		text: HeroCTAConfig['text']
+		link: HeroCTAConfig['link']
+		openInNewTab: HeroCTAConfig['openInNewTab']
+		variant: HeroCTAConfig['variant']
+		size: HeroCTAConfig['size']
+		radius: HeroCTAConfig['radius']
+		hoverEffect: HeroCTAConfig['hoverEffect']
+		alignment: HeroCTAConfig['alignment']
+		fullWidth: HeroCTAConfig['fullWidth']
+		backgroundColor: HeroCTAConfig['backgroundColor']
+		textColor: HeroCTAConfig['textColor']
+		borderColor: HeroCTAConfig['borderColor']
+		hoverBackgroundColor: HeroCTAConfig['hoverBackgroundColor']
+		hoverTextColor: HeroCTAConfig['hoverTextColor']
 	}
 	layout: {
 		contentAlignment: HeroContentAlignment
@@ -77,8 +90,6 @@ export interface HeroStudioState {
 		titleColor: string
 		descriptionColor: string
 		badgeColor: string
-		buttonBgColor: string
-		buttonTextColor: string
 		titleFontWeight: HeroTitleFontWeight
 		overlayOpacity: number
 	}

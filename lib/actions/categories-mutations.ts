@@ -15,7 +15,6 @@ function generateSlug(name: string): string {
 
 export async function createCategory(formData: any) {
 	const supabase = await createClient()
-	const store = await getAdminStoreContext()
 
 	const {
 		data: { user },
@@ -23,6 +22,7 @@ export async function createCategory(formData: any) {
 	if (!user) return { message: 'Unauthorized', error: true }
 
 	try {
+		const store = await getAdminStoreContext()
 		const slug = formData.slug || generateSlug(formData.name)
 
 		const { data, error } = await supabase
@@ -44,6 +44,13 @@ export async function createCategory(formData: any) {
 		return { message: 'Categoría creada exitosamente', error: false }
 	} catch (e: any) {
 		console.error('Error creating category:', e)
+		if (e?.code === '42501') {
+			return {
+				message:
+					'No tienes permisos para crear categorias en esta tienda. Verifica user_roles (store_admin/super_admin) para el store activo.',
+				error: true,
+			}
+		}
 		return {
 			message: e.message || 'Error al crear la categoría',
 			error: true,
@@ -53,7 +60,6 @@ export async function createCategory(formData: any) {
 
 export async function updateCategory(id: string, formData: any) {
 	const supabase = await createClient()
-	const store = await getAdminStoreContext()
 
 	const {
 		data: { user },
@@ -61,6 +67,7 @@ export async function updateCategory(id: string, formData: any) {
 	if (!user) return { message: 'Unauthorized', error: true }
 
 	try {
+		const store = await getAdminStoreContext()
 		const updates: any = {
 			name: formData.name,
 			description: formData.description || null,
@@ -90,6 +97,13 @@ export async function updateCategory(id: string, formData: any) {
 		}
 	} catch (e: any) {
 		console.error('Error updating category:', e)
+		if (e?.code === '42501') {
+			return {
+				message:
+					'No tienes permisos para editar categorias en esta tienda. Verifica user_roles (store_admin/super_admin) para el store activo.',
+				error: true,
+			}
+		}
 		return {
 			message: e.message || 'Error al actualizar la categoría',
 			error: true,
@@ -99,7 +113,6 @@ export async function updateCategory(id: string, formData: any) {
 
 export async function deleteCategory(id: string) {
 	const supabase = await createClient()
-	const store = await getAdminStoreContext()
 
 	const {
 		data: { user },
@@ -107,6 +120,7 @@ export async function deleteCategory(id: string) {
 	if (!user) return { message: 'Unauthorized', error: true }
 
 	try {
+		const store = await getAdminStoreContext()
 		const { error } = await supabase
 			.from('categories')
 			.delete()
@@ -119,6 +133,13 @@ export async function deleteCategory(id: string) {
 		return { message: 'Categoría eliminada', error: false }
 	} catch (e: any) {
 		console.error('Error deleting category:', e)
+		if (e?.code === '42501') {
+			return {
+				message:
+					'No tienes permisos para eliminar categorias en esta tienda. Verifica user_roles (store_admin/super_admin) para el store activo.',
+				error: true,
+			}
+		}
 		return { message: e.message || 'Error al eliminar', error: true }
 	}
 }

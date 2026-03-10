@@ -39,6 +39,7 @@ export function CartSheet() {
 				id: item.id,
 				name: item.name,
 				size: item.size,
+				variantId: item.variantId,
 				quantity: item.quantity,
 				price: item.price,
 			})),

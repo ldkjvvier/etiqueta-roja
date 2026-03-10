@@ -1,12 +1,16 @@
-```sql
+-- 🚀 SUPABASE_SETUP_V4 — ARQUITECTURA ECOMMERCE PRODUCCIÓN
+-- Ejecutar PRIMERO
 
--- 🚀 SUPABASE_SETUP_V3 — ARQUITECTURA ESTRUCTURAL MULTI-TENANT
--- Ejecutar este archivo PRIMERO.
+-- =====================================================
+-- 0 EXTENSIONES
+-- =====================================================
 
--- 0️⃣ EXTENSIONES
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 1️⃣ STORES
+-- =====================================================
+-- 1 STORES
+-- =====================================================
+
 CREATE TABLE public.stores (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   name TEXT NOT NULL,
@@ -14,34 +18,65 @@ CREATE TABLE public.stores (
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
 CREATE INDEX idx_stores_slug ON public.stores(slug);
 
--- 2️⃣ USER ROLES
+-- =====================================================
+-- 2 USER ROLES
+-- =====================================================
+
 CREATE TABLE public.user_roles (
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   store_id UUID REFERENCES public.stores(id) ON DELETE CASCADE,
   role TEXT NOT NULL CHECK (role IN ('super_admin','store_admin','customer')),
   PRIMARY KEY (user_id, store_id)
 );
-CREATE INDEX idx_user_roles_lookup ON public.user_roles(user_id, store_id);
 
--- 3️⃣ FUNCIONES DE SEGURIDAD
+CREATE INDEX idx_user_roles_lookup
+ON public.user_roles(user_id, store_id);
+
+-- =====================================================
+-- 3 FUNCIONES DE SEGURIDAD
+-- =====================================================
+
 CREATE OR REPLACE FUNCTION public.is_store_admin(p_store_id UUID)
 RETURNS BOOLEAN
-LANGUAGE plpgsql
+LANGUAGE sql
+STABLE
 SECURITY DEFINER
+SET search_path = public
+AS $$
+SELECT EXISTS (
+  SELECT 1
+  FROM public.user_roles
+  WHERE user_id = auth.uid()
+  AND store_id = p_store_id
+  AND role IN ('super_admin','store_admin')
+);
+$$;
+
+REVOKE ALL ON FUNCTION public.is_store_admin(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_store_admin(UUID) TO authenticated;
+
+-- =====================================================
+-- 4 UPDATED_AT GLOBAL
+-- =====================================================
+
+CREATE OR REPLACE FUNCTION public.set_updated_at()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public
 AS $$
 BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM public.user_roles
-    WHERE user_id = auth.uid()
-    AND store_id = p_store_id
-    AND role IN ('super_admin','store_admin')
-  );
+  NEW.updated_at = NOW();
+  RETURN NEW;
 END;
 $$;
 
--- 4️⃣ CATEGORÍAS
+-- =====================================================
+-- 5 CATEGORIES
+-- =====================================================
+
 CREATE TABLE public.categories (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   store_id UUID REFERENCES public.stores(id) ON DELETE CASCADE,
@@ -52,9 +87,13 @@ CREATE TABLE public.categories (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(store_id, slug)
 );
+
 CREATE INDEX idx_categories_store ON public.categories(store_id);
 
--- 5️⃣ DROPS
+-- =====================================================
+-- 6 DROPS
+-- =====================================================
+
 CREATE TABLE public.drops (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   store_id UUID REFERENCES public.stores(id) ON DELETE CASCADE,
@@ -64,14 +103,20 @@ CREATE TABLE public.drops (
   cover_image TEXT,
   start_time TIMESTAMPTZ NOT NULL,
   end_time TIMESTAMPTZ,
-  status TEXT DEFAULT 'scheduled' CHECK (status IN ('scheduled','live','ended')),
+  status TEXT DEFAULT 'scheduled'
+  CHECK (status IN ('scheduled','live','ended')),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(store_id, slug),
   CHECK (end_time IS NULL OR end_time > start_time)
 );
-CREATE INDEX idx_drops_store_time ON public.drops(store_id, start_time);
 
--- 6️⃣ PRODUCTS
+CREATE INDEX idx_drops_store_time
+ON public.drops(store_id,start_time);
+
+-- =====================================================
+-- 7 PRODUCTS
+-- =====================================================
+
 CREATE TABLE public.products (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   store_id UUID REFERENCES public.stores(id) ON DELETE CASCADE,
@@ -83,7 +128,8 @@ CREATE TABLE public.products (
   base_price NUMERIC(10,2) NOT NULL CHECK (base_price >= 0),
   compare_at_price NUMERIC(10,2),
   main_image TEXT NOT NULL,
-  status TEXT DEFAULT 'draft' CHECK (status IN ('draft','active','archived')),
+  status TEXT DEFAULT 'draft'
+  CHECK (status IN ('draft','active','archived')),
   is_customizable BOOLEAN DEFAULT false,
   total_views INTEGER DEFAULT 0 CHECK (total_views >= 0),
   deleted_at TIMESTAMPTZ,
@@ -91,20 +137,39 @@ CREATE TABLE public.products (
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(store_id, slug)
 );
-CREATE INDEX idx_products_store_status ON public.products(store_id, status);
-CREATE INDEX idx_products_category ON public.products(category_id);
-CREATE INDEX idx_products_drop ON public.products(drop_id);
 
--- 7️⃣ PRODUCT IMAGES
+CREATE INDEX idx_products_store_status
+ON public.products(store_id,status);
+
+CREATE INDEX idx_products_category
+ON public.products(category_id);
+
+CREATE INDEX idx_products_drop
+ON public.products(drop_id);
+
+CREATE TRIGGER trg_products_updated_at
+BEFORE UPDATE ON public.products
+FOR EACH ROW
+EXECUTE FUNCTION public.set_updated_at();
+
+-- =====================================================
+-- 8 PRODUCT IMAGES
+-- =====================================================
+
 CREATE TABLE public.product_images (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   product_id UUID REFERENCES public.products(id) ON DELETE CASCADE,
   image_url TEXT NOT NULL,
   display_order INTEGER DEFAULT 0
 );
-CREATE INDEX idx_product_images_product ON public.product_images(product_id);
 
--- 8️⃣ MOTOR DE VARIANTES
+CREATE INDEX idx_product_images_product
+ON public.product_images(product_id);
+
+-- =====================================================
+-- 9 VARIANT ENGINE
+-- =====================================================
+
 CREATE TABLE public.product_options (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   product_id UUID REFERENCES public.products(id) ON DELETE CASCADE,
@@ -136,16 +201,23 @@ CREATE TABLE public.product_variants (
   UNIQUE(product_id, combination_key),
   CHECK (reserved_stock <= stock_quantity)
 );
-CREATE INDEX idx_variants_product ON public.product_variants(product_id);
-CREATE INDEX idx_variants_combination ON public.product_variants(product_id, combination_key);
+
+CREATE INDEX idx_variants_product
+ON public.product_variants(product_id);
+
+CREATE INDEX idx_variants_combination
+ON public.product_variants(product_id,combination_key);
 
 CREATE TABLE public.variant_option_values (
   variant_id UUID REFERENCES public.product_variants(id) ON DELETE CASCADE,
   option_value_id UUID REFERENCES public.product_option_values(id) ON DELETE CASCADE,
-  PRIMARY KEY (variant_id, option_value_id)
+  PRIMARY KEY (variant_id,option_value_id)
 );
 
--- 9️⃣ CUSTOMERS
+-- =====================================================
+-- 10 CUSTOMERS
+-- =====================================================
+
 CREATE TABLE public.customers (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   store_id UUID REFERENCES public.stores(id) ON DELETE CASCADE,
@@ -158,24 +230,37 @@ CREATE TABLE public.customers (
   deleted_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
-CREATE INDEX idx_customers_store ON public.customers(store_id);
 
--- 🔟 ORDERS
+CREATE INDEX idx_customers_store
+ON public.customers(store_id);
+
+-- =====================================================
+-- 11 ORDERS
+-- =====================================================
+
 CREATE TABLE public.orders (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   store_id UUID REFERENCES public.stores(id) ON DELETE CASCADE,
   customer_id UUID REFERENCES public.customers(id) ON DELETE SET NULL,
   order_number TEXT NOT NULL,
-  status TEXT DEFAULT 'pending' CHECK (status IN ('pending','paid','processing','shipped','delivered','cancelled')),
+  status TEXT DEFAULT 'pending'
+  CHECK (status IN ('pending','paid','processing','shipped','delivered','cancelled')),
   total_amount NUMERIC(10,2) NOT NULL CHECK (total_amount >= 0),
   shipping_address JSONB,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(store_id, order_number)
 );
-CREATE INDEX idx_orders_store_date ON public.orders(store_id, created_at);
-CREATE INDEX idx_orders_customer ON public.orders(customer_id);
 
--- 1️⃣1️⃣ ORDER ITEMS
+CREATE INDEX idx_orders_store_date
+ON public.orders(store_id,created_at);
+
+CREATE INDEX idx_orders_customer
+ON public.orders(customer_id);
+
+-- =====================================================
+-- 12 ORDER ITEMS
+-- =====================================================
+
 CREATE TABLE public.order_items (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   order_id UUID REFERENCES public.orders(id) ON DELETE CASCADE,
@@ -186,13 +271,16 @@ CREATE TABLE public.order_items (
   unit_price NUMERIC(10,2) NOT NULL CHECK (unit_price >= 0)
 );
 
--- 1️⃣2️⃣ ANALYTICS
+-- =====================================================
+-- 13 ANALYTICS
+-- =====================================================
+
 CREATE TABLE public.product_views_daily (
   store_id UUID REFERENCES public.stores(id) ON DELETE CASCADE,
   product_id UUID REFERENCES public.products(id) ON DELETE CASCADE,
   date DATE DEFAULT CURRENT_DATE,
   views INTEGER DEFAULT 0 CHECK (views >= 0),
-  PRIMARY KEY (store_id, product_id, date)
+  PRIMARY KEY (store_id,product_id,date)
 );
 
 CREATE TABLE public.daily_metrics (
@@ -201,25 +289,39 @@ CREATE TABLE public.daily_metrics (
   total_views INTEGER DEFAULT 0 CHECK (total_views >= 0),
   total_sales NUMERIC(10,2) DEFAULT 0 CHECK (total_sales >= 0),
   total_orders INTEGER DEFAULT 0 CHECK (total_orders >= 0),
-  PRIMARY KEY (store_id, date)
+  PRIMARY KEY (store_id,date)
 );
 
--- 1️⃣3️⃣ SITE CONFIG
+-- =====================================================
+-- 14 SITE CONFIG (ESCALABLE)
+-- =====================================================
+
 CREATE TABLE public.site_config (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   store_id UUID NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
   key TEXT NOT NULL,
   value JSONB NOT NULL DEFAULT '{}'::jsonb,
   is_active BOOLEAN NOT NULL DEFAULT true,
-  visibility TEXT NOT NULL DEFAULT 'public' CHECK (visibility IN ('public', 'private', 'internal')),
+  visibility TEXT NOT NULL DEFAULT 'public'
+  CHECK (visibility IN ('public','private','internal')),
   description TEXT,
   updated_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE(store_id, key)
+  UNIQUE(store_id,key)
 );
-CREATE INDEX idx_site_config_store_key ON public.site_config(store_id, key);
-CREATE INDEX idx_site_config_store_visibility ON public.site_config(store_id, is_active, visibility);
-CREATE INDEX idx_site_config_value_gin ON public.site_config USING GIN(value jsonb_path_ops);
-```
 
+CREATE INDEX idx_site_config_store_key
+ON public.site_config(store_id,key);
+
+CREATE INDEX idx_site_config_visibility
+ON public.site_config(store_id,is_active,visibility);
+
+CREATE INDEX idx_site_config_json
+ON public.site_config
+USING GIN(value jsonb_path_ops);
+
+CREATE TRIGGER trg_site_config_updated_at
+BEFORE UPDATE ON public.site_config
+FOR EACH ROW
+EXECUTE FUNCTION public.set_updated_at();

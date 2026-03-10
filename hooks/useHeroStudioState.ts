@@ -1,5 +1,6 @@
 import { useMemo, useReducer } from 'react'
 import { HomeHeroBannerConfig } from '@/lib/services/site-config-server'
+import { getHeroCTAConfig } from '@/lib/services/hero-cta-config'
 import {
 	HERO_DEFAULT_POSITIONS,
 	HeroDropOption,
@@ -45,6 +46,8 @@ function buildInitialState(
 	isActive?: boolean,
 	initialDescription?: string | null,
 ): HeroStudioState {
+	const normalizedCTA = getHeroCTAConfig(initialData)
+
 	return {
 		isActive: isActive ?? true,
 		internalDescription: initialDescription ?? '',
@@ -60,8 +63,20 @@ function buildInitialState(
 			backgroundVideoUrl: initialData?.background_video_url ?? '',
 		},
 		cta: {
-			text: initialData?.cta_text ?? '',
-			link: initialData?.cta_link ?? '',
+			text: normalizedCTA.text,
+			link: normalizedCTA.link,
+			openInNewTab: normalizedCTA.openInNewTab,
+			variant: normalizedCTA.variant,
+			size: normalizedCTA.size,
+			radius: normalizedCTA.radius,
+			hoverEffect: normalizedCTA.hoverEffect,
+			alignment: normalizedCTA.alignment,
+			fullWidth: normalizedCTA.fullWidth,
+			backgroundColor: normalizedCTA.backgroundColor,
+			textColor: normalizedCTA.textColor,
+			borderColor: normalizedCTA.borderColor,
+			hoverBackgroundColor: normalizedCTA.hoverBackgroundColor,
+			hoverTextColor: normalizedCTA.hoverTextColor,
 		},
 		layout: {
 			contentAlignment: initialData?.content_alignment ?? 'left',
@@ -71,8 +86,6 @@ function buildInitialState(
 			titleColor: initialData?.title_color ?? '#111111',
 			descriptionColor: initialData?.description_color ?? '#6B7280',
 			badgeColor: initialData?.badge_color ?? '#E62727',
-			buttonBgColor: initialData?.button_bg_color ?? '#E62727',
-			buttonTextColor: initialData?.button_text_color ?? '#FFFFFF',
 			titleFontWeight: initialData?.title_font_weight ?? 'black',
 			overlayOpacity: initialData?.overlay_opacity ?? 45,
 		},
@@ -239,8 +252,22 @@ export function useHeroStudioState({
 				badge: state.content.badge,
 				title: state.content.title,
 				description: state.content.description,
-				cta_text: state.cta.text,
-				cta_link: state.cta.link,
+				cta: {
+					text: state.cta.text,
+					link: state.cta.link,
+					openInNewTab: state.cta.openInNewTab,
+					variant: state.cta.variant,
+					size: state.cta.size,
+					radius: state.cta.radius,
+					hoverEffect: state.cta.hoverEffect,
+					alignment: state.cta.alignment,
+					fullWidth: state.cta.fullWidth,
+					backgroundColor: state.cta.backgroundColor,
+					textColor: state.cta.textColor,
+					borderColor: state.cta.borderColor,
+					hoverBackgroundColor: state.cta.hoverBackgroundColor,
+					hoverTextColor: state.cta.hoverTextColor,
+				},
 				background_image: state.media.backgroundImage,
 				background_image_mobile: state.media.backgroundImageMobile,
 				background_video_url: state.media.backgroundVideoUrl,
@@ -289,8 +316,6 @@ export function useHeroStudioState({
 				title_color: state.styles.titleColor,
 				description_color: state.styles.descriptionColor,
 				badge_color: state.styles.badgeColor,
-				button_bg_color: state.styles.buttonBgColor,
-				button_text_color: state.styles.buttonTextColor,
 				title_font_weight: state.styles.titleFontWeight,
 				overlay_opacity: state.styles.overlayOpacity,
 				content_alignment: state.layout.contentAlignment,

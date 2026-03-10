@@ -9,9 +9,9 @@ type VariantRow = {
 	reserved_stock: number
 	low_stock_threshold: number
 	track_inventory: boolean | null
-	price: number | null
-	image_url: string | null
-	sku: string | null
+	price?: number | null
+	image_url?: string | null
+	sku?: string | null
 }
 
 type ProductRow = {
@@ -24,7 +24,7 @@ type ProductRow = {
 	main_image: string
 	category: { name: string | null } | null
 	variants: VariantRow[]
-	gallery: Array<{ image_url: string; display_order: number }>
+	gallery?: Array<{ image_url: string; display_order: number }>
 }
 
 function parseSizeFromCombinationKey(combinationKey: string) {
@@ -109,11 +109,22 @@ function getPublicProductsBaseQuery(db: any, storeId: string) {
 		.is('deleted_at', null)
 }
 
+function getPublicProductsListQuery(db: any, storeId: string) {
+	return db
+		.from('products')
+		.select(
+			'id,slug,name,description,base_price,compare_at_price,main_image,category:categories(name),variants:product_variants(id,combination_key,stock_quantity,reserved_stock,low_stock_threshold,track_inventory,price)',
+		)
+		.eq('store_id', storeId)
+		.eq('status', 'active')
+		.is('deleted_at', null)
+}
+
 export async function getProducts(): Promise<Product[]> {
 	const supabase = await createClient()
 	const db = supabase as any
 	const store = await getAdminStoreContext()
-	const query = getPublicProductsBaseQuery(db, store.id)
+	const query = getPublicProductsListQuery(db, store.id)
 	const { data, error } = await query.order('created_at', {
 		ascending: false,
 	})

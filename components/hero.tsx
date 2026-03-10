@@ -1,20 +1,51 @@
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 import { HeroDropCountdown } from '@/components/HeroDropCountdown'
 import { HeroBannerLayout } from '@/components/hero-studio/HeroBannerLayout'
+import { HeroCTA } from '@/components/hero-studio/HeroCTA'
 import { getHeroLinkedDropSummary } from '@/lib/services/drops-server'
 import {
 	getSiteConfig,
+	HeroCTAConfig,
 	HomeHeroBannerConfig,
 } from '@/lib/services/site-config-server'
+import { getHeroCTAConfig } from '@/lib/services/hero-cta-config'
+
+type StandardHeroConfigInput = {
+	enabled?: boolean
+	title?: string
+	subtitle?: string
+	backgroundImage?: string
+	overlayOpacity?: number
+	alignment?: 'left' | 'center' | 'right'
+	cta?: {
+		text?: string
+		link?: string
+		variant?: 'solid' | 'outline' | 'ghost'
+	}
+}
+
+const fallbackCTA: HeroCTAConfig = {
+	text: 'VER COLECCIÓN',
+	link: '/#stock',
+	openInNewTab: false,
+	variant: 'solid',
+	size: 'md',
+	radius: 'md',
+	hoverEffect: 'none',
+	alignment: 'left',
+	fullWidth: false,
+	backgroundColor: '#E62727',
+	textColor: '#FFFFFF',
+	borderColor: '#E62727',
+	hoverBackgroundColor: '#B91C1C',
+	hoverTextColor: '#FFFFFF',
+}
 
 const fallback: HomeHeroBannerConfig = {
 	badge: 'DROP EXCLUSIVO — EDICIÓN LIMITADA',
 	title: 'LA CALLE ES NUESTRA',
 	description:
 		'Piezas únicas que definen el estilo urbano. Una vez que se acaban, no vuelven.',
-	cta_text: 'VER COLECCIÓN',
-	cta_link: '/#stock',
+	cta: fallbackCTA,
 	background_image: '',
 	background_image_mobile: '',
 	background_video_url: '',
@@ -56,8 +87,6 @@ const fallback: HomeHeroBannerConfig = {
 	title_color: '#111111',
 	description_color: '#6B7280',
 	badge_color: '#E62727',
-	button_bg_color: '#E62727',
-	button_text_color: '#FFFFFF',
 	title_font_weight: 'black',
 	overlay_opacity: 45,
 	content_alignment: 'left',
@@ -139,9 +168,36 @@ function applyDropTemplate(
 function normalizeHeroConfig(
 	value?: Partial<HomeHeroBannerConfig> | null,
 ): HomeHeroBannerConfig {
+	const incoming = {
+		...(value || {}),
+	} as Partial<HomeHeroBannerConfig> & StandardHeroConfigInput
+
+	// Compatibility bridge for the simplified production JSON shape.
+	if (incoming.backgroundImage && !incoming.background_image) {
+		incoming.background_image = incoming.backgroundImage
+	}
+	if (incoming.subtitle && !incoming.description) {
+		incoming.description = incoming.subtitle
+	}
+	if (incoming.alignment && !incoming.content_alignment) {
+		incoming.content_alignment = incoming.alignment
+	}
+	if (
+		typeof incoming.overlayOpacity === 'number' &&
+		typeof incoming.overlay_opacity !== 'number'
+	) {
+		incoming.overlay_opacity =
+			incoming.overlayOpacity <= 1
+				? incoming.overlayOpacity * 100
+				: incoming.overlayOpacity
+	}
+
+	const normalizedCta = getHeroCTAConfig(incoming)
+
 	return {
 		...fallback,
-		...(value || {}),
+		...incoming,
+		cta: normalizedCta,
 		hero_badge_pos_x:
 			typeof value?.hero_badge_pos_x === 'number'
 				? Math.max(0, Math.min(100, value.hero_badge_pos_x))
@@ -308,11 +364,20 @@ export async function Hero() {
 		'home_hero_banner',
 	)
 
+	const rawValue =
+		(config?.value as Partial<HomeHeroBannerConfig> &
+			StandardHeroConfigInput) || null
+
 	if (config && !config.is_active) {
 		return null
 	}
 
-	const value = normalizeHeroConfig(config?.value)
+	if (rawValue && rawValue.enabled === false) {
+		return null
+	}
+
+	const value = normalizeHeroConfig(rawValue)
+	const ctaConfig = value.cta ?? fallbackCTA
 	const linkedDrop = await getHeroLinkedDropSummary(
 		value.linked_drop_id,
 	)
@@ -329,7 +394,7 @@ export async function Hero() {
 	const ctaLabel =
 		ctaState === 'ended'
 			? value.drop_ended_text || 'SOLD OUT'
-			: value.cta_text
+			: ctaConfig.text
 	const ctaDisabled = ctaState === 'scheduled' || ctaState === 'ended'
 
 	const dropTextAlignmentClass =
@@ -414,7 +479,7 @@ export async function Hero() {
 	const shouldShowCta =
 		value.drop_display_mode !== 'hidden' &&
 		ctaLabel &&
-		value.cta_link &&
+		ctaConfig.link &&
 		((ctaState === 'scheduled' && value.drop_show_cta_scheduled) ||
 			(ctaState === 'live' && value.drop_show_cta_live) ||
 			(ctaState === 'ended' && value.drop_show_cta_ended) ||
@@ -553,31 +618,12 @@ export async function Hero() {
 						transform: 'translate(-50%, -50%)',
 					}}
 				>
-					{ctaDisabled ? (
-						<Button
-							disabled
-							tabIndex={-1}
-							aria-disabled="true"
-							className="cursor-not-allowed px-10 py-6 text-base font-bold opacity-80"
-							style={{
-								backgroundColor: value.button_bg_color,
-								color: value.button_text_color,
-							}}
-						>
-							{ctaLabel}
-						</Button>
-					) : (
-						<Button
-							asChild
-							className="px-10 py-6 text-base font-bold"
-							style={{
-								backgroundColor: value.button_bg_color,
-								color: value.button_text_color,
-							}}
-						>
-							<Link href={value.cta_link}>{ctaLabel}</Link>
-						</Button>
-					)}
+					<HeroCTA
+						config={ctaConfig}
+						text={ctaLabel}
+						href={ctaConfig.link}
+						disabled={ctaDisabled}
+					/>
 				</div>
 			)}
 		</HeroBannerLayout>

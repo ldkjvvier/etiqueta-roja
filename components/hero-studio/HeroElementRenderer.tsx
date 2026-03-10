@@ -1,13 +1,13 @@
 'use client'
 
 import { memo } from 'react'
-import { Button } from '@/components/ui/button'
 import { HeroDropCountdown } from '@/components/HeroDropCountdown'
 import { HeroDropPreview } from '@/services/heroDropService'
 import {
 	HeroElementType,
 	HeroStudioState,
 } from '@/types/heroStudio.types'
+import { HeroCTA } from './HeroCTA'
 
 type DragPropsGetter = (target: HeroElementType) => {
 	onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void
@@ -188,31 +188,13 @@ function HeroElementRendererComponent({
 					onPointerDown={ctaDragProps.onPointerDown}
 				>
 					{dragEnabled && <DragHandle label="Mover CTA" />}
-					{dropPreview.ctaDisabled ? (
-						<Button
-							disabled
-							tabIndex={-1}
-							aria-disabled="true"
-							className="cursor-not-allowed px-10 py-6 text-base font-bold opacity-80"
-							style={{
-								backgroundColor: state.styles.buttonBgColor,
-								color: state.styles.buttonTextColor,
-							}}
-						>
-							{dropPreview.ctaText}
-						</Button>
-					) : (
-						<Button
-							type="button"
-							className="px-10 py-6 text-base font-bold"
-							style={{
-								backgroundColor: state.styles.buttonBgColor,
-								color: state.styles.buttonTextColor,
-							}}
-						>
-							{dropPreview.ctaText}
-						</Button>
-					)}
+					<HeroCTA
+						config={state.cta}
+						text={dropPreview.ctaText}
+						href={state.cta.link}
+						disabled={dropPreview.ctaDisabled}
+						forceButton
+					/>
 				</div>
 			)}
 		</>

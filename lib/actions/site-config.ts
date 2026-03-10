@@ -8,9 +8,313 @@ import {
 	ContactInfoConfig,
 	HomeHeroBannerConfig,
 } from '@/lib/services/site-config-server'
+import { parseHeroCTAConfig } from '@/lib/validation/hero-cta'
+import type { Database } from '@/lib/supabase/types'
+import { z } from 'zod'
+
+type SiteConfigInsert =
+	Database['public']['Tables']['site_config']['Insert']
+type SiteConfigJson =
+	Database['public']['Tables']['site_config']['Row']['value']
+
+const ALLOWED_GENERIC_SITE_CONFIG_KEYS = new Set([
+	'social_links',
+	'announcement_bar',
+	'store_settings',
+])
+
+const optionalUrlSchema = z
+	.string()
+	.trim()
+	.refine(
+		(value) => {
+			if (!value) return true
+			try {
+				const parsed = new URL(value)
+				return (
+					parsed.protocol === 'https:' || parsed.protocol === 'http:'
+				)
+			} catch {
+				return false
+			}
+		},
+		{ message: 'URL inválida' },
+	)
+
+const hexColorSchema = z
+	.string()
+	.trim()
+	.regex(/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/, 'Color inválido')
+
+const socialLinksSchema = z.object({
+	instagram: optionalUrlSchema,
+	tiktok: optionalUrlSchema,
+	twitter: optionalUrlSchema,
+	facebook: optionalUrlSchema,
+})
+
+const announcementBarSchema = z.object({
+	message: z.string().trim().min(1).max(140),
+	ctaText: z.string().trim().max(40),
+	ctaLink: z.string().trim().max(2048),
+	backgroundColor: hexColorSchema,
+	textColor: hexColorSchema,
+})
+
+const storeSettingsSchema = z.object({
+	storeName: z.string().trim().min(1).max(80),
+	supportEmail: z.string().trim().email().max(120),
+	currency: z.string().trim().min(2).max(10),
+	timezone: z.string().trim().min(3).max(100),
+})
+
+type SiteConfigVisibility = 'public' | 'private' | 'internal'
+
+async function upsertSiteConfigValue(params: {
+	key: string
+	value: SiteConfigJson
+	description: string | null
+	isActive: boolean
+	visibility: SiteConfigVisibility
+}) {
+	const supabase = await createClient()
+	const store = await getAdminStoreContext()
+	const {
+		data: { user },
+	} = await supabase.auth.getUser()
+
+	if (!user) {
+		return { message: 'Unauthorized', error: true }
+	}
+
+	const payload: SiteConfigInsert = {
+		store_id: store.id,
+		key: params.key,
+		value: params.value,
+		description: params.description,
+		is_active: params.isActive,
+		visibility: params.visibility,
+		updated_by: user.id,
+		updated_at: new Date().toISOString(),
+	}
+
+	const { error } = await supabase
+		.from('site_config')
+		.upsert(payload as never, { onConflict: 'store_id,key' })
+
+	if (error) {
+		console.error(
+			`Error updating site config (${params.key}):`,
+			error,
+		)
+		return {
+			message: 'No se pudo guardar la configuración',
+			error: true,
+		}
+	}
+
+	revalidatePath('/admin/config')
+	revalidatePath('/', 'layout')
+	return {
+		message: 'Configuración guardada correctamente',
+		error: false,
+	}
+}
+
+export async function updateSocialLinksConfig(
+	_prevState: unknown,
+	formData: FormData,
+) {
+	const parsed = socialLinksSchema.safeParse({
+		instagram: String(formData.get('instagram') || ''),
+		tiktok: String(formData.get('tiktok') || ''),
+		twitter: String(formData.get('twitter') || ''),
+		facebook: String(formData.get('facebook') || ''),
+	})
+
+	if (!parsed.success) {
+		return {
+			message: 'Revisa las URLs de redes sociales',
+			error: true,
+		}
+	}
+
+	return upsertSiteConfigValue({
+		key: 'social_links',
+		value: parsed.data as unknown as SiteConfigJson,
+		description:
+			String(formData.get('description') || '').trim() || null,
+		isActive:
+			formData.get('is_active') === 'on' ||
+			formData.get('is_active') === 'true',
+		visibility: 'public',
+	})
+}
+
+export async function updateAnnouncementBarConfig(
+	_prevState: unknown,
+	formData: FormData,
+) {
+	const parsed = announcementBarSchema.safeParse({
+		message: String(formData.get('message') || ''),
+		ctaText: String(formData.get('cta_text') || ''),
+		ctaLink: String(formData.get('cta_link') || ''),
+		backgroundColor:
+			String(formData.get('background_color') || '#111111') ||
+			'#111111',
+		textColor:
+			String(formData.get('text_color') || '#FFFFFF') || '#FFFFFF',
+	})
+
+	if (!parsed.success) {
+		return {
+			message:
+				'Revisa el mensaje, CTA y colores del announcement bar',
+			error: true,
+		}
+	}
+
+	return upsertSiteConfigValue({
+		key: 'announcement_bar',
+		value: parsed.data as unknown as SiteConfigJson,
+		description:
+			String(formData.get('description') || '').trim() || null,
+		isActive:
+			formData.get('is_active') === 'on' ||
+			formData.get('is_active') === 'true',
+		visibility: 'public',
+	})
+}
+
+export async function updateStoreSettingsConfig(
+	_prevState: unknown,
+	formData: FormData,
+) {
+	const parsed = storeSettingsSchema.safeParse({
+		storeName: String(formData.get('store_name') || ''),
+		supportEmail: String(formData.get('support_email') || ''),
+		currency: String(formData.get('currency') || 'CLP'),
+		timezone: String(formData.get('timezone') || 'America/Santiago'),
+	})
+
+	if (!parsed.success) {
+		return {
+			message:
+				'Revisa nombre de tienda, email, moneda y zona horaria',
+			error: true,
+		}
+	}
+
+	return upsertSiteConfigValue({
+		key: 'store_settings',
+		value: parsed.data as unknown as SiteConfigJson,
+		description:
+			String(formData.get('description') || '').trim() || null,
+		isActive:
+			formData.get('is_active') === 'on' ||
+			formData.get('is_active') === 'true',
+		visibility: 'internal',
+	})
+}
+
+export async function updateGenericSiteConfig(
+	_prevState: unknown,
+	formData: FormData,
+) {
+	const supabase = await createClient()
+	const store = await getAdminStoreContext()
+
+	const {
+		data: { user },
+	} = await supabase.auth.getUser()
+	if (!user) {
+		return { message: 'Unauthorized', error: true }
+	}
+
+	const key = String(formData.get('key') || '').trim()
+	if (!ALLOWED_GENERIC_SITE_CONFIG_KEYS.has(key)) {
+		return {
+			message: 'Clave de configuración no permitida',
+			error: true,
+		}
+	}
+
+	const rawJson = String(formData.get('json_value') || '').trim()
+	if (!rawJson) {
+		return {
+			message: 'Debes enviar un JSON válido',
+			error: true,
+		}
+	}
+
+	let parsedValue: unknown
+	try {
+		parsedValue = JSON.parse(rawJson)
+	} catch {
+		return {
+			message: 'JSON inválido. Corrige la sintaxis.',
+			error: true,
+		}
+	}
+
+	if (
+		!parsedValue ||
+		typeof parsedValue !== 'object' ||
+		Array.isArray(parsedValue)
+	) {
+		return {
+			message: 'La configuración debe ser un objeto JSON.',
+			error: true,
+		}
+	}
+
+	const description =
+		String(formData.get('description') || '').trim() || null
+	const isActive =
+		formData.get('is_active') === 'on' ||
+		formData.get('is_active') === 'true'
+	const visibilityRaw = String(formData.get('visibility') || 'public')
+	const visibility =
+		visibilityRaw === 'private' || visibilityRaw === 'internal'
+			? visibilityRaw
+			: 'public'
+
+	const payload: SiteConfigInsert = {
+		store_id: store.id,
+		key,
+		value: parsedValue as SiteConfigJson,
+		description,
+		is_active: isActive,
+		visibility,
+		updated_by: user.id,
+		updated_at: new Date().toISOString(),
+	}
+
+	const { error } = await supabase
+		.from('site_config')
+		.upsert(payload as never, { onConflict: 'store_id,key' })
+
+	if (error) {
+		console.error(
+			`Error updating generic site config (${key}):`,
+			error,
+		)
+		return {
+			message: 'No se pudo guardar la configuración',
+			error: true,
+		}
+	}
+
+	revalidatePath('/admin/config')
+	revalidatePath('/', 'layout')
+	return {
+		message: 'Configuración guardada correctamente',
+		error: false,
+	}
+}
 
 export async function updatePromoBanner(
-	prevState: any,
+	_prevState: unknown,
 	formData: FormData,
 ) {
 	const supabase = await createClient()
@@ -34,19 +338,20 @@ export async function updatePromoBanner(
 		link: link || null,
 	}
 
-	const { error } = await supabase.from('site_config').upsert(
-		{
-			store_id: store.id,
-			key: 'promo_banner',
-			value,
-			description,
-			is_active: isActive,
-			visibility: 'public',
-			updated_by: user.id,
-			updated_at: new Date().toISOString(),
-		} as any,
-		{ onConflict: 'store_id,key' },
-	)
+	const payload: SiteConfigInsert = {
+		store_id: store.id,
+		key: 'promo_banner',
+		value: value as unknown as SiteConfigJson,
+		description,
+		is_active: isActive,
+		visibility: 'public',
+		updated_by: user.id,
+		updated_at: new Date().toISOString(),
+	}
+
+	const { error } = await supabase
+		.from('site_config')
+		.upsert(payload as never, { onConflict: 'store_id,key' })
 
 	if (error) {
 		console.error('Error updating promo banner:', error)
@@ -61,7 +366,7 @@ export async function updatePromoBanner(
 }
 
 export async function updateContactInfo(
-	prevState: any,
+	_prevState: unknown,
 	formData: FormData,
 ) {
 	const supabase = await createClient()
@@ -88,19 +393,20 @@ export async function updateContactInfo(
 		email,
 	}
 
-	const { error } = await supabase.from('site_config').upsert(
-		{
-			store_id: store.id,
-			key: 'contact_info',
-			value,
-			description,
-			is_active: true,
-			visibility: 'public',
-			updated_by: user.id,
-			updated_at: new Date().toISOString(),
-		} as any,
-		{ onConflict: 'store_id,key' },
-	)
+	const payload: SiteConfigInsert = {
+		store_id: store.id,
+		key: 'contact_info',
+		value: value as unknown as SiteConfigJson,
+		description,
+		is_active: true,
+		visibility: 'public',
+		updated_by: user.id,
+		updated_at: new Date().toISOString(),
+	}
+
+	const { error } = await supabase
+		.from('site_config')
+		.upsert(payload as never, { onConflict: 'store_id,key' })
 
 	if (error) {
 		console.error('Error updating contact info:', error)
@@ -115,7 +421,7 @@ export async function updateContactInfo(
 }
 
 export async function updateHomeHeroBanner(
-	prevState: any,
+	_prevState: unknown,
 	formData: FormData,
 ) {
 	const supabase = await createClient()
@@ -166,8 +472,27 @@ export async function updateHomeHeroBanner(
 					}
 				}
 
+				const parsedCta = parseHeroCTAConfig(
+					parsedPayload.value.cta,
+					{
+						ctaText: parsedPayload.value.cta?.text,
+						ctaLink: parsedPayload.value.cta?.link,
+						buttonBgColor: parsedPayload.value.cta?.backgroundColor,
+						buttonTextColor: parsedPayload.value.cta?.textColor,
+					},
+				)
+
+				if (!parsedCta.success) {
+					return {
+						message:
+							'Configuración CTA inválida. Revisa variantes, tamaños y colores.',
+						error: true,
+					}
+				}
+
 				const value: HomeHeroBannerConfig = {
 					...parsedPayload.value,
+					cta: parsedCta.data,
 					hero_badge_pos_x: Math.max(
 						0,
 						Math.min(
@@ -305,19 +630,22 @@ export async function updateHomeHeroBanner(
 					),
 				}
 
-				const { error } = await supabase.from('site_config').upsert(
-					{
-						store_id: store.id,
-						key: 'home_hero_banner',
-						value,
-						description: parsedPayload.internal_description || null,
-						is_active: Boolean(parsedPayload.is_active ?? true),
-						visibility: 'public',
-						updated_by: user.id,
-						updated_at: new Date().toISOString(),
-					} as any,
-					{ onConflict: 'store_id,key' },
-				)
+				const payload: SiteConfigInsert = {
+					store_id: store.id,
+					key: 'home_hero_banner',
+					value: value as unknown as SiteConfigJson,
+					description: parsedPayload.internal_description || null,
+					is_active: Boolean(parsedPayload.is_active ?? true),
+					visibility: 'public',
+					updated_by: user.id,
+					updated_at: new Date().toISOString(),
+				}
+
+				const { error } = await supabase
+					.from('site_config')
+					.upsert(payload as never, {
+						onConflict: 'store_id,key',
+					})
 
 				if (error) {
 					console.error('Error updating home hero banner:', error)
@@ -341,8 +669,24 @@ export async function updateHomeHeroBanner(
 	const badge = (formData.get('badge') as string) || ''
 	const title = (formData.get('title') as string) || ''
 	const description = (formData.get('description') as string) || ''
-	const ctaText = (formData.get('cta_text') as string) || ''
-	const ctaLink = (formData.get('cta_link') as string) || ''
+	const ctaText = (formData.get('ctaContentText') as string) || ''
+	const ctaLink = (formData.get('ctaContentLink') as string) || ''
+	const ctaVariant =
+		(formData.get('cta_variant') as string | null) || undefined
+	const ctaSize =
+		(formData.get('cta_size') as string | null) || undefined
+	const ctaRadius =
+		(formData.get('cta_radius') as string | null) || undefined
+	const ctaHoverEffect =
+		(formData.get('cta_hover_effect') as string | null) || undefined
+	const ctaAlignment =
+		(formData.get('cta_alignment') as string | null) || undefined
+	const ctaFullWidth =
+		formData.get('cta_full_width') === 'true' ||
+		formData.get('cta_full_width') === 'on'
+	const ctaOpenInNewTab =
+		formData.get('cta_open_in_new_tab') === 'true' ||
+		formData.get('cta_open_in_new_tab') === 'on'
 	const backgroundImage =
 		(formData.get('background_image') as string) || ''
 	const backgroundImageMobile =
@@ -497,9 +841,16 @@ export async function updateHomeHeroBanner(
 	const badgeColor =
 		(formData.get('badge_color') as string) || '#E62727'
 	const buttonBgColor =
-		(formData.get('button_bg_color') as string) || '#E62727'
+		(formData.get('ctaBackgroundColor') as string) || '#E62727'
 	const buttonTextColor =
-		(formData.get('button_text_color') as string) || '#FFFFFF'
+		(formData.get('ctaTextColor') as string) || '#FFFFFF'
+	const ctaBorderColor =
+		(formData.get('cta_border_color') as string) || buttonBgColor
+	const ctaHoverBackgroundColor =
+		(formData.get('cta_hover_bg_color') as string) || buttonBgColor
+	const ctaHoverTextColor =
+		(formData.get('cta_hover_text_color') as string) ||
+		buttonTextColor
 	const titleFontWeight = ((formData.get(
 		'title_font_weight',
 	) as string) || 'black') as 'bold' | 'black' | 'outline'
@@ -539,12 +890,44 @@ export async function updateHomeHeroBanner(
 		}
 	}
 
+	const parsedCta = parseHeroCTAConfig(
+		{
+			text: ctaText,
+			link: ctaLink,
+			openInNewTab: ctaOpenInNewTab,
+			variant: ctaVariant,
+			size: ctaSize,
+			radius: ctaRadius,
+			hoverEffect: ctaHoverEffect,
+			alignment: ctaAlignment,
+			fullWidth: ctaFullWidth,
+			backgroundColor: buttonBgColor,
+			textColor: buttonTextColor,
+			borderColor: ctaBorderColor,
+			hoverBackgroundColor: ctaHoverBackgroundColor,
+			hoverTextColor: ctaHoverTextColor,
+		},
+		{
+			ctaText,
+			ctaLink,
+			buttonBgColor,
+			buttonTextColor,
+		},
+	)
+
+	if (!parsedCta.success) {
+		return {
+			message:
+				'Configuración CTA inválida. Revisa variantes, tamaños y colores.',
+			error: true,
+		}
+	}
+
 	const value: HomeHeroBannerConfig = {
 		badge,
 		title,
 		description,
-		cta_text: ctaText,
-		cta_link: ctaLink,
+		cta: parsedCta.data,
 		background_image: backgroundImage,
 		background_image_mobile: backgroundImageMobile,
 		background_video_url: backgroundVideoUrl,
@@ -585,27 +968,26 @@ export async function updateHomeHeroBanner(
 		title_color: titleColor,
 		description_color: descriptionColor,
 		badge_color: badgeColor,
-		button_bg_color: buttonBgColor,
-		button_text_color: buttonTextColor,
 		title_font_weight: titleFontWeight,
 		overlay_opacity: overlayOpacity,
 		content_alignment: contentAlignment,
 		banner_height: bannerHeight,
 	}
 
-	const { error } = await supabase.from('site_config').upsert(
-		{
-			store_id: store.id,
-			key: 'home_hero_banner',
-			value,
-			description: internalDescription,
-			is_active: isActive,
-			visibility: 'public',
-			updated_by: user.id,
-			updated_at: new Date().toISOString(),
-		} as any,
-		{ onConflict: 'store_id,key' },
-	)
+	const payload: SiteConfigInsert = {
+		store_id: store.id,
+		key: 'home_hero_banner',
+		value: value as unknown as SiteConfigJson,
+		description: internalDescription,
+		is_active: isActive,
+		visibility: 'public',
+		updated_by: user.id,
+		updated_at: new Date().toISOString(),
+	}
+
+	const { error } = await supabase
+		.from('site_config')
+		.upsert(payload as never, { onConflict: 'store_id,key' })
 
 	if (error) {
 		console.error('Error updating home hero banner:', error)

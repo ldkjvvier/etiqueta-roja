@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getAdminStoreContext } from '@/lib/services/admin-context'
+import type { Database } from '@/lib/supabase/types'
 
 export interface PromoBannerConfig {
 	message: string
@@ -13,12 +14,34 @@ export interface ContactInfoConfig {
 	email: string
 }
 
+export type HeroCTAVariant = 'solid' | 'outline' | 'ghost'
+export type HeroCTASize = 'sm' | 'md' | 'lg'
+export type HeroCTARadius = 'none' | 'sm' | 'md' | 'lg' | 'full'
+export type HeroCTAHoverEffect = 'none' | 'lift' | 'scale' | 'invert'
+export type HeroCTAAlignment = 'left' | 'center' | 'right'
+
+export interface HeroCTAConfig {
+	text: string
+	link: string
+	openInNewTab: boolean
+	variant: HeroCTAVariant
+	size: HeroCTASize
+	radius: HeroCTARadius
+	hoverEffect: HeroCTAHoverEffect
+	alignment: HeroCTAAlignment
+	fullWidth: boolean
+	backgroundColor: string
+	textColor: string
+	borderColor: string
+	hoverBackgroundColor: string
+	hoverTextColor: string
+}
+
 export interface HomeHeroBannerConfig {
 	badge: string
 	title: string
 	description: string
-	cta_text: string
-	cta_link: string
+	cta: HeroCTAConfig
 	background_image: string
 	background_image_mobile?: string
 	background_video_url?: string
@@ -64,8 +87,6 @@ export interface HomeHeroBannerConfig {
 	title_color: string
 	description_color?: string
 	badge_color: string
-	button_bg_color: string
-	button_text_color: string
 	title_font_weight?: 'bold' | 'black' | 'outline'
 	overlay_opacity: number
 	content_alignment: 'left' | 'center' | 'right'
@@ -111,11 +132,18 @@ export async function getSiteConfig<T>(key: string): Promise<{
 			return null
 		}
 
-		// Supabase stores JSONB as any, we cast it to T
+		type SiteConfigSelection = Pick<
+			Database['public']['Tables']['site_config']['Row'],
+			'value' | 'is_active' | 'description'
+		>
+
+		const typedData = data as SiteConfigSelection
+
+		// Keep a single explicit cast boundary from JSONB to caller-provided type.
 		return {
-			value: (data as any).value as unknown as T,
-			is_active: (data as any).is_active ?? true,
-			description: (data as any).description ?? null,
+			value: typedData.value as unknown as T,
+			is_active: typedData.is_active ?? true,
+			description: typedData.description ?? null,
 		}
 	} catch (e) {
 		if (!isDynamicServerUsageError(e)) {

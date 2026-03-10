@@ -15,6 +15,8 @@ export type CartItem = {
 	name: string
 	price: number
 	size: string
+	variantId?: string
+	combinationKey?: string
 	quantity: number
 	image: string
 	maxStock: number
@@ -97,6 +99,17 @@ export function StoreProvider({
 		useState<Product | null>(null)
 	const [isLoaded, setIsLoaded] = useState(false)
 
+	const sameCartLine = (
+		left: Pick<CartItem, 'id' | 'size' | 'variantId'>,
+		right: Pick<CartItem, 'id' | 'size' | 'variantId'>,
+	) => {
+		if (left.id !== right.id) return false
+		if (left.variantId && right.variantId) {
+			return left.variantId === right.variantId
+		}
+		return left.size === right.size
+	}
+
 	const validateCart = async (items: CartItem[]) => {
 		if (items.length === 0) return
 		const normalize = (value: string) =>
@@ -104,12 +117,18 @@ export function StoreProvider({
 
 		try {
 			const stockMap = await validateCartStock(
-				items.map((i) => ({ id: i.id, size: i.size })),
+				items.map((i) => ({
+					id: i.id,
+					size: i.size,
+					variantId: i.variantId,
+				})),
 			)
 
 			setCartItems((prev) =>
 				prev.map((item) => {
-					const key = `${item.id}-${normalize(item.size)}`
+					const key = item.variantId
+						? `${item.id}-variant:${item.variantId}`
+						: `${item.id}-${normalize(item.size)}`
 					const realStock = stockMap[key]
 
 					// If we got a valid stock number back, update the item
@@ -158,16 +177,14 @@ export function StoreProvider({
 
 	const addToCart = (item: Omit<CartItem, 'quantity'>) => {
 		setCartItems((prev) => {
-			const existing = prev.find(
-				(i) => i.id === item.id && i.size === item.size,
-			)
+			const existing = prev.find((i) => sameCartLine(i, item))
 			if (existing) {
 				// Prevent adding more than maxStock
 				if (existing.quantity >= existing.maxStock) {
 					return prev
 				}
 				return prev.map((i) =>
-					i.id === item.id && i.size === item.size
+					sameCartLine(i, item)
 						? { ...i, quantity: i.quantity + 1 }
 						: i,
 				)

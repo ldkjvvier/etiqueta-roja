@@ -7,6 +7,7 @@ export type CheckoutCartItem = {
 	id: string
 	name: string
 	size: string
+	variantId?: string
 	quantity: number
 	price: number
 }
@@ -89,6 +90,13 @@ export async function createPendingOrderFromCart(input: {
 	const distinctProductIds = Array.from(
 		new Set(items.map((item) => item.id)),
 	)
+	const distinctVariantIds = Array.from(
+		new Set(
+			items
+				.map((item) => item.variantId)
+				.filter((id): id is string => Boolean(id)),
+		),
+	)
 	const combinationByProduct = new Map<string, string>()
 	for (const item of items) {
 		combinationByProduct.set(
@@ -113,7 +121,12 @@ export async function createPendingOrderFromCart(input: {
 			.select(
 				'id,product_id,combination_key,stock_quantity,reserved_stock,track_inventory,is_active,deleted_at',
 			)
-			.in('product_id', distinctProductIds)
+			.in(
+				distinctVariantIds.length ? 'id' : 'product_id',
+				distinctVariantIds.length
+					? distinctVariantIds
+					: distinctProductIds,
+			)
 			.eq('is_active', true)
 			.is('deleted_at', null),
 	])
@@ -129,7 +142,9 @@ export async function createPendingOrderFromCart(input: {
 		(products ?? []).map((product: any) => [product.id, product]),
 	)
 	const variantMap = new Map<string, any>()
+	const variantById = new Map<string, any>()
 	for (const variant of variants ?? []) {
+		variantById.set(variant.id, variant)
 		variantMap.set(
 			`${variant.product_id}::${variant.combination_key}`,
 			variant,
@@ -150,9 +165,18 @@ export async function createPendingOrderFromCart(input: {
 		const combinationKey = combinationByProduct.get(
 			`${item.id}::${item.size}`,
 		)
-		const variant = combinationKey
-			? variantMap.get(`${item.id}::${combinationKey}`)
-			: null
+		const variant = item.variantId
+			? variantById.get(item.variantId)
+			: combinationKey
+				? variantMap.get(`${item.id}::${combinationKey}`)
+				: null
+
+		if (variant && variant.product_id !== item.id) {
+			return {
+				error: true,
+				message: `Variante inválida para ${item.name}`,
+			}
+		}
 
 		if (!product || !variant) {
 			return {
