@@ -34,6 +34,7 @@ export function CategoriesClient({ data }: CategoriesClientProps) {
 	const [loading, setLoading] = useState(false)
 
 	const handleDelete = async (id: string) => {
+		if (loading) return
 		if (!confirm('¿Estás seguro de eliminar esta categoría?')) return
 
 		try {
@@ -65,13 +66,22 @@ export function CategoriesClient({ data }: CategoriesClientProps) {
 						Gestiona las categorías de tus productos
 					</p>
 				</div>
-				<Button onClick={() => router.push('/admin/categories/new')}>
+				<Button
+					onClick={() => router.push('/admin/categories/new')}
+					aria-label="Crear nueva categoria"
+				>
 					<Plus className="mr-2 h-4 w-4" /> Nueva Categoría
 				</Button>
 			</div>
 
-			<div className="border rounded-md">
+			<div
+				className="rounded-md border bg-white shadow-sm"
+				aria-busy={loading}
+			>
 				<Table>
+					<caption className="sr-only">
+						Tabla de categorias del catalogo administrable
+					</caption>
 					<TableHeader>
 						<TableRow>
 							<TableHead>Nombre</TableHead>
@@ -82,14 +92,17 @@ export function CategoriesClient({ data }: CategoriesClientProps) {
 					</TableHeader>
 					<TableBody>
 						{data.map((category) => (
-							<TableRow key={category.id}>
+							<TableRow
+								key={category.id}
+								className="hover:bg-muted/30"
+							>
 								<TableCell className="font-medium">
 									<div className="flex items-center gap-3">
 										{category.image_url && (
 											<div className="h-10 w-10 relative overflow-hidden rounded-md border">
 												<Image
 													src={category.image_url}
-													alt={category.name}
+													alt={`Imagen de categoria ${category.name}`}
 													fill
 													className="object-cover"
 												/>
@@ -100,12 +113,17 @@ export function CategoriesClient({ data }: CategoriesClientProps) {
 								</TableCell>
 								<TableCell>{category.slug}</TableCell>
 								<TableCell className="max-w-xs truncate">
-									{category.description}
+									{category.description || 'Sin descripcion'}
 								</TableCell>
 								<TableCell>
 									<DropdownMenu>
 										<DropdownMenuTrigger asChild>
-											<Button variant="ghost" className="h-8 w-8 p-0">
+											<Button
+												variant="ghost"
+												className="h-8 w-8 p-0"
+												disabled={loading}
+												aria-label={`Abrir acciones para categoria ${category.name}`}
+											>
 												<span className="sr-only">Abrir menu</span>
 												<MoreHorizontal className="h-4 w-4" />
 											</Button>
@@ -113,6 +131,7 @@ export function CategoriesClient({ data }: CategoriesClientProps) {
 										<DropdownMenuContent align="end">
 											<DropdownMenuLabel>Acciones</DropdownMenuLabel>
 											<DropdownMenuItem
+												disabled={loading}
 												onClick={() =>
 													router.push(
 														`/admin/categories/${category.id}`,
@@ -122,6 +141,7 @@ export function CategoriesClient({ data }: CategoriesClientProps) {
 												<Edit className="mr-2 h-4 w-4" /> Editar
 											</DropdownMenuItem>
 											<DropdownMenuItem
+												disabled={loading}
 												className="text-red-600"
 												onClick={() => handleDelete(category.id)}
 											>
