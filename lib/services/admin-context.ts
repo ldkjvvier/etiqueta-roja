@@ -24,7 +24,9 @@ export const getAdminStoreContext = cache(
 
 		let query = db
 			.from('stores')
-			.select('id, name, slug, is_active, user_roles!inner(user_id, role)')
+			.select(
+				'id, name, slug, is_active, user_roles!inner(user_id, role)',
+			)
 			.eq('is_active', true)
 			.eq('user_roles.user_id', user.id)
 			.in('user_roles.role', ['super_admin', 'store_admin'])
@@ -36,7 +38,9 @@ export const getAdminStoreContext = cache(
 		const { data, error } = await query
 
 		if (error) {
-			throw new Error(`Failed to resolve admin store context: ${error.message}`)
+			throw new Error(
+				`Failed to resolve admin store context: ${error.message}`,
+			)
 		}
 
 		const rows = (data ?? []) as Array<{
@@ -52,7 +56,9 @@ export const getAdminStoreContext = cache(
 			const baseMessage = preferredSlug
 				? `No admin access to active store "${preferredSlug}" for current user.`
 				: 'Current user has no admin access to any active store.'
-			throw new Error(`${baseMessage} Assign role store_admin or super_admin in user_roles.`)
+			throw new Error(
+				`${baseMessage} Assign role store_admin or super_admin in user_roles.`,
+			)
 		}
 
 		return {
