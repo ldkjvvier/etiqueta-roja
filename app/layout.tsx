@@ -16,7 +16,6 @@ export const metadata: Metadata = {
 	title: 'ETIQUETA ROJA | Premium Streetwear',
 	description:
 		'Premium streetwear brand. Limited drops. Exclusive pieces.',
-	generator: 'v0.app',
 	icons: {
 		icon: [
 			{

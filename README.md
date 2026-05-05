@@ -1,30 +1,67 @@
-# Etiqueta Roja e-commerce
+# Etiqueta Roja — E-commerce
 
-*Automatically synced with your [v0.app](https://v0.app) deployments*
+Plataforma de e-commerce para la marca **Etiqueta Roja**, construida con Next.js, Supabase y Tailwind CSS. Lista para producción.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/gpatoveas-9438s-projects/v0-etiqueta-roja-e-commerce)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/szYmuFGX4MP)
+## Stack tecnológico
 
-## Overview
+- **Framework:** Next.js 16 (App Router)
+- **Lenguaje:** TypeScript
+- **Base de datos / Auth:** Supabase (PostgreSQL + Row Level Security)
+- **Estilos:** Tailwind CSS v4 + shadcn/ui
+- **Deploy:** Vercel
+- **Analíticas:** Vercel Analytics
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+## Requisitos previos
 
-## Deployment
+- Node.js ≥ 18
+- pnpm ≥ 8
+- Proyecto en Supabase con las tablas y políticas configuradas (ver [`SUPABASE_SETUP.md`](./SUPABASE_SETUP.md))
 
-Your project is live at:
+## Variables de entorno
 
-**[https://vercel.com/gpatoveas-9438s-projects/v0-etiqueta-roja-e-commerce](https://vercel.com/gpatoveas-9438s-projects/v0-etiqueta-roja-e-commerce)**
+Crea un archivo `.env.local` en la raíz del proyecto con:
 
-## Build your app
+```env
+NEXT_PUBLIC_SUPABASE_URL=tu_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_anon_key
+SUPABASE_SERVICE_ROLE_KEY=tu_service_role_key
+```
 
-Continue building your app on:
+## Instalación y desarrollo
 
-**[https://v0.app/chat/szYmuFGX4MP](https://v0.app/chat/szYmuFGX4MP)**
+```bash
+pnpm install
+pnpm dev
+```
 
-## How It Works
+La app estará disponible en `http://localhost:3000`.
 
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+## Build de producción
+
+```bash
+pnpm build
+pnpm start
+```
+
+## Estructura del proyecto
+
+```
+app/          # Rutas y layouts (App Router)
+components/   # Componentes reutilizables (UI + dominio)
+hooks/        # Custom hooks de React
+lib/          # Utilidades, servicios y configuración
+services/     # Lógica de negocio y acceso a datos
+types/        # Definiciones de tipos TypeScript
+public/       # Assets estáticos
+styles/       # Estilos globales
+```
+
+## Deploy
+
+El proyecto está configurado para desplegarse automáticamente en **Vercel** al hacer push a la rama principal.
+
+Consulta la [documentación de Vercel para Next.js](https://vercel.com/docs/frameworks/nextjs) para más detalles.
+
+## Base de datos
+
+Revisa [`SUPABASE_SETUP.md`](./SUPABASE_SETUP.md) y [`SUPABASE_POLICY_SETUP.md`](./SUPABASE_POLICY_SETUP.md) para la configuración completa de tablas y políticas de seguridad.
