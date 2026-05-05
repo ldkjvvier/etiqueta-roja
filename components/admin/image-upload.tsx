@@ -18,7 +18,6 @@ export function ImageUpload({
 	maxImages = 5,
 }: ImageUploadProps) {
 	const [uploading, setUploading] = useState(false)
-	const supabase = createClient()
 
 	const onUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		try {
@@ -26,6 +25,7 @@ export function ImageUpload({
 			if (!files || files.length === 0) return
 
 			setUploading(true)
+			const supabase = createClient()
 			const newUrls: string[] = []
 
 			for (const file of Array.from(files)) {

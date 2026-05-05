@@ -10,23 +10,30 @@ export default function LoginPage() {
 	const [password, setPassword] = useState('')
 	const [loading, setLoading] = useState(false)
 	const router = useRouter()
-	const supabase = createClient()
 
 	const handleLogin = async (e: React.FormEvent) => {
 		e.preventDefault()
 		setLoading(true)
 
-		const { error } = await supabase.auth.signInWithPassword({
-			email,
-			password,
-		})
+		try {
+			const supabase = createClient()
+			const { error } = await supabase.auth.signInWithPassword({
+				email,
+				password,
+			})
 
-		if (error) {
-			alert(error.message)
-			setLoading(false)
-		} else {
+			if (error) {
+				alert(error.message)
+				return
+			}
+
 			router.push('/admin')
 			router.refresh()
+		} catch (error) {
+			console.error(error)
+			alert('No se pudo inicializar la conexión con Supabase')
+		} finally {
+			setLoading(false)
 		}
 	}
 
