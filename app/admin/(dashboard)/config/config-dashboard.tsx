@@ -26,27 +26,27 @@ type ConfigItemId =
 	| 'social_links'
 
 const NAV_SECTIONS: Array<{
-	category: 'GENERAL' | 'HOMEPAGE' | 'MARKETING'
+	category: 'GENERAL' | 'INICIO' | 'PROMOCIÓN'
 	items: Array<{ id: ConfigItemId; label: string }>
 }> = [
 	{
 		category: 'GENERAL',
 		items: [
-			{ id: 'store_settings', label: 'Store Settings' },
-			{ id: 'contact_info', label: 'Contact Info' },
+			{ id: 'store_settings', label: 'Ajustes de tienda' },
+			{ id: 'contact_info', label: 'Contacto' },
 		],
 	},
 	{
-		category: 'HOMEPAGE',
+		category: 'INICIO',
 		items: [
-			{ id: 'home_hero_banner', label: 'Hero Banner' },
-			{ id: 'announcement_bar', label: 'Announcement Bar' },
-			{ id: 'promo_banner', label: 'Promo Banner' },
+			{ id: 'home_hero_banner', label: 'Hero principal' },
+			{ id: 'announcement_bar', label: 'Barra de anuncios' },
+			{ id: 'promo_banner', label: 'Banner promocional' },
 		],
 	},
 	{
-		category: 'MARKETING',
-		items: [{ id: 'social_links', label: 'Social Links' }],
+		category: 'PROMOCIÓN',
+		items: [{ id: 'social_links', label: 'Redes sociales' }],
 	},
 ]
 
@@ -94,7 +94,7 @@ export function ConfigDashboard({
 
 	return (
 		<div className="space-y-6">
-			<h1 className="text-3xl font-bold">Site Configuration</h1>
+			<h1 className="text-3xl font-bold">Configuración del sitio</h1>
 
 			<div className="md:hidden">
 				<div className="overflow-x-auto rounded-lg border bg-muted/20 p-2">

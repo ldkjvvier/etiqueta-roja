@@ -18,13 +18,13 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 
 const navItems = [
-	{ href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-	{ href: '/admin/products', label: 'Products', icon: Package },
+	{ href: '/admin', label: 'Resumen', icon: LayoutDashboard },
+	{ href: '/admin/products', label: 'Productos', icon: Package },
 	{ href: '/admin/drops', label: 'Drops', icon: Zap },
-	{ href: '/admin/orders', label: 'Orders', icon: Receipt },
-	{ href: '/admin/customers', label: 'Customers', icon: Users },
-	{ href: '/admin/categories', label: 'Categories', icon: Tags },
-	{ href: '/admin/config', label: 'Site Config', icon: Settings },
+	{ href: '/admin/orders', label: 'Pedidos', icon: Receipt },
+	{ href: '/admin/customers', label: 'Clientes', icon: Users },
+	{ href: '/admin/categories', label: 'Categorías', icon: Tags },
+	{ href: '/admin/config', label: 'Configuración', icon: Settings },
 ]
 
 export function AdminSidebar() {
@@ -65,7 +65,7 @@ export function AdminSidebar() {
 						ETIQUETA R<span className="text-[#E62727]">★</span>JA
 					</h1>
 					<p className="font-mono text-xs text-gray-500 mt-1">
-						// ADMIN PANEL
+						// PANEL ADMIN
 					</p>
 				</Link>
 			</div>
@@ -113,8 +113,8 @@ export function AdminSidebar() {
 					aria-busy={isLoggingOut}
 					className="flex w-full items-center justify-start gap-3 px-4 py-3 font-mono text-sm text-gray-500 hover:text-black transition-colors"
 				>
-						<LogOut className="w-4 h-4" />
-						{isLoggingOut ? 'Cerrando sesión...' : 'Logout'}
+					<LogOut className="w-4 h-4" />
+					{isLoggingOut ? 'Cerrando sesión...' : 'Cerrar sesión'}
 				</Button>
 				{logoutError ? (
 					<p className="mt-2 text-xs text-red-600" role="alert">

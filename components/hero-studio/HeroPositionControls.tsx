@@ -34,7 +34,7 @@ export function HeroPositionControls({
 						Drop: {selectedDrop?.name ?? 'Sin drop enlazado'}
 					</p>
 					<p className="text-muted-foreground">
-						Preview: {dropPreview.status ?? 'sin estado'}
+						Vista previa: {dropPreview.status ?? 'sin estado'}
 					</p>
 					{selectedDrop?.start_time && (
 						<p className="text-muted-foreground">
@@ -63,7 +63,7 @@ export function HeroPositionControls({
 						{state.positions.countdown.y.toFixed(1)}%
 					</p>
 					<p className="text-muted-foreground">
-						Live badge: {state.positions['live-badge'].x.toFixed(1)}%,{' '}
+						Badge live: {state.positions['live-badge'].x.toFixed(1)}%,{' '}
 						{state.positions['live-badge'].y.toFixed(1)}%
 					</p>
 					<p className="text-muted-foreground">
@@ -77,7 +77,7 @@ export function HeroPositionControls({
 							size="sm"
 							onClick={onResetPositions}
 						>
-							Reset posiciones
+							Restablecer posiciones
 						</Button>
 					</div>
 				</div>

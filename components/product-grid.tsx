@@ -27,13 +27,13 @@ export function ProductGrid({ products }: ProductGridProps) {
 
 	const totalPages = Math.max(
 		1,
-		Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE)
+		Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE),
 	)
 
 	const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE
 	const currentProducts = filteredProducts.slice(
 		startIndex,
-		startIndex + PRODUCTS_PER_PAGE
+		startIndex + PRODUCTS_PER_PAGE,
 	)
 
 	const handleLoadMore = () => {
@@ -72,7 +72,7 @@ export function ProductGrid({ products }: ProductGridProps) {
 							/>
 						</form>
 						<span className="text-sm font-bold text-muted-foreground font-mono">
-							{filteredProducts.length} ITEMS
+							{filteredProducts.length} PRODUCTOS
 						</span>
 					</div>
 				</div>
@@ -110,7 +110,7 @@ export function ProductGrid({ products }: ProductGridProps) {
 
 							{Array.from(
 								{ length: totalPages },
-								(_, i) => i + 1
+								(_, i) => i + 1,
 							).map((page) => (
 								<button
 									key={page}
@@ -128,7 +128,7 @@ export function ProductGrid({ products }: ProductGridProps) {
 							<button
 								onClick={() =>
 									setCurrentPage(
-										Math.min(totalPages, currentPage + 1)
+										Math.min(totalPages, currentPage + 1),
 									)
 								}
 								disabled={currentPage === totalPages}

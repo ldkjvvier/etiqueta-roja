@@ -289,10 +289,12 @@ const announcementBarFormSchema = z.object({
 		.regex(/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/, 'Color inválido'),
 })
 
-const storeSettingsFormSchema = z.object({
-	isActive: z.boolean(),
-	description: z.string().max(160).optional(),
-}).extend(storeSettingsEditableFieldsSchema.shape)
+const storeSettingsFormSchema = z
+	.object({
+		isActive: z.boolean(),
+		description: z.string().max(160).optional(),
+	})
+	.extend(storeSettingsEditableFieldsSchema.shape)
 
 function useConfigSubmit() {
 	const router = useRouter()
@@ -357,8 +359,8 @@ export function SocialLinksConfigForm({
 	return (
 		<form onSubmit={onSubmit} className="space-y-4">
 			<ConfigSectionCard
-				title="Social Links"
-				description="Enlaces de redes sociales visibles en storefront."
+				title="Redes sociales"
+				description="Enlaces de redes sociales visibles en la tienda."
 				footer={
 					<Button type="submit" disabled={isPending}>
 						{isPending ? 'Guardando...' : 'Guardar Redes'}
@@ -376,16 +378,16 @@ export function SocialLinksConfigForm({
 				/>
 
 				<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-					<ConfigInputField id="instagram" label="Instagram URL">
+					<ConfigInputField id="instagram" label="URL de Instagram">
 						<Input id="instagram" {...form.register('instagram')} />
 					</ConfigInputField>
-					<ConfigInputField id="tiktok" label="TikTok URL">
+					<ConfigInputField id="tiktok" label="URL de TikTok">
 						<Input id="tiktok" {...form.register('tiktok')} />
 					</ConfigInputField>
-					<ConfigInputField id="twitter" label="Twitter/X URL">
+					<ConfigInputField id="twitter" label="URL de Twitter/X">
 						<Input id="twitter" {...form.register('twitter')} />
 					</ConfigInputField>
-					<ConfigInputField id="facebook" label="Facebook URL">
+					<ConfigInputField id="facebook" label="URL de Facebook">
 						<Input id="facebook" {...form.register('facebook')} />
 					</ConfigInputField>
 				</div>
@@ -400,7 +402,7 @@ export function SocialLinksConfigForm({
 					/>
 				</ConfigInputField>
 
-				<ConfigPreview title="Preview enlaces activos">
+				<ConfigPreview title="Vista previa de enlaces activos">
 					<div className="flex flex-wrap gap-2 text-sm">
 						{[
 							['Instagram', values.instagram],
@@ -466,17 +468,17 @@ export function AnnouncementBarConfigForm({
 	return (
 		<form onSubmit={onSubmit} className="space-y-4">
 			<ConfigSectionCard
-				title="Announcement Bar"
+				title="Barra de anuncios"
 				description="Barra superior destacada para anuncios y CTA."
 				footer={
 					<Button type="submit" disabled={isPending}>
-						{isPending ? 'Guardando...' : 'Guardar Announcement'}
+						{isPending ? 'Guardando...' : 'Guardar barra'}
 					</Button>
 				}
 			>
 				<ConfigToggle
 					id="announcement_active"
-					label="Announcement activo"
+					label="Barra de anuncios activa"
 					checked={values.isActive}
 					onCheckedChange={(checked) =>
 						form.setValue('isActive', checked)
@@ -493,7 +495,7 @@ export function AnnouncementBarConfigForm({
 				<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 					<ConfigInputField
 						id="announcement_cta_text"
-						label="CTA text"
+						label="Texto CTA"
 					>
 						<Input
 							id="announcement_cta_text"
@@ -502,7 +504,7 @@ export function AnnouncementBarConfigForm({
 					</ConfigInputField>
 					<ConfigInputField
 						id="announcement_cta_link"
-						label="CTA link"
+						label="Enlace CTA"
 					>
 						<Input
 							id="announcement_cta_link"
@@ -514,7 +516,7 @@ export function AnnouncementBarConfigForm({
 				<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 					<ConfigColorPicker
 						id="announcement_bg_color"
-						label="Background color"
+						label="Color de fondo"
 						value={values.backgroundColor}
 						onChange={(next) =>
 							form.setValue('backgroundColor', next)
@@ -522,7 +524,7 @@ export function AnnouncementBarConfigForm({
 					/>
 					<ConfigColorPicker
 						id="announcement_text_color"
-						label="Text color"
+						label="Color del texto"
 						value={values.textColor}
 						onChange={(next) => form.setValue('textColor', next)}
 					/>
@@ -538,7 +540,7 @@ export function AnnouncementBarConfigForm({
 					/>
 				</ConfigInputField>
 
-				<ConfigPreview title="Preview barra">
+				<ConfigPreview title="Vista previa de barra">
 					<div
 						className="flex items-center justify-between rounded px-3 py-2 text-sm"
 						style={{
@@ -571,10 +573,8 @@ export function StoreSettingsConfigForm({
 	const storedTimezone = String(
 		initialData?.timezone || STORE_SETTINGS_TIMEZONE,
 	)
-	const hasLegacyCurrency =
-		!isSupportedStoreCurrency(storedCurrency)
-	const hasLegacyTimezone =
-		!isSupportedStoreTimezone(storedTimezone)
+	const hasLegacyCurrency = !isSupportedStoreCurrency(storedCurrency)
+	const hasLegacyTimezone = !isSupportedStoreTimezone(storedTimezone)
 	const form = useForm<z.infer<typeof storeSettingsFormSchema>>({
 		resolver: zodResolver(storeSettingsFormSchema),
 		defaultValues: {
@@ -601,17 +601,17 @@ export function StoreSettingsConfigForm({
 	return (
 		<form onSubmit={onSubmit} className="space-y-4">
 			<ConfigSectionCard
-				title="Store Settings"
+				title="Ajustes de tienda"
 				description="Ajustes internos de referencia y soporte. La moneda y la zona horaria operativas están fijadas por el negocio."
 				footer={
 					<Button type="submit" disabled={isPending}>
-						{isPending ? 'Guardando...' : 'Guardar Ajustes'}
+						{isPending ? 'Guardando...' : 'Guardar ajustes'}
 					</Button>
 				}
 			>
 				<ConfigToggle
 					id="store_settings_active"
-					label="Store settings activos"
+					label="Ajustes de tienda activos"
 					checked={values.isActive}
 					onCheckedChange={(checked) =>
 						form.setValue('isActive', checked)
@@ -621,15 +621,15 @@ export function StoreSettingsConfigForm({
 				<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 					<ConfigInputField
 						id="store_name"
-						label="Store name interno"
+						label="Nombre interno de la tienda"
 						helper="Referencia interna para admins. No cambia el nombre visible, el logo ni la identidad pública de la tienda."
 					>
 						<Input id="store_name" {...form.register('storeName')} />
 					</ConfigInputField>
 					<ConfigInputField
 						id="support_email"
-						label="Support email interno"
-						helper="El email visible en storefront se gestiona en Contact Info. Este campo queda como referencia operativa interna."
+						label="Correo interno de soporte"
+						helper="El correo visible en la tienda se gestiona en Contacto. Este campo queda como referencia operativa interna."
 					>
 						<Input
 							id="support_email"
@@ -639,11 +639,11 @@ export function StoreSettingsConfigForm({
 					</ConfigInputField>
 					<ConfigInputField
 						id="currency"
-						label="Currency"
+						label="Moneda"
 						helper={
 							hasLegacyCurrency
 								? `Valor legado detectado (${storedCurrency}). Al guardar se normalizará a ${STORE_SETTINGS_CURRENCY}.`
-								: 'Fijada en CLP. El storefront y el pricing actual no soportan cambio de moneda desde este panel.'
+								: 'Fijada en CLP. La tienda y el sistema de precios actual no soportan cambio de moneda desde este panel.'
 						}
 					>
 						<Input
@@ -656,7 +656,7 @@ export function StoreSettingsConfigForm({
 					</ConfigInputField>
 					<ConfigInputField
 						id="timezone"
-						label="Timezone"
+						label="Zona horaria"
 						helper={
 							hasLegacyTimezone
 								? `Valor legado detectado (${storedTimezone}). Al guardar se normalizará a ${STORE_SETTINGS_TIMEZONE}.`
@@ -683,7 +683,7 @@ export function StoreSettingsConfigForm({
 					/>
 				</ConfigInputField>
 
-				<ConfigPreview title="Preview resumen tienda">
+				<ConfigPreview title="Vista previa del resumen de tienda">
 					<div className="space-y-1 text-sm">
 						<p>
 							<strong>Tienda:</strong> {values.storeName}
@@ -698,7 +698,7 @@ export function StoreSettingsConfigForm({
 								: STORE_SETTINGS_CURRENCY}
 						</p>
 						<p>
-							<strong>Timezone:</strong>{' '}
+							<strong>Zona horaria:</strong>{' '}
 							{hasLegacyTimezone
 								? `${storedTimezone} -> ${STORE_SETTINGS_TIMEZONE} al guardar`
 								: STORE_SETTINGS_TIMEZONE}

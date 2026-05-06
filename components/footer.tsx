@@ -14,21 +14,21 @@ export async function Footer() {
 	const socialLinks = [
 		info?.instagram?.trim()
 			? {
-				label: 'INSTAGRAM',
-				href: info.instagram,
-			}
+					label: 'INSTAGRAM',
+					href: info.instagram,
+				}
 			: null,
 		info?.tiktok?.trim()
 			? {
-				label: 'TIKTOK',
-				href: info.tiktok,
-			}
+					label: 'TIKTOK',
+					href: info.tiktok,
+				}
 			: null,
 		info?.whatsapp?.trim()
 			? {
-				label: 'WHATSAPP',
-				href: `https://wa.me/${info.whatsapp.replace(/[^0-9]/g, '')}`,
-			}
+					label: 'WHATSAPP',
+					href: `https://wa.me/${info.whatsapp.replace(/[^0-9]/g, '')}`,
+				}
 			: null,
 	].filter(
 		(
@@ -65,44 +65,44 @@ export async function Footer() {
 					{/* Support */}
 					{supportLinks.length > 0 ? (
 						<div>
-						<h4 className="font-mono font-bold text-xs uppercase tracking-wider mb-4 border-b border-foreground/20 pb-2">
-							[SUPPORT]
-						</h4>
-						<ul className="space-y-2 text-xs font-mono text-foreground/70">
-							{supportLinks.map((link) => (
-								<li key={link.label}>
-									<a
-										href={link.href}
-										className="hover:text-foreground transition-colors"
-									>
-										&gt; {link.label}
-									</a>
-								</li>
-							))}
-						</ul>
+							<h4 className="font-mono font-bold text-xs uppercase tracking-wider mb-4 border-b border-foreground/20 pb-2">
+								[CONTACTO]
+							</h4>
+							<ul className="space-y-2 text-xs font-mono text-foreground/70">
+								{supportLinks.map((link) => (
+									<li key={link.label}>
+										<a
+											href={link.href}
+											className="hover:text-foreground transition-colors"
+										>
+											&gt; {link.label}
+										</a>
+									</li>
+								))}
+							</ul>
 						</div>
 					) : null}
 
 					{/* Socials */}
 					{socialLinks.length > 0 ? (
 						<div>
-						<h4 className="font-mono font-bold text-xs uppercase tracking-wider mb-4 border-b border-foreground/20 pb-2">
-							[SOCIALS]
-						</h4>
-						<ul className="space-y-2 text-xs font-mono text-foreground/70">
-							{socialLinks.map((link) => (
-								<li key={link.label}>
-									<a
-										href={link.href}
-										target="_blank"
-										rel="noopener noreferrer"
-										className="hover:text-foreground transition-colors"
-									>
-										&gt; {link.label}
-									</a>
-								</li>
-							))}
-						</ul>
+							<h4 className="font-mono font-bold text-xs uppercase tracking-wider mb-4 border-b border-foreground/20 pb-2">
+								[REDES]
+							</h4>
+							<ul className="space-y-2 text-xs font-mono text-foreground/70">
+								{socialLinks.map((link) => (
+									<li key={link.label}>
+										<a
+											href={link.href}
+											target="_blank"
+											rel="noopener noreferrer"
+											className="hover:text-foreground transition-colors"
+										>
+											&gt; {link.label}
+										</a>
+									</li>
+								))}
+							</ul>
 						</div>
 					) : null}
 				</div>

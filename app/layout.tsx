@@ -13,9 +13,9 @@ const _inter = Inter({ subsets: ['latin'] })
 const _geistMono = Geist_Mono({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-	title: 'ETIQUETA ROJA | Premium Streetwear',
+	title: 'ETIQUETA ROJA | Streetwear premium',
 	description:
-		'Premium streetwear brand. Limited drops. Exclusive pieces.',
+		'Marca de streetwear premium. Drops limitados. Piezas exclusivas.',
 	icons: {
 		icon: [
 			{

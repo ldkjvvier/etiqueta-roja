@@ -30,7 +30,7 @@ function HeroCanvasPreviewComponent({
 						id="hero-canvas-preview-title"
 						className="text-sm font-semibold"
 					>
-						Canvas Preview
+						Vista de lienzo
 					</h2>
 					<p
 						id="hero-canvas-preview-description"
@@ -79,12 +79,12 @@ function HeroCanvasPreviewComponent({
 					<p>Drop enlazado: {state.dropConfig.linkedDropId}</p>
 				)}
 				{dropPreview.status && (
-					<p>Estado preview drop: {dropPreview.status}</p>
+					<p>Vista previa del drop: {dropPreview.status}</p>
 				)}
 				<p>Modo drop: {state.dropConfig.dropDisplayMode}</p>
 				{state.cta.link && <p>Destino CTA: {state.cta.link}</p>}
 				{state.media.backgroundImageMobile && (
-					<p>Imagen mobile configurada</p>
+					<p>Imagen móvil configurada</p>
 				)}
 				{state.media.backgroundVideoUrl && (
 					<p>Video de fondo activo</p>

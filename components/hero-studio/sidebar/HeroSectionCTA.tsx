@@ -314,7 +314,7 @@ export function HeroSectionCTA({ form, setField }: HeroSectionProps) {
 
 			<div className="rounded-lg border bg-background p-4">
 				<p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-					Preview CTA
+					Vista previa del CTA
 				</p>
 				<HeroCTA
 					config={{

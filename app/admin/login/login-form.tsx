@@ -55,9 +55,9 @@ export function LoginForm({ unauthorizedReason }: LoginFormProps) {
 				className="w-full max-w-md space-y-6 rounded-lg border border-gray-200 bg-white p-8 shadow-md dark:border-gray-800 dark:bg-black"
 			>
 				<div className="text-center">
-					<h1 className="text-2xl font-bold">Admin Login</h1>
+					<h1 className="text-2xl font-bold">Acceso admin</h1>
 					<p className="text-gray-500">
-						Ingresa para gestionar la web
+						Ingresa para gestionar la tienda
 					</p>
 				</div>
 				{unauthorizedReason ? (
@@ -82,7 +82,7 @@ export function LoginForm({ unauthorizedReason }: LoginFormProps) {
 						htmlFor="admin-email"
 						className="mb-2 block text-sm font-medium"
 					>
-						Email
+						Correo
 					</label>
 					<input
 						id="admin-email"
@@ -90,7 +90,7 @@ export function LoginForm({ unauthorizedReason }: LoginFormProps) {
 						value={email}
 						onChange={(e) => setEmail(e.target.value)}
 						className="w-full rounded-md border border-gray-300 bg-background p-2 focus:outline-none focus:ring-2 focus:ring-primary dark:border-gray-700"
-						placeholder="admin@example.com"
+						placeholder="admin@ejemplo.com"
 						autoComplete="email"
 						aria-describedby={
 							errorMessage ? 'admin-login-error' : undefined
@@ -104,7 +104,7 @@ export function LoginForm({ unauthorizedReason }: LoginFormProps) {
 						htmlFor="admin-password"
 						className="mb-2 block text-sm font-medium"
 					>
-						Password
+						Contraseña
 					</label>
 					<input
 						id="admin-password"

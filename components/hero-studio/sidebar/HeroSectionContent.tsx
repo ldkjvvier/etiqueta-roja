@@ -118,7 +118,7 @@ export function HeroSectionContent({
 				<div className="mb-2 flex items-center gap-2">
 					<Palette className="h-4 w-4 text-muted-foreground" />
 					<p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-						Preview inline copy
+						Vista previa del texto
 					</p>
 				</div>
 				<p className="text-[11px] font-bold tracking-[0.18em] text-muted-foreground">

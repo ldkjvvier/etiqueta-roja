@@ -111,10 +111,10 @@ export function HeroStudio({
 		<>
 			<Card>
 				<CardHeader>
-					<CardTitle>Hero Banner Home</CardTitle>
+					<CardTitle>Hero principal de inicio</CardTitle>
 					<CardDescription>
-						Controla contenido, branding y layout desde un editor
-						full-screen.
+						Controla contenido, branding y layout desde un editor de
+						pantalla completa.
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
@@ -134,7 +134,7 @@ export function HeroStudio({
 						aria-expanded={isStudioOpen}
 						aria-controls="hero-studio-dialog"
 					>
-						Abrir Hero Studio
+						Abrir estudio del hero
 					</Button>
 					{actionState.message && (
 						<p
@@ -172,7 +172,7 @@ export function HeroStudio({
 										id="hero-studio-title"
 										className="text-sm font-semibold"
 									>
-										Hero Studio
+										Estudio del hero
 									</h2>
 									<p
 										id="hero-studio-description"

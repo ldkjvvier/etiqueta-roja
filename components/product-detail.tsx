@@ -236,7 +236,7 @@ export function ProductDetail({
 										>
 											<img
 												src={img || '/placeholder.svg'}
-												alt={`${product.name} - view ${index + 1}`}
+												alt={`${product.name} - vista ${index + 1}`}
 												className={`w-full h-full object-cover ${
 													isSoldOut ? 'opacity-50 grayscale' : ''
 												}`}
@@ -253,7 +253,7 @@ export function ProductDetail({
 										type="button"
 										onClick={scrollPrev}
 										className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-background/90 border border-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-										aria-label="Previous image"
+										aria-label="Imagen anterior"
 									>
 										<ChevronLeft className="w-5 h-5" />
 									</button>
@@ -261,7 +261,7 @@ export function ProductDetail({
 										type="button"
 										onClick={scrollNext}
 										className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-background/90 border border-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-										aria-label="Next image"
+										aria-label="Siguiente imagen"
 									>
 										<ChevronRight className="w-5 h-5" />
 									</button>
@@ -410,8 +410,8 @@ export function ProductDetail({
 											{!whatsappNumber
 												? 'WHATSAPP NO DISPONIBLE'
 												: selectedSize
-												? 'PEDIR POR WHATSAPP'
-												: 'SELECCIONA TU TALLA'}
+													? 'PEDIR POR WHATSAPP'
+													: 'SELECCIONA TU TALLA'}
 										</Button>
 
 										{/* Add to Cart Secondary */}

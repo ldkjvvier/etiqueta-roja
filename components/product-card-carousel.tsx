@@ -29,7 +29,7 @@ export function ProductCardCarousel({
 			e.stopPropagation() // Prevent bubbling
 			emblaApi?.scrollPrev()
 		},
-		[emblaApi]
+		[emblaApi],
 	)
 
 	const scrollNext = useCallback(
@@ -38,7 +38,7 @@ export function ProductCardCarousel({
 			e.stopPropagation() // Prevent bubbling
 			emblaApi?.scrollNext()
 		},
-		[emblaApi]
+		[emblaApi],
 	)
 
 	const onSelect = useCallback(() => {
@@ -67,7 +67,7 @@ export function ProductCardCarousel({
 						>
 							<img
 								src={img || '/placeholder.svg'}
-								alt={`${alt} - view ${index + 1}`}
+								alt={`${alt} - vista ${index + 1}`}
 								className={`w-full h-full object-cover ${
 									isSoldOut ? 'grayscale' : ''
 								}`}
@@ -82,14 +82,14 @@ export function ProductCardCarousel({
 			<button
 				onClick={scrollPrev}
 				className="absolute left-1 top-1/2 -translate-y-1/2 w-6 h-6 md:w-7 md:h-7 bg-background/80 border border-foreground flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 transition-opacity z-10"
-				aria-label="Previous image"
+				aria-label="Imagen anterior"
 			>
 				<ChevronLeft className="w-3 h-3 md:w-4 md:h-4" />
 			</button>
 			<button
 				onClick={scrollNext}
 				className="absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 md:w-7 md:h-7 bg-background/80 border border-foreground flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 transition-opacity z-10"
-				aria-label="Next image"
+				aria-label="Siguiente imagen"
 			>
 				<ChevronRight className="w-3 h-3 md:w-4 md:h-4" />
 			</button>
@@ -110,7 +110,7 @@ export function ProductCardCarousel({
 									? 'bg-foreground'
 									: 'bg-foreground/40'
 							}`}
-							aria-label={`Go to image ${index + 1}`}
+							aria-label={`Ir a la imagen ${index + 1}`}
 						/>
 					))}
 				</div>
