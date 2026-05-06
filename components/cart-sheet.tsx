@@ -32,6 +32,14 @@ export function CartSheet() {
 
 	const handleWhatsAppCheckout = () => {
 		setCheckoutError(null)
+
+		if (!whatsappNumber) {
+			setCheckoutError(
+				'WhatsApp no está configurado para esta tienda.',
+			)
+			return
+		}
+
 		setCheckoutLoading(true)
 
 		createPendingOrderFromCart({
@@ -202,6 +210,7 @@ export function CartSheet() {
 								onClick={handleWhatsAppCheckout}
 								disabled={
 									checkoutLoading ||
+									!whatsappNumber ||
 									cartItems.some((item) => item.maxStock === 0)
 								}
 								className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-lg py-6 gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -209,6 +218,8 @@ export function CartSheet() {
 								<MessageCircle className="h-5 w-5" />
 								{checkoutLoading
 									? 'PROCESANDO...'
+									: !whatsappNumber
+										? 'WHATSAPP NO DISPONIBLE'
 									: cartItems.some((item) => item.maxStock === 0)
 										? 'ELIMINA PRODUCTOS AGOTADOS'
 										: 'ENVIAR PEDIDO A WHATSAPP'}

@@ -7,21 +7,50 @@ import {
 export async function Footer() {
 	const config =
 		await getSiteConfig<ContactInfoConfig>('contact_info')
-
-	// Valores de respaldo si la configuración dinámica aún no está disponible.
-	const info = config?.value || {
-		whatsapp: '+56912345678',
-		instagram: 'https://instagram.com/etiquetaroja',
-		tiktok: 'https://tiktok.com/@etiquetaroja',
-		email: 'contacto@etiquetaroja.com',
-	}
+	const info = config?.value
+	const supportLinks = info?.email
+		? [{ label: 'CONTACTO', href: `mailto:${info.email}` }]
+		: []
+	const socialLinks = [
+		info?.instagram?.trim()
+			? {
+				label: 'INSTAGRAM',
+				href: info.instagram,
+			}
+			: null,
+		info?.tiktok?.trim()
+			? {
+				label: 'TIKTOK',
+				href: info.tiktok,
+			}
+			: null,
+		info?.whatsapp?.trim()
+			? {
+				label: 'WHATSAPP',
+				href: `https://wa.me/${info.whatsapp.replace(/[^0-9]/g, '')}`,
+			}
+			: null,
+	].filter(
+		(
+			item,
+		): item is {
+			label: string
+			href: string
+		} => Boolean(item),
+	)
+	const gridClassName =
+		supportLinks.length > 0 && socialLinks.length > 0
+			? 'grid grid-cols-1 md:grid-cols-3 gap-8'
+			: supportLinks.length > 0 || socialLinks.length > 0
+				? 'grid grid-cols-1 md:grid-cols-2 gap-8'
+				: 'grid grid-cols-1 gap-8'
 
 	return (
 		<footer className="bg-[#DCDCDC] text-foreground border-t border-border">
 			<div className="container mx-auto px-4 py-12">
-				<div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+				<div className={gridClassName}>
 					{/* Brand */}
-					<div className="md:col-span-1">
+					<div>
 						<span className="text-xl font-black tracking-tighter">
 							ETIQUETA R
 							<Star className="inline-block w-4 h-4 fill-primary text-primary -mt-1" />
@@ -34,121 +63,48 @@ export async function Footer() {
 					</div>
 
 					{/* Support */}
-					<div>
+					{supportLinks.length > 0 ? (
+						<div>
 						<h4 className="font-mono font-bold text-xs uppercase tracking-wider mb-4 border-b border-foreground/20 pb-2">
 							[SUPPORT]
 						</h4>
 						<ul className="space-y-2 text-xs font-mono text-foreground/70">
-							<li>
-								<a
-									href="#"
-									className="hover:text-foreground transition-colors"
-								>
-									&gt; FAQ
-								</a>
-							</li>
-							<li>
-								<a
-									href="#"
-									className="hover:text-foreground transition-colors"
-								>
-									&gt; ENVÍOS
-								</a>
-							</li>
-							<li>
-								<a
-									href="#"
-									className="hover:text-foreground transition-colors"
-								>
-									&gt; DEVOLUCIONES
-								</a>
-							</li>
-							<li>
-								<a
-									href={`mailto:${info.email}`}
-									className="hover:text-foreground transition-colors"
-								>
-									&gt; CONTACTO
-								</a>
-							</li>
+							{supportLinks.map((link) => (
+								<li key={link.label}>
+									<a
+										href={link.href}
+										className="hover:text-foreground transition-colors"
+									>
+										&gt; {link.label}
+									</a>
+								</li>
+							))}
 						</ul>
-					</div>
-
-					{/* Legal */}
-					<div>
-						<h4 className="font-mono font-bold text-xs uppercase tracking-wider mb-4 border-b border-foreground/20 pb-2">
-							[LEGAL]
-						</h4>
-						<ul className="space-y-2 text-xs font-mono text-foreground/70">
-							<li>
-								<a
-									href="#"
-									className="hover:text-foreground transition-colors"
-								>
-									&gt; TÉRMINOS
-								</a>
-							</li>
-							<li>
-								<a
-									href="#"
-									className="hover:text-foreground transition-colors"
-								>
-									&gt; PRIVACIDAD
-								</a>
-							</li>
-							<li>
-								<a
-									href="#"
-									className="hover:text-foreground transition-colors"
-								>
-									&gt; COOKIES
-								</a>
-							</li>
-						</ul>
-					</div>
+						</div>
+					) : null}
 
 					{/* Socials */}
-					<div>
+					{socialLinks.length > 0 ? (
+						<div>
 						<h4 className="font-mono font-bold text-xs uppercase tracking-wider mb-4 border-b border-foreground/20 pb-2">
 							[SOCIALS]
 						</h4>
 						<ul className="space-y-2 text-xs font-mono text-foreground/70">
-							<li>
-								<a
-									href={info.instagram}
-									target="_blank"
-									rel="noopener noreferrer"
-									className="hover:text-foreground transition-colors"
-								>
-									&gt; INSTAGRAM
-								</a>
-							</li>
-							<li>
-								<a
-									href={info.tiktok}
-									target="_blank"
-									rel="noopener noreferrer"
-									className="hover:text-foreground transition-colors"
-								>
-									&gt; TIKTOK
-								</a>
-							</li>
-							<li>
-								{/* Clean whatsapp number for link: remove spaces, +, etc if needed. Assuming stored with + */}
-								<a
-									href={`https://wa.me/${info.whatsapp.replace(
-										/[^0-9]/g,
-										'',
-									)}`}
-									target="_blank"
-									rel="noopener noreferrer"
-									className="hover:text-foreground transition-colors"
-								>
-									&gt; WHATSAPP
-								</a>
-							</li>
+							{socialLinks.map((link) => (
+								<li key={link.label}>
+									<a
+										href={link.href}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="hover:text-foreground transition-colors"
+									>
+										&gt; {link.label}
+									</a>
+								</li>
+							))}
 						</ul>
-					</div>
+						</div>
+					) : null}
 				</div>
 
 				{/* Receipt-style bottom */}

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import type { Product } from '@/lib/store-context'
-import { getAdminStoreContext } from '@/lib/services/admin-context'
+import { getPublicStoreContext } from '@/lib/services/public-store-context'
 
 type VariantRow = {
 	id: string
@@ -123,7 +123,7 @@ function getPublicProductsListQuery(db: any, storeId: string) {
 export async function getProducts(): Promise<Product[]> {
 	const supabase = await createClient()
 	const db = supabase as any
-	const store = await getAdminStoreContext()
+	const store = await getPublicStoreContext()
 	const query = getPublicProductsListQuery(db, store.id)
 	const { data, error } = await query.order('created_at', {
 		ascending: false,
@@ -142,7 +142,7 @@ export async function getProduct(
 ): Promise<Product | null> {
 	const supabase = await createClient()
 	const db = supabase as any
-	const store = await getAdminStoreContext()
+	const store = await getPublicStoreContext()
 	const query = getPublicProductsBaseQuery(db, store.id)
 	const { data, error } = await query.eq('id', id).maybeSingle()
 
@@ -158,7 +158,7 @@ export async function getProductBySlug(
 ): Promise<Product | null> {
 	const supabase = await createClient()
 	const db = supabase as any
-	const store = await getAdminStoreContext()
+	const store = await getPublicStoreContext()
 	const query = getPublicProductsBaseQuery(db, store.id)
 	const { data, error } = await query.eq('slug', slug).maybeSingle()
 
@@ -174,7 +174,7 @@ export async function getRelatedProducts(
 ): Promise<Product[]> {
 	const supabase = await createClient()
 	const db = supabase as any
-	const store = await getAdminStoreContext()
+	const store = await getPublicStoreContext()
 	const query = getPublicProductsBaseQuery(db, store.id)
 	const { data, error } = await query
 		.neq('id', excludeId)

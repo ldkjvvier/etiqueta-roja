@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { getAdminStoreContext } from '@/lib/services/admin-context'
+import { getPublicStoreContext } from '@/lib/services/public-store-context'
 import type { Database } from '@/lib/supabase/types'
 
 export interface PromoBannerConfig {
@@ -112,7 +112,7 @@ export async function getSiteConfig<T>(key: string): Promise<{
 } | null> {
 	try {
 		const supabase = await createClient()
-		const store = await getAdminStoreContext()
+		const store = await getPublicStoreContext()
 		const { data, error } = await supabase
 			.from('site_config')
 			.select('value, is_active, description')

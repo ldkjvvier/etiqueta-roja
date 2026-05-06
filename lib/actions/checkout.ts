@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { getAdminStoreContext } from '@/lib/services/admin-context'
+import { getPublicStoreContext } from '@/lib/services/public-store-context'
 
 export type CheckoutCartItem = {
 	id: string
@@ -68,7 +68,7 @@ export async function createPendingOrderFromCart(input: {
 }) {
 	const supabase = await createClient()
 	const db = supabase as any
-	const store = await getAdminStoreContext()
+	const store = await getPublicStoreContext()
 
 	const {
 		data: { user },
@@ -85,6 +85,17 @@ export async function createPendingOrderFromCart(input: {
 	const items = input.items || []
 	if (!items.length) {
 		return { error: true, message: 'El carrito está vacío' }
+	}
+
+	const cleanNumber = (input.whatsappNumber || '').replace(
+		/[^0-9]/g,
+		'',
+	)
+	if (!cleanNumber) {
+		return {
+			error: true,
+			message: 'WhatsApp no está configurado para esta tienda.',
+		}
 	}
 
 	const distinctProductIds = Array.from(
@@ -268,10 +279,6 @@ export async function createPendingOrderFromCart(input: {
 			throw new Error('No se pudo guardar el detalle de la orden')
 		}
 
-		const cleanNumber = (input.whatsappNumber || '').replace(
-			/[^0-9]/g,
-			'',
-		)
 		const message = [
 			`Hola ETIQUETA ROJA, confirmo mi pedido ${order.order_number}:`,
 			'',

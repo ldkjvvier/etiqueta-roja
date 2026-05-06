@@ -85,9 +85,9 @@ interface StoreProviderProps {
 
 export function StoreProvider({
 	children,
-	whatsappNumber = '5491123456789',
+	whatsappNumber,
 }: StoreProviderProps) {
-	const sanitizedWhatsappNumber = whatsappNumber.replace(
+	const sanitizedWhatsappNumber = (whatsappNumber ?? '').replace(
 		/[^0-9]/g,
 		'',
 	)
@@ -230,6 +230,10 @@ export function StoreProvider({
 		size?: string,
 	) => {
 		const cleanNumber = sanitizedWhatsappNumber
+
+		if (!cleanNumber) {
+			return ''
+		}
 
 		if (product && size) {
 			// Single product order

@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { hardDeleteProductV3 } from '@/lib/actions/products-admin'
-import { getAdminStoreContext } from '@/lib/services/admin-context'
+import { getPublicStoreContext } from '@/lib/services/public-store-context'
 
 export async function deleteProduct(id: string) {
 	const result = await hardDeleteProductV3(id)
@@ -16,7 +16,7 @@ export async function validateCartStock(
 	items: { id: string; size: string; variantId?: string }[],
 ) {
 	const supabase = await createClient()
-	const store = await getAdminStoreContext()
+	const store = await getPublicStoreContext()
 	const normalize = (value: string) =>
 		(value || '').trim().toLowerCase().replace(/\s+/g, '-')
 	const productIds = Array.from(new Set(items.map((i) => i.id)))

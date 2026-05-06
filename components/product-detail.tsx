@@ -26,7 +26,8 @@ export function ProductDetail({
 		null,
 	)
 	const [selectedImageIndex, setSelectedImageIndex] = useState(0)
-	const { addToCart, generateWhatsAppMessage } = useStore()
+	const { addToCart, generateWhatsAppMessage, whatsappNumber } =
+		useStore()
 
 	// Main gallery carousel
 	const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true })
@@ -154,7 +155,7 @@ export function ProductDetail({
 	}, [emblaApi])
 
 	const handleWhatsAppOrder = () => {
-		if (!selectedSize) return
+		if (!selectedSize || !whatsappNumber) return
 		window.open(
 			generateWhatsAppMessage(product, selectedSize),
 			'_blank',
@@ -289,7 +290,7 @@ export function ProductDetail({
 
 						{/* Thumbnail Row/Column */}
 						{productImages.length > 1 && (
-							<div className="flex gap-2 lg:flex-col lg:w-24 order-2 lg:h-[calc(100%-0px)] overflow-y-auto scrollbar-hide">
+							<div className="flex gap-2 lg:flex-col lg:w-24 order-2 lg:h-[calc(100%-0)] overflow-y-auto scrollbar-hide">
 								{productImages.map((img, index) => (
 									<button
 										key={index}
@@ -335,15 +336,16 @@ export function ProductDetail({
 						</div>
 
 						{/* Description */}
-						<div className="mb-6">
-							<h3 className="font-bold text-xs uppercase tracking-wide mb-2 text-muted-foreground">
-								Descripción
-							</h3>
-							<p className="text-foreground leading-relaxed">
-								{product.description ||
-									'Prenda premium de nuestra última colección. Fabricada con materiales de alta calidad para máxima comodidad y durabilidad. Corte moderno oversize que define el streetwear contemporáneo.'}
-							</p>
-						</div>
+						{product.description?.trim() ? (
+							<div className="mb-6">
+								<h3 className="font-bold text-xs uppercase tracking-wide mb-2 text-muted-foreground">
+									Descripción
+								</h3>
+								<p className="text-foreground leading-relaxed">
+									{product.description}
+								</p>
+							</div>
+						) : null}
 
 						{/* Bottom Actions Section */}
 						<div className="mt-auto pt-8 lg:pt-0">
@@ -401,11 +403,13 @@ export function ProductDetail({
 										{/* WhatsApp Primary CTA */}
 										<Button
 											onClick={handleWhatsAppOrder}
-											disabled={!selectedSize}
+											disabled={!selectedSize || !whatsappNumber}
 											className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-black text-base lg:text-lg py-6 gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
 										>
 											<MessageCircle className="h-5 w-5 lg:h-6 lg:w-6" />
-											{selectedSize
+											{!whatsappNumber
+												? 'WHATSAPP NO DISPONIBLE'
+												: selectedSize
 												? 'PEDIR POR WHATSAPP'
 												: 'SELECCIONA TU TALLA'}
 										</Button>
