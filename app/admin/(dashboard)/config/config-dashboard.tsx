@@ -110,6 +110,7 @@ export function ConfigDashboard({
 										? 'bg-primary text-primary-foreground'
 										: 'hover:bg-background',
 								)}
+								aria-pressed={activeItem === item.id}
 							>
 								{item.label}
 							</button>
@@ -138,6 +139,7 @@ export function ConfigDashboard({
 													? 'bg-primary text-primary-foreground'
 													: 'hover:bg-muted',
 											)}
+											aria-pressed={activeItem === item.id}
 										>
 											{item.label}
 										</button>

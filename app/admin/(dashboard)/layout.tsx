@@ -3,6 +3,32 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getAdminStoreContext } from '@/lib/services/admin-context'
 
+function isAdminAccessError(error: unknown) {
+	if (!(error instanceof Error)) return false
+	return (
+		error.message === 'Unauthorized' ||
+		error.message.includes('No admin access')
+	)
+}
+
+function buildUnauthorizedRedirect(error: Error) {
+	const params = new URLSearchParams()
+
+	if (error.message.includes('No admin access')) {
+		params.set('reason', 'missing-role')
+
+		const preferredSlug =
+			process.env.NEXT_PUBLIC_DEFAULT_STORE_SLUG?.trim()
+		if (preferredSlug) {
+			params.set('store', preferredSlug)
+		}
+	} else {
+		params.set('reason', 'unauthorized')
+	}
+
+	return `/admin/login?${params.toString()}`
+}
+
 export default async function AdminLayout({
 	children,
 }: {
@@ -18,7 +44,15 @@ export default async function AdminLayout({
 	}
 
 	// Ensures store context resolves before rendering protected admin routes.
-	await getAdminStoreContext()
+	try {
+		await getAdminStoreContext()
+	} catch (error) {
+		if (error instanceof Error && isAdminAccessError(error)) {
+			redirect(buildUnauthorizedRedirect(error))
+		}
+
+		throw error
+	}
 
 	return (
 		<div className="flex h-screen overflow-hidden bg-gray-50 text-foreground">

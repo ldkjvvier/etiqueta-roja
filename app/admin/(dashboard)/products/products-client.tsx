@@ -30,6 +30,7 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
+import { ConfirmDialog } from '@/components/admin/confirm-dialog'
 import { deleteProduct } from '@/lib/actions/products'
 import type { AdminProduct } from '@/lib/services/products-admin'
 import { formatPrice } from '@/lib/utils'
@@ -53,6 +54,9 @@ export function ProductTable({
 	const router = useRouter()
 	const pathname = usePathname()
 	const [searchTerm, setSearchTerm] = useState(search)
+	const [pendingDelete, setPendingDelete] = useState<AdminProduct | null>(
+		null,
+	)
 
 	useEffect(() => {
 		const timeoutId = setTimeout(() => {
@@ -83,24 +87,19 @@ export function ProductTable({
 
 	// Delete Handler
 	const handleDelete = async (id: string) => {
-		if (
-			confirm(
-				'¿Eliminar producto de forma permanente? Esta acción borra imágenes y relaciones de catálogo.',
-			)
-		) {
-			const result = await deleteProduct(id)
-			if (result.error) {
-				toast.error('No se pudo eliminar', {
-					description: result.message,
-				})
-				return
-			}
-
-			toast.success('Producto eliminado', {
+		const result = await deleteProduct(id)
+		if (result.error) {
+			toast.error('No se pudo eliminar', {
 				description: result.message,
 			})
-			router.refresh()
+			return
 		}
+
+		toast.success('Producto eliminado', {
+			description: result.message,
+		})
+		setPendingDelete(null)
+		router.refresh()
 	}
 
 	return (
@@ -115,6 +114,7 @@ export function ProductTable({
 						className="pl-8"
 						value={searchTerm}
 						onChange={(e) => setSearchTerm(e.target.value)}
+						aria-label="Buscar productos"
 					/>
 				</div>
 				<Button onClick={() => router.push('/admin/products/new')}>
@@ -125,6 +125,9 @@ export function ProductTable({
 			{/* Table */}
 			<div className="rounded-md border bg-white">
 				<Table>
+					<caption className="sr-only">
+						Tabla de productos administrables
+					</caption>
 					<TableHeader>
 						<TableRow>
 							<TableHead className="w-20 hidden md:table-cell">
@@ -211,6 +214,7 @@ export function ProductTable({
 												<Button
 													variant="ghost"
 													className="h-8 w-8 p-0"
+													aria-label={`Abrir acciones para ${product.name}`}
 												>
 													<span className="sr-only">Abrir menú</span>
 													<MoreHorizontal className="h-4 w-4" />
@@ -232,7 +236,7 @@ export function ProductTable({
 												<DropdownMenuSeparator />
 												<DropdownMenuItem
 													className="text-destructive focus:text-destructive"
-													onClick={() => handleDelete(product.id)}
+													onClick={() => setPendingDelete(product)}
 												>
 													<Trash className="mr-2 h-4 w-4" /> Eliminar
 												</DropdownMenuItem>
@@ -245,6 +249,26 @@ export function ProductTable({
 					</TableBody>
 				</Table>
 			</div>
+
+			<ConfirmDialog
+				open={Boolean(pendingDelete)}
+				onOpenChange={(open) => {
+					if (!open) setPendingDelete(null)
+				}}
+				title="Eliminar producto"
+				description={
+					pendingDelete
+						? `Se eliminará el producto ${pendingDelete.name} de forma permanente.`
+						: 'Se eliminará el producto seleccionado de forma permanente.'
+				}
+				onConfirm={() => {
+					if (pendingDelete) {
+						void handleDelete(pendingDelete.id)
+					}
+				}}
+				confirmLabel="Eliminar"
+				loadingLabel="Eliminando..."
+			/>
 
 			{/* Footer / Pagination */}
 			<div className="flex items-center justify-between px-2">

@@ -27,6 +27,7 @@ import {
 	SelectValue,
 } from '@/components/ui/select'
 import { ImageUpload } from '@/components/admin/image-upload'
+import { ConfirmDialog } from '@/components/admin/confirm-dialog'
 import {
 	createDrop,
 	deleteDrop,
@@ -89,6 +90,7 @@ function toDateTimeLocal(value?: string | null) {
 export function DropForm({ initialData }: DropFormProps) {
 	const router = useRouter()
 	const [loading, setLoading] = useState(false)
+	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
 	const title = initialData ? 'Editar Drop' : 'Nuevo Drop'
 	const description = initialData
@@ -157,7 +159,6 @@ export function DropForm({ initialData }: DropFormProps) {
 
 	const onDelete = async () => {
 		if (!initialData) return
-		if (!confirm('¿Estás seguro de eliminar este drop?')) return
 
 		try {
 			setLoading(true)
@@ -170,6 +171,7 @@ export function DropForm({ initialData }: DropFormProps) {
 			toast.success('Drop eliminado', {
 				description: result.message,
 			})
+			setIsDeleteDialogOpen(false)
 			router.push('/admin/drops')
 			router.refresh()
 		} finally {
@@ -193,7 +195,8 @@ export function DropForm({ initialData }: DropFormProps) {
 						disabled={loading}
 						variant="destructive"
 						size="icon"
-						onClick={onDelete}
+						onClick={() => setIsDeleteDialogOpen(true)}
+						aria-label="Eliminar drop"
 					>
 						<Trash className="h-4 w-4" />
 					</Button>
@@ -335,6 +338,17 @@ export function DropForm({ initialData }: DropFormProps) {
 					</Button>
 				</div>
 			</form>
+
+			<ConfirmDialog
+				open={isDeleteDialogOpen}
+				onOpenChange={setIsDeleteDialogOpen}
+				title="Eliminar drop"
+				description="Esta acción eliminará el drop seleccionado del panel."
+				onConfirm={onDelete}
+				confirmLabel="Eliminar"
+				loadingLabel="Eliminando..."
+				loading={loading}
+			/>
 		</div>
 	)
 }

@@ -1,6 +1,7 @@
 import { getAdminOrders } from '@/lib/services/orders'
 import { advanceOrderStatus } from '@/lib/actions/orders-admin'
 import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 import {
 	Table,
 	TableBody,
@@ -17,7 +18,11 @@ export default async function AdminOrdersPage({
 	searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
 	const params = await searchParams
-	const page = Number(params.page) || 1
+	const requestedPage = Number(params.page)
+	const page =
+		Number.isFinite(requestedPage) && requestedPage > 0
+			? requestedPage
+			: 1
 	const limit = 20
 	const status =
 		(params.status as
@@ -34,6 +39,8 @@ export default async function AdminOrdersPage({
 		limit,
 		status,
 	})
+	const hasPreviousPage = page > 1
+	const hasNextPage = totalPages > 0 && page < totalPages
 
 	const buildPageUrl = (nextPage: number) => {
 		const query = new URLSearchParams()
@@ -127,22 +134,24 @@ export default async function AdminOrdersPage({
 					Total: {totalCount}
 				</p>
 				<div className="flex items-center gap-2">
-					<Button
-						asChild
-						size="sm"
-						variant="outline"
-						disabled={page <= 1}
-					>
-						<a href={buildPageUrl(page - 1)}>Anterior</a>
-					</Button>
-					<Button
-						asChild
-						size="sm"
-						variant="outline"
-						disabled={page >= totalPages}
-					>
-						<a href={buildPageUrl(page + 1)}>Siguiente</a>
-					</Button>
+					{hasPreviousPage ? (
+						<Button asChild size="sm" variant="outline">
+							<Link href={buildPageUrl(page - 1)}>Anterior</Link>
+						</Button>
+					) : (
+						<Button size="sm" variant="outline" disabled>
+							Anterior
+						</Button>
+					)}
+					{hasNextPage ? (
+						<Button asChild size="sm" variant="outline">
+							<Link href={buildPageUrl(page + 1)}>Siguiente</Link>
+						</Button>
+					) : (
+						<Button size="sm" variant="outline" disabled>
+							Siguiente
+						</Button>
+					)}
 				</div>
 			</div>
 		</div>

@@ -487,6 +487,7 @@ export function ProductForm({
 										size="icon"
 										disabled={fields.length === 1}
 										onClick={() => remove(index)}
+										aria-label={`Eliminar variante ${index + 1}`}
 									>
 										<Trash className="h-4 w-4 text-red-500" />
 									</Button>

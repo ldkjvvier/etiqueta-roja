@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { ImageUpload } from '@/components/admin/image-upload'
+import { ConfirmDialog } from '@/components/admin/confirm-dialog'
 import {
 	createCategory,
 	updateCategory,
@@ -46,6 +47,7 @@ interface CategoryFormProps {
 export function CategoryForm({ initialData }: CategoryFormProps) {
 	const router = useRouter()
 	const [loading, setLoading] = useState(false)
+	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
 	const title = initialData ? 'Editar Categoría' : 'Nueva Categoría'
 	const description = initialData
@@ -103,7 +105,6 @@ export function CategoryForm({ initialData }: CategoryFormProps) {
 
 	const onDelete = async () => {
 		if (!initialData) return
-		if (!confirm('¿Estás seguro de eliminar esta categoría?')) return
 
 		try {
 			setLoading(true)
@@ -112,6 +113,7 @@ export function CategoryForm({ initialData }: CategoryFormProps) {
 				toast.error('Error', { description: result.message })
 			} else {
 				toast.success('Eliminado', { description: result.message })
+				setIsDeleteDialogOpen(false)
 				router.push('/admin/categories')
 				router.refresh()
 			}
@@ -136,7 +138,8 @@ export function CategoryForm({ initialData }: CategoryFormProps) {
 						disabled={loading}
 						variant="destructive"
 						size="icon"
-						onClick={onDelete}
+						onClick={() => setIsDeleteDialogOpen(true)}
+						aria-label="Eliminar categoría"
 					>
 						<Trash className="h-4 w-4" />
 					</Button>
@@ -223,6 +226,17 @@ export function CategoryForm({ initialData }: CategoryFormProps) {
 					</Button>
 				</div>
 			</form>
+
+			<ConfirmDialog
+				open={isDeleteDialogOpen}
+				onOpenChange={setIsDeleteDialogOpen}
+				title="Eliminar categoría"
+				description="Esta acción eliminará la categoría seleccionada del panel administrativo."
+				onConfirm={onDelete}
+				confirmLabel="Eliminar"
+				loadingLabel="Eliminando..."
+				loading={loading}
+			/>
 		</div>
 	)
 }

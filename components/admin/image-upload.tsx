@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { ImagePlus, X, Loader2 } from 'lucide-react'
 import Image from 'next/image'
+import { toast } from 'sonner'
 
 interface ImageUploadProps {
 	value: string[]
@@ -18,17 +19,31 @@ export function ImageUpload({
 	maxImages = 5,
 }: ImageUploadProps) {
 	const [uploading, setUploading] = useState(false)
+	const inputRef = useRef<HTMLInputElement>(null)
 
 	const onUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		try {
 			const files = e.target.files
 			if (!files || files.length === 0) return
 
+			const remainingSlots = Math.max(maxImages - value.length, 0)
+			if (remainingSlots === 0) {
+				toast.error(`Solo puedes subir hasta ${maxImages} imágenes.`)
+				return
+			}
+
+			const selectedFiles = Array.from(files).slice(0, remainingSlots)
+			if (selectedFiles.length < files.length) {
+				toast.error('Se superó el máximo de imágenes permitido.', {
+					description: `Solo se subirán ${selectedFiles.length} imágenes.`,
+				})
+			}
+
 			setUploading(true)
 			const supabase = createClient()
 			const newUrls: string[] = []
 
-			for (const file of Array.from(files)) {
+			for (const file of selectedFiles) {
 				// Determine file extension
 				const fileExt = file.name.split('.').pop()
 				// Unique path
@@ -51,12 +66,16 @@ export function ImageUpload({
 				newUrls.push(publicUrl)
 			}
 
-			onChange([...value, ...newUrls])
+			onChange([...value, ...newUrls].slice(0, maxImages))
 		} catch (error) {
-			alert('Error al subir imagen')
+			toast.error('Error al subir imagen', {
+				description:
+					'Revisa el archivo seleccionado o intenta nuevamente en unos segundos.',
+			})
 			console.error(error)
 		} finally {
 			setUploading(false)
+			e.target.value = ''
 		}
 	}
 
@@ -78,6 +97,7 @@ export function ImageUpload({
 								onClick={() => onRemove(url)}
 								variant="destructive"
 								size="icon"
+								aria-label="Eliminar imagen"
 							>
 								<X className="h-4 w-4" />
 							</Button>
@@ -96,9 +116,8 @@ export function ImageUpload({
 					type="button"
 					variant="secondary"
 					disabled={uploading || value.length >= maxImages}
-					onClick={() =>
-						document.getElementById('image-upload')?.click()
-					}
+					onClick={() => inputRef.current?.click()}
+					aria-busy={uploading}
 				>
 					{uploading ? (
 						<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -108,7 +127,7 @@ export function ImageUpload({
 					{uploading ? 'Subiendo...' : 'Subir Imágenes'}
 				</Button>
 				<input
-					id="image-upload"
+					ref={inputRef}
 					type="file"
 					accept="image/*"
 					multiple

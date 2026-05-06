@@ -21,6 +21,7 @@ import {
 	DropdownMenuLabel,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { ConfirmDialog } from '@/components/admin/confirm-dialog'
 import { Category } from '@/lib/services/categories-server'
 import { deleteCategory } from '@/lib/actions/categories-mutations'
 import { toast } from 'sonner'
@@ -32,10 +33,10 @@ interface CategoriesClientProps {
 export function CategoriesClient({ data }: CategoriesClientProps) {
 	const router = useRouter()
 	const [loading, setLoading] = useState(false)
+	const [pendingDelete, setPendingDelete] = useState<Category | null>(null)
 
 	const handleDelete = async (id: string) => {
 		if (loading) return
-		if (!confirm('¿Estás seguro de eliminar esta categoría?')) return
 
 		try {
 			setLoading(true)
@@ -48,6 +49,7 @@ export function CategoriesClient({ data }: CategoriesClientProps) {
 				toast.success('Eliminado', {
 					description: result.message,
 				})
+				setPendingDelete(null)
 				router.refresh()
 			}
 		} finally {
@@ -73,6 +75,27 @@ export function CategoriesClient({ data }: CategoriesClientProps) {
 					<Plus className="mr-2 h-4 w-4" /> Nueva Categoría
 				</Button>
 			</div>
+
+			<ConfirmDialog
+				open={Boolean(pendingDelete)}
+				onOpenChange={(open) => {
+					if (!open) setPendingDelete(null)
+				}}
+				title="Eliminar categoría"
+				description={
+					pendingDelete
+						? `Se eliminará la categoría ${pendingDelete.name}.`
+						: 'Se eliminará la categoría seleccionada.'
+				}
+				onConfirm={() => {
+					if (pendingDelete) {
+						void handleDelete(pendingDelete.id)
+					}
+				}}
+				confirmLabel="Eliminar"
+				loadingLabel="Eliminando..."
+				loading={loading}
+			/>
 
 			<div
 				className="rounded-md border bg-white shadow-sm"
@@ -143,7 +166,7 @@ export function CategoriesClient({ data }: CategoriesClientProps) {
 											<DropdownMenuItem
 												disabled={loading}
 												className="text-red-600"
-												onClick={() => handleDelete(category.id)}
+												onClick={() => setPendingDelete(category)}
 											>
 												<Trash className="mr-2 h-4 w-4" /> Eliminar
 											</DropdownMenuItem>

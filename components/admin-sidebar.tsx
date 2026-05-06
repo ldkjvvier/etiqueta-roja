@@ -1,7 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
 	LayoutDashboard,
 	Package,
@@ -13,6 +14,8 @@ import {
 	Zap,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
 
 const navItems = [
 	{ href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -26,6 +29,32 @@ const navItems = [
 
 export function AdminSidebar() {
 	const pathname = usePathname()
+	const router = useRouter()
+	const [isLoggingOut, setIsLoggingOut] = useState(false)
+	const [logoutError, setLogoutError] = useState<string | null>(null)
+
+	const handleLogout = async () => {
+		setIsLoggingOut(true)
+		setLogoutError(null)
+
+		try {
+			const supabase = createClient()
+			const { error } = await supabase.auth.signOut()
+
+			if (error) {
+				setLogoutError(error.message)
+				return
+			}
+
+			router.push('/admin/login')
+			router.refresh()
+		} catch (error) {
+			console.error(error)
+			setLogoutError('No se pudo cerrar la sesión del administrador.')
+		} finally {
+			setIsLoggingOut(false)
+		}
+	}
 
 	return (
 		<aside className="w-64 border-r border-gray-200 bg-white flex flex-col shrink-0">
@@ -59,6 +88,7 @@ export function AdminSidebar() {
 											? 'bg-black text-white border-black'
 											: 'border-transparent text-gray-500 hover:border-gray-200 hover:bg-gray-50 hover:text-black',
 									)}
+									aria-current={isActive ? 'page' : undefined}
 								>
 									<item.icon className="w-4 h-4" />
 									{item.label}
@@ -71,19 +101,26 @@ export function AdminSidebar() {
 
 			{/* Logout */}
 			<div className="p-4 border-t border-gray-200">
-				<form action="/auth/signout" method="post">
-					{/* Note: In a real implementation we might use a server action or client handler for signOut, 
-             the provided snippets used a form action in the page.tsx. 
-             For now, I'll keep the UI link as requested but it might need func. 
-             The user code had a Link to '/'. I will stick to user request. */}
-					<Link
-						href="/"
-						className="flex items-center gap-3 px-4 py-3 font-mono text-sm text-gray-500 hover:text-black transition-colors"
-					>
+				<Button
+					type="button"
+					variant="ghost"
+					onClick={handleLogout}
+					disabled={isLoggingOut}
+					aria-label={
+						isLoggingOut ? 'Cerrando sesión...' : 'Cerrar sesión'
+					}
+					aria-live="polite"
+					aria-busy={isLoggingOut}
+					className="flex w-full items-center justify-start gap-3 px-4 py-3 font-mono text-sm text-gray-500 hover:text-black transition-colors"
+				>
 						<LogOut className="w-4 h-4" />
-						Logout
-					</Link>
-				</form>
+						{isLoggingOut ? 'Cerrando sesión...' : 'Logout'}
+				</Button>
+				{logoutError ? (
+					<p className="mt-2 text-xs text-red-600" role="alert">
+						{logoutError}
+					</p>
+				) : null}
 			</div>
 		</aside>
 	)
