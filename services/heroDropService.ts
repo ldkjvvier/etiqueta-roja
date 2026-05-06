@@ -216,6 +216,7 @@ export function buildDropPreview(
 	const showCta =
 		state.dropConfig.dropDisplayMode !== 'hidden' &&
 		Boolean(ctaText) &&
+		Boolean(state.cta.link) &&
 		((status === 'scheduled' &&
 			state.dropConfig.dropShowCtaScheduled) ||
 			(status === 'live' && state.dropConfig.dropShowCtaLive) ||

@@ -19,11 +19,23 @@ function HeroCanvasPreviewComponent({
 	onOpenRealView,
 }: HeroCanvasPreviewProps) {
 	return (
-		<main className="col-span-12 overflow-auto rounded-lg border bg-card p-4 lg:col-span-6">
+		<section
+			className="col-span-12 overflow-auto rounded-lg border bg-card p-4 lg:col-span-6"
+			aria-labelledby="hero-canvas-preview-title"
+			aria-describedby="hero-canvas-preview-description"
+		>
 			<div className="mb-3 flex items-center justify-between gap-3">
 				<div>
-					<p className="text-sm font-semibold">Canvas Preview</p>
-					<p className="text-xs text-muted-foreground">
+					<h2
+						id="hero-canvas-preview-title"
+						className="text-sm font-semibold"
+					>
+						Canvas Preview
+					</h2>
+					<p
+						id="hero-canvas-preview-description"
+						className="text-xs text-muted-foreground"
+					>
 						Vista visual sin drag.
 					</p>
 				</div>
@@ -44,6 +56,7 @@ function HeroCanvasPreviewComponent({
 						backgroundImage={state.media.backgroundImage}
 						backgroundImageMobile={state.media.backgroundImageMobile}
 						backgroundVideoUrl={state.media.backgroundVideoUrl}
+						renderEmbeddableVideo
 						rootClassName="border-b-0"
 					>
 						<HeroElementRenderer
@@ -77,7 +90,7 @@ function HeroCanvasPreviewComponent({
 					<p>Video de fondo activo</p>
 				)}
 			</div>
-		</main>
+		</section>
 	)
 }
 

@@ -68,13 +68,25 @@ export function HeroRealViewEditor({
 
 	return (
 		<div className="fixed inset-0 z-80 bg-black/80 p-4">
-			<div className="flex h-full flex-col overflow-hidden rounded-xl border bg-background">
+			<div
+				role="dialog"
+				aria-modal="true"
+				aria-labelledby="hero-real-view-title"
+				aria-describedby="hero-real-view-description"
+				className="flex h-full flex-col overflow-hidden rounded-xl border bg-background"
+			>
 				<div className="flex items-center justify-between border-b px-4 py-3">
 					<div>
-						<p className="text-sm font-semibold">
+						<h2
+							id="hero-real-view-title"
+							className="text-sm font-semibold"
+						>
 							Vista real (drag habilitado)
-						</p>
-						<p className="text-xs text-muted-foreground">
+						</h2>
+						<p
+							id="hero-real-view-description"
+							className="text-xs text-muted-foreground"
+						>
 							Posiciona elementos como se verán en el sitio.
 						</p>
 					</div>
@@ -94,6 +106,7 @@ export function HeroRealViewEditor({
 						backgroundImage={state.media.backgroundImage}
 						backgroundImageMobile={state.media.backgroundImageMobile}
 						backgroundVideoUrl={state.media.backgroundVideoUrl}
+						renderEmbeddableVideo
 						canvasRef={drag.canvasRef}
 						onCanvasPointerMove={drag.onCanvasPointerMove}
 						onCanvasPointerUp={drag.onCanvasPointerUp}

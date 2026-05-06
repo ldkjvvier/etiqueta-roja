@@ -127,7 +127,13 @@ export function HeroStudio({
 							Estado: {state.isActive ? 'Activo' : 'Inactivo'}
 						</p>
 					</div>
-					<Button type="button" onClick={() => setIsStudioOpen(true)}>
+					<Button
+						type="button"
+						onClick={() => setIsStudioOpen(true)}
+						aria-haspopup="dialog"
+						aria-expanded={isStudioOpen}
+						aria-controls="hero-studio-dialog"
+					>
 						Abrir Hero Studio
 					</Button>
 					{actionState.message && (
@@ -147,69 +153,86 @@ export function HeroStudio({
 			{isStudioOpen && (
 				<div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm">
 					<form action={formAction} className="flex h-full flex-col">
-						<input
-							type="hidden"
-							name="hero_payload"
-							value={JSON.stringify(submitPayload)}
-						/>
-						<div className="flex items-center justify-between border-b bg-background px-5 py-3">
-							<div>
-								<p className="text-sm font-semibold">Hero Studio</p>
-								<p className="text-xs text-muted-foreground">
-									Editor dedicado del banner principal.
-								</p>
+						<div
+							id="hero-studio-dialog"
+							role="dialog"
+							aria-modal="true"
+							aria-labelledby="hero-studio-title"
+							aria-describedby="hero-studio-description"
+							className="flex h-full flex-col"
+						>
+							<input
+								type="hidden"
+								name="hero_payload"
+								value={JSON.stringify(submitPayload)}
+							/>
+							<div className="flex items-center justify-between border-b bg-background px-5 py-3">
+								<div>
+									<h2
+										id="hero-studio-title"
+										className="text-sm font-semibold"
+									>
+										Hero Studio
+									</h2>
+									<p
+										id="hero-studio-description"
+										className="text-xs text-muted-foreground"
+									>
+										Editor dedicado del banner principal.
+									</p>
+								</div>
+								<div className="flex items-center gap-2">
+									<Button
+										type="button"
+										variant="outline"
+										onClick={() => setIsStudioOpen(false)}
+									>
+										Cerrar
+									</Button>
+									<Button
+										type="submit"
+										disabled={isPending || hasInvalidVideoUrl}
+									>
+										{isPending ? 'Guardando...' : 'Guardar Hero'}
+									</Button>
+								</div>
 							</div>
-							<div className="flex items-center gap-2">
-								<Button
-									type="button"
-									variant="outline"
-									onClick={() => setIsStudioOpen(false)}
-								>
-									Cerrar
-								</Button>
-								<Button
-									type="submit"
-									disabled={isPending || hasInvalidVideoUrl}
-								>
-									{isPending ? 'Guardando...' : 'Guardar Hero'}
-								</Button>
-							</div>
-						</div>
 
-						<div className="grid flex-1 grid-cols-12 gap-4 overflow-hidden p-4">
-							<HeroPositionControls
-								state={state}
-								selectedDrop={selectedDrop}
-								dropPreview={dropPreview}
-								onResetPositions={() =>
-									dispatch({ type: 'resetPositions' })
-								}
-							/>
-							<HeroCanvasPreview
-								state={state}
-								dropPreview={dropPreview}
-								onOpenRealView={() => setIsRealViewOpen(true)}
-							/>
-							<HeroConfigForm
-								state={state}
-								dispatch={dispatch}
-								dropOptions={dropOptions}
-							/>
-						</div>
-
-						{actionState.message && (
-							<div className="border-t bg-background px-5 py-2">
-								<p
-									className={`text-sm ${
-										actionState.error
-											? 'text-destructive'
-											: 'text-green-600'
-									}`}
-								>
-									{actionState.message}
-								</p>
+							<div className="grid flex-1 grid-cols-12 gap-4 overflow-hidden p-4">
+								<HeroPositionControls
+									state={state}
+									selectedDrop={selectedDrop}
+									dropPreview={dropPreview}
+									onResetPositions={() =>
+										dispatch({ type: 'resetPositions' })
+									}
+								/>
+								<HeroCanvasPreview
+									state={state}
+									dropPreview={dropPreview}
+									onOpenRealView={() => setIsRealViewOpen(true)}
+								/>
+								<HeroConfigForm
+									state={state}
+									dispatch={dispatch}
+									dropOptions={dropOptions}
+								/>
 							</div>
-						)}
+
+							{actionState.message && (
+								<div className="border-t bg-background px-5 py-2">
+									<p
+										className={`text-sm ${
+											actionState.error
+												? 'text-destructive'
+												: 'text-green-600'
+										}`}
+									>
+										{actionState.message}
+									</p>
+								</div>
+							)}
+						</div>
 					</form>
 				</div>
 			)}
