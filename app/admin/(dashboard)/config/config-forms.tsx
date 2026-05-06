@@ -38,6 +38,13 @@ import {
 import { HeroStudio } from '@/components/hero-studio/HeroStudio'
 import { HeroDropOption } from '@/types/heroStudio.types'
 import {
+	isSupportedStoreCurrency,
+	isSupportedStoreTimezone,
+	STORE_SETTINGS_CURRENCY,
+	STORE_SETTINGS_TIMEZONE,
+	storeSettingsEditableFieldsSchema,
+} from '@/lib/validation/store-settings'
+import {
 	ConfigColorPicker,
 	ConfigInputField,
 	ConfigPreview,
@@ -285,11 +292,7 @@ const announcementBarFormSchema = z.object({
 const storeSettingsFormSchema = z.object({
 	isActive: z.boolean(),
 	description: z.string().max(160).optional(),
-	storeName: z.string().trim().min(1).max(80),
-	supportEmail: z.string().trim().email(),
-	currency: z.string().trim().min(2).max(10),
-	timezone: z.string().trim().min(3).max(100),
-})
+}).extend(storeSettingsEditableFieldsSchema.shape)
 
 function useConfigSubmit() {
 	const router = useRouter()
@@ -562,6 +565,16 @@ export function StoreSettingsConfigForm({
 	initialDescription?: string | null
 }) {
 	const { isPending, submit } = useConfigSubmit()
+	const storedCurrency = String(
+		initialData?.currency || STORE_SETTINGS_CURRENCY,
+	)
+	const storedTimezone = String(
+		initialData?.timezone || STORE_SETTINGS_TIMEZONE,
+	)
+	const hasLegacyCurrency =
+		!isSupportedStoreCurrency(storedCurrency)
+	const hasLegacyTimezone =
+		!isSupportedStoreTimezone(storedTimezone)
 	const form = useForm<z.infer<typeof storeSettingsFormSchema>>({
 		resolver: zodResolver(storeSettingsFormSchema),
 		defaultValues: {
@@ -569,8 +582,6 @@ export function StoreSettingsConfigForm({
 			description: initialDescription ?? '',
 			storeName: String(initialData?.storeName || ''),
 			supportEmail: String(initialData?.supportEmail || ''),
-			currency: String(initialData?.currency || 'CLP'),
-			timezone: String(initialData?.timezone || 'America/Santiago'),
 		},
 	})
 
@@ -582,8 +593,8 @@ export function StoreSettingsConfigForm({
 		fd.set('description', data.description || '')
 		fd.set('store_name', data.storeName)
 		fd.set('support_email', data.supportEmail)
-		fd.set('currency', data.currency)
-		fd.set('timezone', data.timezone)
+		fd.set('currency', STORE_SETTINGS_CURRENCY)
+		fd.set('timezone', STORE_SETTINGS_TIMEZONE)
 		submit(updateStoreSettingsConfig, fd)
 	})
 
@@ -591,7 +602,7 @@ export function StoreSettingsConfigForm({
 		<form onSubmit={onSubmit} className="space-y-4">
 			<ConfigSectionCard
 				title="Store Settings"
-				description="Ajustes generales operativos y de soporte de tienda."
+				description="Ajustes internos de referencia y soporte. La moneda y la zona horaria operativas están fijadas por el negocio."
 				footer={
 					<Button type="submit" disabled={isPending}>
 						{isPending ? 'Guardando...' : 'Guardar Ajustes'}
@@ -608,21 +619,57 @@ export function StoreSettingsConfigForm({
 				/>
 
 				<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-					<ConfigInputField id="store_name" label="Store name">
+					<ConfigInputField
+						id="store_name"
+						label="Store name interno"
+						helper="Referencia interna para admins. No cambia el nombre visible, el logo ni la identidad pública de la tienda."
+					>
 						<Input id="store_name" {...form.register('storeName')} />
 					</ConfigInputField>
-					<ConfigInputField id="support_email" label="Support email">
+					<ConfigInputField
+						id="support_email"
+						label="Support email interno"
+						helper="El email visible en storefront se gestiona en Contact Info. Este campo queda como referencia operativa interna."
+					>
 						<Input
 							id="support_email"
 							type="email"
 							{...form.register('supportEmail')}
 						/>
 					</ConfigInputField>
-					<ConfigInputField id="currency" label="Currency">
-						<Input id="currency" {...form.register('currency')} />
+					<ConfigInputField
+						id="currency"
+						label="Currency"
+						helper={
+							hasLegacyCurrency
+								? `Valor legado detectado (${storedCurrency}). Al guardar se normalizará a ${STORE_SETTINGS_CURRENCY}.`
+								: 'Fijada en CLP. El storefront y el pricing actual no soportan cambio de moneda desde este panel.'
+						}
+					>
+						<Input
+							id="currency"
+							value={storedCurrency}
+							readOnly
+							aria-readonly="true"
+							className="bg-muted/40 text-muted-foreground"
+						/>
 					</ConfigInputField>
-					<ConfigInputField id="timezone" label="Timezone">
-						<Input id="timezone" {...form.register('timezone')} />
+					<ConfigInputField
+						id="timezone"
+						label="Timezone"
+						helper={
+							hasLegacyTimezone
+								? `Valor legado detectado (${storedTimezone}). Al guardar se normalizará a ${STORE_SETTINGS_TIMEZONE}.`
+								: 'Fijada en America/Santiago. La programación vigente no admite una zona horaria editable en este panel.'
+						}
+					>
+						<Input
+							id="timezone"
+							value={storedTimezone}
+							readOnly
+							aria-readonly="true"
+							className="bg-muted/40 text-muted-foreground"
+						/>
 					</ConfigInputField>
 				</div>
 
@@ -645,10 +692,16 @@ export function StoreSettingsConfigForm({
 							<strong>Email soporte:</strong> {values.supportEmail}
 						</p>
 						<p>
-							<strong>Moneda:</strong> {values.currency}
+							<strong>Moneda:</strong>{' '}
+							{hasLegacyCurrency
+								? `${storedCurrency} -> ${STORE_SETTINGS_CURRENCY} al guardar`
+								: STORE_SETTINGS_CURRENCY}
 						</p>
 						<p>
-							<strong>Timezone:</strong> {values.timezone}
+							<strong>Timezone:</strong>{' '}
+							{hasLegacyTimezone
+								? `${storedTimezone} -> ${STORE_SETTINGS_TIMEZONE} al guardar`
+								: STORE_SETTINGS_TIMEZONE}
 						</p>
 					</div>
 				</ConfigPreview>

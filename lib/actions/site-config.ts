@@ -9,6 +9,11 @@ import {
 	HomeHeroBannerConfig,
 } from '@/lib/services/site-config-server'
 import { parseHeroCTAConfig } from '@/lib/validation/hero-cta'
+import {
+	STORE_SETTINGS_CURRENCY,
+	STORE_SETTINGS_TIMEZONE,
+	storeSettingsSchema,
+} from '@/lib/validation/store-settings'
 import type { Database } from '@/lib/supabase/types'
 import { z } from 'zod'
 
@@ -59,13 +64,6 @@ const announcementBarSchema = z.object({
 	ctaLink: z.string().trim().max(2048),
 	backgroundColor: hexColorSchema,
 	textColor: hexColorSchema,
-})
-
-const storeSettingsSchema = z.object({
-	storeName: z.string().trim().min(1).max(80),
-	supportEmail: z.string().trim().email().max(120),
-	currency: z.string().trim().min(2).max(10),
-	timezone: z.string().trim().min(3).max(100),
 })
 
 type SiteConfigVisibility = 'public' | 'private' | 'internal'
@@ -193,8 +191,8 @@ export async function updateStoreSettingsConfig(
 	const parsed = storeSettingsSchema.safeParse({
 		storeName: String(formData.get('store_name') || ''),
 		supportEmail: String(formData.get('support_email') || ''),
-		currency: String(formData.get('currency') || 'CLP'),
-		timezone: String(formData.get('timezone') || 'America/Santiago'),
+		currency: STORE_SETTINGS_CURRENCY,
+		timezone: STORE_SETTINGS_TIMEZONE,
 	})
 
 	if (!parsed.success) {
