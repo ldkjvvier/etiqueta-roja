@@ -232,8 +232,9 @@ export async function createPendingOrderFromCart(input: {
 			}
 		}
 
-		const { data: order, error: orderError } =
-			await createOrder(supabase, {
+		const { data: order, error: orderError } = await createOrder(
+			supabase,
+			{
 				store_id: storeId,
 				customer_id: customer.id,
 				status: 'pending',
@@ -243,7 +244,8 @@ export async function createPendingOrderFromCart(input: {
 					customerEmail: customer.email || customerEmail,
 					authUserId: user.id,
 				},
-			})
+			},
+		)
 
 		if (orderError || !order) {
 			throw new Error('No se pudo crear la orden')
