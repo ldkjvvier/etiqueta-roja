@@ -157,7 +157,7 @@ export async function advanceStatus(
 
 	if (nextStatus === 'paid') {
 		await applyPaidInventory(
-			order.order_items.map((i: { variant_id: string | null; quantity: number }) => ({
+			order.order_items.map((i: { variant_id: string; quantity: number }) => ({
 				variantId: i.variant_id,
 				quantity: i.quantity,
 			})),
@@ -171,14 +171,14 @@ export async function advanceStatus(
 }
 
 type OrderItemInventory = {
-	variantId: string | null
+	variantId: string
 	quantity: number
 }
 
 type VariantStock = {
-	stock_quantity: number | null
-	reserved_stock: number | null
-	track_inventory: boolean | null
+	stock_quantity: number
+	reserved_stock: number
+	track_inventory: boolean
 }
 
 async function applyPaidInventory(
@@ -188,8 +188,6 @@ async function applyPaidInventory(
 	const db = (await createClient()) as any
 
 	for (const item of items) {
-		if (!item.variantId) continue
-
 		const { data: variant } = (await db
 			.from('product_variants')
 			.select('stock_quantity, reserved_stock, track_inventory')
@@ -198,14 +196,8 @@ async function applyPaidInventory(
 
 		if (!variant?.track_inventory) continue
 
-		const newStock = Math.max(
-			0,
-			(variant.stock_quantity ?? 0) - item.quantity,
-		)
-		const newReserved = Math.max(
-			0,
-			(variant.reserved_stock ?? 0) - item.quantity,
-		)
+		const newStock = Math.max(0, variant.stock_quantity - item.quantity)
+		const newReserved = Math.max(0, variant.reserved_stock - item.quantity)
 
 		await db
 			.from('product_variants')
@@ -244,7 +236,7 @@ export async function cancel(orderId: string): Promise<ActionResult> {
 
 	if (order.status === 'pending' || order.status === 'paid') {
 		await releaseReservedInventory(
-			order.order_items.map((i: { variant_id: string | null; quantity: number }) => ({
+			order.order_items.map((i: { variant_id: string; quantity: number }) => ({
 				variantId: i.variant_id,
 				quantity: i.quantity,
 			})),
@@ -266,25 +258,17 @@ async function releaseReservedInventory(
 	const db = (await createClient()) as any
 
 	for (const item of items) {
-		if (!item.variantId) continue
-
 		const { data: variant } = (await db
 			.from('product_variants')
 			.select('reserved_stock, track_inventory')
 			.eq('id', item.variantId)
 			.single()) as {
-			data: Pick<
-				VariantStock,
-				'reserved_stock' | 'track_inventory'
-			> | null
+			data: Pick<VariantStock, 'reserved_stock' | 'track_inventory'> | null
 		}
 
 		if (!variant?.track_inventory) continue
 
-		const newReserved = Math.max(
-			0,
-			(variant.reserved_stock ?? 0) - item.quantity,
-		)
+		const newReserved = Math.max(0, variant.reserved_stock - item.quantity)
 
 		await db
 			.from('product_variants')

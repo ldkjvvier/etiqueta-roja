@@ -36,7 +36,7 @@ export async function getDailyMetrics(
 
 	const { data, error } = await supabase
 		.from('daily_metrics')
-		.select('store_id, date, total_views, total_sales, total_orders')
+		.select('store_id, date, total_views, total_sales, total_orders, updated_at')
 		.eq('store_id', storeId)
 		.gte('date', from.toISOString().slice(0, 10))
 		.lte('date', to.toISOString().slice(0, 10))

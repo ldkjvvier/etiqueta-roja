@@ -194,7 +194,7 @@ type OrderWithItems = {
 	created_at: string
 	order_items: Array<{
 		id: string
-		variant_id: string | null
+		variant_id: string
 		product_name: string
 		variant_details: string | null
 		quantity: number

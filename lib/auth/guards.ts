@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import type { Customer } from '@/types/database.types'
 
 const CUSTOMER_SELECT =
-	'id, store_id, auth_user_id, email, first_name, last_name, phone, total_spent, deleted_at, created_at'
+	'id, store_id, auth_user_id, email, first_name, last_name, phone, total_spent, deleted_at, created_at, updated_at'
 
 /**
  * Verifies the current user is authenticated.

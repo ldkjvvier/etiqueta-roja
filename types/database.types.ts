@@ -5,33 +5,24 @@ import type { Database } from '@/lib/supabase/types'
 // Row aliases
 // ---------------------------------------------------------------------------
 export type Store = Database['public']['Tables']['stores']['Row']
-export type Category =
-	Database['public']['Tables']['categories']['Row']
+export type Category = Database['public']['Tables']['categories']['Row']
 export type Drop = Database['public']['Tables']['drops']['Row']
 export type Product = Database['public']['Tables']['products']['Row']
-export type ProductImage =
-	Database['public']['Tables']['product_images']['Row']
-export type ProductOption =
-	Database['public']['Tables']['product_options']['Row']
+export type ProductImage = Database['public']['Tables']['product_images']['Row']
+export type ProductOption = Database['public']['Tables']['product_options']['Row']
 export type ProductOptionValue =
 	Database['public']['Tables']['product_option_values']['Row']
-export type ProductVariant =
-	Database['public']['Tables']['product_variants']['Row']
+export type ProductVariant = Database['public']['Tables']['product_variants']['Row']
 export type VariantOptionValue =
 	Database['public']['Tables']['variant_option_values']['Row']
-export type Customer =
-	Database['public']['Tables']['customers']['Row']
+export type Customer = Database['public']['Tables']['customers']['Row']
 export type Order = Database['public']['Tables']['orders']['Row']
-export type OrderItem =
-	Database['public']['Tables']['order_items']['Row']
-export type DailyMetrics =
-	Database['public']['Tables']['daily_metrics']['Row']
+export type OrderItem = Database['public']['Tables']['order_items']['Row']
+export type DailyMetrics = Database['public']['Tables']['daily_metrics']['Row']
 export type ProductViewsDaily =
 	Database['public']['Tables']['product_views_daily']['Row']
-export type SiteConfig =
-	Database['public']['Tables']['site_config']['Row']
-export type UserRole =
-	Database['public']['Tables']['user_roles']['Row']
+export type SiteConfig = Database['public']['Tables']['site_config']['Row']
+export type UserRole = Database['public']['Tables']['user_roles']['Row']
 
 // ---------------------------------------------------------------------------
 // Insert / Update aliases (excluding server-managed fields)
@@ -47,21 +38,22 @@ export type UpdateProduct = Omit<
 
 export type InsertOrder = Omit<
 	Database['public']['Tables']['orders']['Insert'],
-	'created_at'
+	'created_at' | 'updated_at'
 >
 export type UpdateOrder = Omit<
 	Database['public']['Tables']['orders']['Update'],
-	'id' | 'store_id' | 'created_at'
+	'id' | 'store_id' | 'created_at' | 'updated_at'
 >
 
+// total_price is a generated column (quantity * unit_price) — never set directly
 export type InsertOrderItem = Omit<
 	Database['public']['Tables']['order_items']['Insert'],
-	never
+	'total_price'
 >
 
 export type InsertCustomer = Omit<
 	Database['public']['Tables']['customers']['Insert'],
-	'created_at'
+	'created_at' | 'updated_at'
 >
 export type UpdateCustomer = Omit<
 	Database['public']['Tables']['customers']['Update'],
@@ -71,10 +63,11 @@ export type UpdateCustomer = Omit<
 	| 'total_spent'
 	| 'deleted_at'
 	| 'created_at'
+	| 'updated_at'
 >
 
 // ---------------------------------------------------------------------------
-// String literal enums
+// String literal enums (narrower than the DB string type — use for business logic)
 // ---------------------------------------------------------------------------
 export type UserRoleValue = 'super_admin' | 'store_admin' | 'customer'
 export type ProductStatus = 'draft' | 'active' | 'archived'
