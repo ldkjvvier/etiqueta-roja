@@ -5,9 +5,8 @@ import {
 } from '@/lib/data/site-config'
 
 export async function PromoBanner() {
-	const config = await getSiteConfig<PromoBannerConfig>(
-		'promo_banner'
-	)
+	const config =
+		await getSiteConfig<PromoBannerConfig>('promo_banner')
 
 	// If disabled or not found, don't show anything (or show default if desired, but request implies control)
 	if (!config || !config.is_active) {
@@ -41,12 +40,15 @@ export async function PromoBanner() {
 
 	return (
 		<div className="bg-foreground text-background py-3 border-b border-foreground overflow-hidden flex select-none gap-0">
-			<div className="flex animate-marquee-infinite whitespace-nowrap min-w-full shrink-0 items-center justify-around">
+			<div className="hidden w-full items-center justify-center px-4 text-center motion-reduce:flex">
+				{renderContent(0)}
+			</div>
+			<div className="flex animate-marquee-infinite whitespace-nowrap min-w-full shrink-0 items-center justify-around motion-reduce:hidden">
 				{Array.from({ length: 8 }).map((_, i) => renderContent(i))}
 			</div>
 			<div
 				aria-hidden="true"
-				className="flex animate-marquee-infinite whitespace-nowrap min-w-full shrink-0 items-center justify-around"
+				className="flex animate-marquee-infinite whitespace-nowrap min-w-full shrink-0 items-center justify-around motion-reduce:hidden"
 			>
 				{Array.from({ length: 8 }).map((_, i) => renderContent(i))}
 			</div>

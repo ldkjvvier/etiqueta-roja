@@ -10,7 +10,6 @@ import {
 	getProductBySlug,
 	getRelatedProducts,
 } from '@/lib/services/products-server'
-import { createClient } from '@/lib/supabase/server'
 
 const UUID_REGEX =
 	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -55,19 +54,14 @@ export default async function ProductPage({
 		redirect(`/producto/${product.slug}`)
 	}
 
-	const [relatedProducts, supabase] = await Promise.all([
-		getRelatedProducts(product.id),
-		createClient(),
-	])
-
-	supabase.rpc('increment_product_view', { p_product_id: product.id })
+	const relatedProducts = await getRelatedProducts(product.id)
 
 	return (
 		<div className="min-h-screen flex flex-col">
 			<AnnouncementBar />
 			<PromoBanner />
 			<Header />
-			<main className="flex-1">
+			<main id="main-content" tabIndex={-1} className="flex-1">
 				<ProductDetail
 					product={product}
 					relatedProducts={relatedProducts}

@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useState } from 'react'
 import { Minus, Plus, X, MessageCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -26,17 +27,19 @@ export function CartSheet() {
 		generateWhatsAppMessage,
 	} = useStore()
 	const [checkoutLoading, setCheckoutLoading] = useState(false)
-	const [checkoutError, setCheckoutError] = useState<string | null>(
-		null,
-	)
+	const [checkoutNotice, setCheckoutNotice] = useState<{
+		type: 'error' | 'success'
+		message: string
+	} | null>(null)
 
 	const handleWhatsAppCheckout = () => {
-		setCheckoutError(null)
+		setCheckoutNotice(null)
 
 		if (!whatsappNumber) {
-			setCheckoutError(
-				'WhatsApp no está configurado para esta tienda.',
-			)
+			setCheckoutNotice({
+				type: 'error',
+				message: 'WhatsApp no está configurado para esta tienda.',
+			})
 			return
 		}
 
@@ -55,16 +58,11 @@ export function CartSheet() {
 		})
 			.then((result) => {
 				if (result.error) {
-					setCheckoutError(
-						result.message || 'No se pudo crear la orden',
-					)
+					setCheckoutNotice({
+						type: 'error',
+						message: result.message || 'No se pudo crear la orden',
+					})
 					return
-				}
-
-				if (result.orderNumber) {
-					window.alert(
-						`Pedido ${result.orderNumber} creado correctamente`,
-					)
 				}
 
 				if (result.whatsappUrl) {
@@ -73,11 +71,19 @@ export function CartSheet() {
 					window.open(generateWhatsAppMessage(), '_blank')
 				}
 
+				setCheckoutNotice({
+					type: 'success',
+					message: result.orderNumber
+						? `Pedido ${result.orderNumber} creado correctamente. Si WhatsApp no se abrió, revisa el bloqueo de ventanas emergentes.`
+						: 'Pedido creado correctamente. Si WhatsApp no se abrió, revisa el bloqueo de ventanas emergentes.',
+				})
 				clearCart()
-				setIsCartOpen(false)
 			})
 			.catch(() => {
-				setCheckoutError('No se pudo crear la orden')
+				setCheckoutNotice({
+					type: 'error',
+					message: 'No se pudo crear la orden',
+				})
 			})
 			.finally(() => {
 				setCheckoutLoading(false)
@@ -88,13 +94,29 @@ export function CartSheet() {
 		<Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
 			<SheetContent
 				id="cart-sheet"
-				className="w-full sm:max-w-md bg-background border-l border-border flex flex-col"
+				className="flex w-full flex-col border-l border-border bg-background overscroll-contain sm:max-w-md"
 			>
 				<SheetHeader className="border-b border-border pb-4">
 					<SheetTitle className="text-xl font-black tracking-tight">
 						TU CARRITO ({cartItems.length})
 					</SheetTitle>
 				</SheetHeader>
+
+				{checkoutNotice ? (
+					<p
+						role={
+							checkoutNotice.type === 'error' ? 'alert' : 'status'
+						}
+						aria-live="polite"
+						className={`mt-4 border px-4 py-3 text-sm ${
+							checkoutNotice.type === 'error'
+								? 'border-destructive/30 text-destructive'
+								: 'border-primary/30 text-foreground'
+						}`}
+					>
+						{checkoutNotice.message}
+					</p>
+				) : null}
 
 				{cartItems.length === 0 ? (
 					<div className="flex-1 flex flex-col items-center justify-center gap-4">
@@ -117,10 +139,13 @@ export function CartSheet() {
 									className="flex gap-4 p-4 border border-border"
 								>
 									<div className="w-20 h-20 bg-secondary shrink-0">
-										<img
+										<Image
 											src={item.image || '/placeholder.svg'}
 											alt={item.name}
-											className="w-full h-full object-cover"
+											width={80}
+											height={80}
+											sizes="80px"
+											className="h-full w-full object-cover"
 										/>
 									</div>
 									<div className="flex-1 flex flex-col">
@@ -148,6 +173,7 @@ export function CartSheet() {
 												variant="ghost"
 												size="icon"
 												className="h-6 w-6 hover:bg-transparent hover:text-primary"
+												aria-label={`Eliminar ${item.name} talla ${item.size}`}
 												onClick={() =>
 													removeFromCart(item.id, item.size)
 												}
@@ -161,6 +187,7 @@ export function CartSheet() {
 													variant="ghost"
 													size="icon"
 													className="h-8 w-8 hover:bg-secondary"
+													aria-label={`Restar una unidad de ${item.name} talla ${item.size}`}
 													onClick={() =>
 														updateQuantity(
 															item.id,
@@ -178,6 +205,7 @@ export function CartSheet() {
 													variant="ghost"
 													size="icon"
 													className="h-8 w-8 hover:bg-secondary"
+													aria-label={`Sumar una unidad de ${item.name} talla ${item.size}`}
 													disabled={item.quantity >= item.maxStock}
 													onClick={() =>
 														updateQuantity(
@@ -217,18 +245,13 @@ export function CartSheet() {
 							>
 								<MessageCircle className="h-5 w-5" />
 								{checkoutLoading
-									? 'PROCESANDO...'
+									? 'PROCESANDO…'
 									: !whatsappNumber
 										? 'WHATSAPP NO DISPONIBLE'
-									: cartItems.some((item) => item.maxStock === 0)
-										? 'ELIMINA PRODUCTOS AGOTADOS'
-										: 'ENVIAR PEDIDO A WHATSAPP'}
+										: cartItems.some((item) => item.maxStock === 0)
+											? 'ELIMINA PRODUCTOS AGOTADOS'
+											: 'ENVIAR PEDIDO A WHATSAPP'}
 							</Button>
-							{checkoutError && (
-								<p className="text-center text-xs text-destructive">
-									{checkoutError}
-								</p>
-							)}
 							<p className="text-center text-xs text-muted-foreground">
 								Se abrirá WhatsApp con el resumen de tu pedido
 							</p>

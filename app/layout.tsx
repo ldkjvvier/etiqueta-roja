@@ -51,6 +51,12 @@ export default async function RootLayout({
 	return (
 		<html lang="es">
 			<body className={`font-sans antialiased`}>
+				<a
+					href="#main-content"
+					className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:bg-primary focus:px-4 focus:py-2 focus:font-bold focus:text-primary-foreground"
+				>
+					Saltar al contenido principal
+				</a>
 				<Providers whatsappNumber={whatsappNumber}>
 					{children}
 				</Providers>

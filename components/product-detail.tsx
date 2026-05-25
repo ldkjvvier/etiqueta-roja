@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import useEmblaCarousel from 'embla-carousel-react'
 import {
 	ArrowLeft,
@@ -232,12 +233,15 @@ export function ProductDetail({
 									{productImages.map((img, index) => (
 										<div
 											key={index}
-											className="flex-[0_0_100%] min-w-0 h-full"
+											className="relative flex-[0_0_100%] min-w-0 h-full"
 										>
-											<img
+											<Image
 												src={img || '/placeholder.svg'}
 												alt={`${product.name} - vista ${index + 1}`}
-												className={`w-full h-full object-cover ${
+												fill
+												priority={index === 0}
+												sizes="(max-width: 1024px) 100vw, 50vw"
+												className={`object-cover ${
 													isSoldOut ? 'opacity-50 grayscale' : ''
 												}`}
 											/>
@@ -252,7 +256,7 @@ export function ProductDetail({
 									<button
 										type="button"
 										onClick={scrollPrev}
-										className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-background/90 border border-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+										className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center border border-foreground bg-background/90 opacity-100 transition-opacity focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
 										aria-label="Imagen anterior"
 									>
 										<ChevronLeft className="w-5 h-5" />
@@ -260,7 +264,7 @@ export function ProductDetail({
 									<button
 										type="button"
 										onClick={scrollNext}
-										className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-background/90 border border-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+										className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center border border-foreground bg-background/90 opacity-100 transition-opacity focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
 										aria-label="Siguiente imagen"
 									>
 										<ChevronRight className="w-5 h-5" />
@@ -307,10 +311,12 @@ export function ProductDetail({
 											'flex-1 lg:flex-none lg:w-full'
 										}`}
 									>
-										<img
+										<Image
 											src={img || '/placeholder.svg'}
 											alt={`${product.name} thumbnail ${index + 1}`}
-											className="w-full h-full object-cover"
+											fill
+											sizes="96px"
+											className="object-cover"
 										/>
 									</button>
 								))}

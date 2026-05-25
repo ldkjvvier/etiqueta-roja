@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { ReactNode } from 'react'
 import { HeroStudioState } from '@/types/heroStudio.types'
 
@@ -79,11 +80,14 @@ export function HeroBannerLayout({
 						className="pointer-events-none absolute inset-0 h-full w-full"
 						title="Hero background video"
 						allow="autoplay; fullscreen; picture-in-picture"
+						aria-hidden="true"
 						loading="lazy"
+						tabIndex={-1}
 					/>
 				) : (
 					<video
 						className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+						aria-hidden="true"
 						autoPlay
 						loop
 						muted
@@ -94,20 +98,35 @@ export function HeroBannerLayout({
 					</video>
 				)
 			) : backgroundImage ? (
-				<picture>
-					{backgroundImageMobile && (
-						<source
-							media="(max-width: 767px)"
-							srcSet={backgroundImageMobile}
+				<>
+					{backgroundImageMobile &&
+					backgroundImageMobile !== backgroundImage ? (
+						<Image
+							src={backgroundImageMobile}
+							alt=""
+							aria-hidden="true"
+							fill
+							priority
+							sizes="100vw"
+							className="absolute inset-0 object-cover md:hidden"
 						/>
-					)}
-					<img
+					) : null}
+					<Image
 						src={backgroundImage}
-						alt="Hero background"
-						className="absolute inset-0 h-full w-full object-cover"
-						loading="eager"
+						alt=""
+						aria-hidden="true"
+						fill
+						priority
+						sizes="100vw"
+						className={cx(
+							'absolute inset-0 object-cover',
+							backgroundImageMobile &&
+								backgroundImageMobile !== backgroundImage
+								? 'hidden md:block'
+								: undefined,
+						)}
 					/>
-				</picture>
+				</>
 			) : null}
 
 			<div
