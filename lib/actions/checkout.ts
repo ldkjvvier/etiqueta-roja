@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { getPublicStoreContext } from '@/lib/data/admin-context'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database, Json } from '@/lib/supabase/types'
 
 export type CheckoutCartItem = {
 	id: string
@@ -21,13 +23,13 @@ function combinationKeyFromSize(size: string) {
 }
 
 async function createOrder(
-	supabase: any,
+	supabase: SupabaseClient<Database>,
 	payload: {
 		store_id: string
 		customer_id: string
 		status: 'pending'
 		total_amount: number
-		shipping_address: Record<string, unknown>
+		shipping_address: Json
 	},
 ) {
 	const { data: orderNumber, error: seqError } = await supabase.rpc(
@@ -54,7 +56,6 @@ export async function createPendingOrderFromCart(input: {
 	whatsappNumber?: string
 }) {
 	const supabase = await createClient()
-	const db = supabase as any
 	const { storeId } = await getPublicStoreContext()
 
 	const {
@@ -107,14 +108,14 @@ export async function createPendingOrderFromCart(input: {
 		{ data: products, error: productsError },
 		{ data: variants, error: variantsError },
 	] = await Promise.all([
-		db
+		supabase
 			.from('products')
 			.select('id,name,base_price,store_id,status,deleted_at')
 			.in('id', distinctProductIds)
 			.eq('store_id', storeId)
 			.eq('status', 'active')
 			.is('deleted_at', null),
-		db
+		supabase
 			.from('product_variants')
 			.select(
 				'id,product_id,combination_key,stock_quantity,reserved_stock,track_inventory,is_active,deleted_at',
@@ -216,7 +217,7 @@ export async function createPendingOrderFromCart(input: {
 
 		const customerEmail = user.email || ''
 
-		const { data: customer } = await db
+		const { data: customer } = await supabase
 			.from('customers')
 			.select('id,email')
 			.eq('store_id', storeId)
@@ -243,7 +244,7 @@ export async function createPendingOrderFromCart(input: {
 					channel: 'whatsapp',
 					customerEmail: customer.email || customerEmail,
 					authUserId: user.id,
-				},
+				} as Json,
 			},
 		)
 
@@ -258,9 +259,10 @@ export async function createPendingOrderFromCart(input: {
 			variant_details: `Talla: ${item.size}`,
 			quantity: item.quantity,
 			unit_price: item.unitPrice,
+			total_price: item.unitPrice * item.quantity,
 		}))
 
-		const { error: itemsError } = await db
+		const { error: itemsError } = await supabase
 			.from('order_items')
 			.insert(itemsPayload)
 

@@ -10,6 +10,16 @@ import {
 	getProductBySlug,
 	getRelatedProducts,
 } from '@/lib/services/products-server'
+import { createClient } from '@/lib/supabase/server'
+
+const UUID_REGEX =
+	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+async function resolveProduct(id: string) {
+	return UUID_REGEX.test(id)
+		? await getProduct(id)
+		: await getProductBySlug(id)
+}
 
 export async function generateMetadata({
 	params,
@@ -17,8 +27,7 @@ export async function generateMetadata({
 	params: Promise<{ id: string }>
 }): Promise<Metadata> {
 	const { id } = await params
-	const product =
-		(await getProduct(id)) || (await getProductBySlug(id))
+	const product = await resolveProduct(id)
 	if (!product) return { title: 'Producto | ETIQUETA ROJA' }
 
 	return {
@@ -35,18 +44,23 @@ export default async function ProductPage({
 	params: Promise<{ id: string }>
 }) {
 	const { id } = await params
-	const productById = await getProduct(id)
-	const product = productById || (await getProductBySlug(id))
+	const isUUID = UUID_REGEX.test(id)
+	const product = await resolveProduct(id)
 
 	if (!product) {
 		notFound()
 	}
 
-	if (productById && product.slug && product.slug !== id) {
+	if (isUUID && product.slug && product.slug !== id) {
 		redirect(`/producto/${product.slug}`)
 	}
 
-	const relatedProducts = await getRelatedProducts(product.id)
+	const [relatedProducts, supabase] = await Promise.all([
+		getRelatedProducts(product.id),
+		createClient(),
+	])
+
+	supabase.rpc('increment_product_view', { p_product_id: product.id })
 
 	return (
 		<div className="min-h-screen flex flex-col">

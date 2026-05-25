@@ -697,6 +697,10 @@ export type Database = {
 				Args: { p_store_id: string }
 				Returns: boolean
 			}
+			next_order_number: {
+				Args: Record<string, never>
+				Returns: string
+			}
 		}
 		Enums: {
 			[_ in never]: never

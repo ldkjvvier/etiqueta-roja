@@ -1,4 +1,6 @@
-export default [
+import tseslint from 'typescript-eslint'
+
+export default tseslint.config(
 	{
 		ignores: [
 			'.next/**',
@@ -6,15 +8,16 @@ export default [
 			'out/**',
 			'build/**',
 			'**/*.d.ts',
-			'**/*.{ts,tsx}',
 		],
 	},
+	...tseslint.configs.recommended,
 	{
-		files: ['**/*.{js,mjs,cjs}'],
-		languageOptions: {
-			ecmaVersion: 'latest',
-			sourceType: 'module',
+		rules: {
+			'@typescript-eslint/no-explicit-any': 'warn',
+			'@typescript-eslint/no-unused-vars': [
+				'warn',
+				{ argsIgnorePattern: '^_' },
+			],
 		},
-		rules: {},
 	},
-]
+)
