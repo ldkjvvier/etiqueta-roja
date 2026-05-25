@@ -151,7 +151,7 @@ export async function createOrder(
 		return { data: null, error: mapOrderError(orderError.code) }
 	}
 
-	const itemsWithOrderId = items.map(item => ({
+	const itemsWithOrderId = items.map((item) => ({
 		...item,
 		order_id: (order as Order).id,
 	}))
@@ -162,7 +162,10 @@ export async function createOrder(
 
 	if (itemsError) {
 		console.error('[createOrder] items insert', itemsError)
-		await db.from('orders').delete().eq('id', (order as Order).id)
+		await db
+			.from('orders')
+			.delete()
+			.eq('id', (order as Order).id)
 		return { data: null, error: 'Error al guardar ítems de la orden' }
 	}
 
@@ -188,7 +191,10 @@ export async function updateOrderStatus(
 
 	if (error) {
 		console.error('[updateOrderStatus]', error)
-		return { data: null, error: 'Error al actualizar estado de la orden' }
+		return {
+			data: null,
+			error: 'Error al actualizar estado de la orden',
+		}
 	}
 
 	return { data: order as Order, error: null }

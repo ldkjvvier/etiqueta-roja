@@ -6,7 +6,9 @@ import type {
 	UserRole,
 } from '@/types/database.types'
 
-export async function getStoreBySlug(slug: string): Promise<DataResult<Store>> {
+export async function getStoreBySlug(
+	slug: string,
+): Promise<DataResult<Store>> {
 	const supabase = await createClient()
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const db = supabase as any

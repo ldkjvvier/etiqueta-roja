@@ -31,7 +31,9 @@ export function useAuth(): AuthState {
 	useEffect(() => {
 		const supabase = createClient()
 
-		const loadRole = async (userId: string): Promise<UserRoleValue | null> => {
+		const loadRole = async (
+			userId: string,
+		): Promise<UserRoleValue | null> => {
 			if (!STORE_SLUG) return null
 
 			const storeResult = await supabase

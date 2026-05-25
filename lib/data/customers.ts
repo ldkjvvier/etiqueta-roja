@@ -54,7 +54,8 @@ export async function getOrCreateCustomer(
 				.is('deleted_at', null)
 				.single()
 
-			if (raceCustomer) return { data: raceCustomer as Customer, error: null }
+			if (raceCustomer)
+				return { data: raceCustomer as Customer, error: null }
 		}
 
 		return { data: null, error: 'Error al crear perfil de cliente' }

@@ -49,7 +49,10 @@ export type AdminProductFilters = {
 	includeDeleted?: boolean
 }
 
-function mapPostgresError(code: string | undefined, table: string): string {
+function mapPostgresError(
+	code: string | undefined,
+	table: string,
+): string {
 	switch (code) {
 		case '23505':
 			return table === 'products'
@@ -103,7 +106,8 @@ export async function getPublicProducts(
 		.range(from, to)
 		.order('created_at', { ascending: false })
 
-	if (filters.categoryId) query = query.eq('category_id', filters.categoryId)
+	if (filters.categoryId)
+		query = query.eq('category_id', filters.categoryId)
 	if (filters.dropId) query = query.eq('drop_id', filters.dropId)
 	if (filters.query) query = query.ilike('name', `%${filters.query}%`)
 
@@ -190,7 +194,8 @@ export async function getAdminProducts(
 	if (!filters.includeDeleted) query = query.is('deleted_at', null)
 	if (filters.status && filters.status !== 'all')
 		query = query.eq('status', filters.status)
-	if (filters.categoryId) query = query.eq('category_id', filters.categoryId)
+	if (filters.categoryId)
+		query = query.eq('category_id', filters.categoryId)
 	if (filters.query) query = query.ilike('name', `%${filters.query}%`)
 
 	const { data, error, count } = await query
@@ -236,7 +241,10 @@ export async function createProduct(
 
 	if (error) {
 		console.error('[createProduct]', error)
-		return { data: null, error: mapPostgresError(error.code, 'products') }
+		return {
+			data: null,
+			error: mapPostgresError(error.code, 'products'),
+		}
 	}
 
 	return { data: product as Product, error: null }
@@ -262,7 +270,10 @@ export async function updateProduct(
 
 	if (error) {
 		console.error('[updateProduct]', error)
-		return { data: null, error: mapPostgresError(error.code, 'products') }
+		return {
+			data: null,
+			error: mapPostgresError(error.code, 'products'),
+		}
 	}
 
 	return { data: product as Product, error: null }

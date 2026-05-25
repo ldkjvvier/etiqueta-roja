@@ -10,7 +10,11 @@ import {
 	getOrderWithItems,
 } from '@/lib/data/orders'
 import type { Json } from '@/lib/supabase/types'
-import type { OrderStatus, InsertOrder, InsertOrderItem } from '@/types/database.types'
+import type {
+	OrderStatus,
+	InsertOrder,
+	InsertOrderItem,
+} from '@/types/database.types'
 
 type ActionResult<T = undefined> = {
 	success: boolean
@@ -72,15 +76,14 @@ export async function create(
 			shipping_address: parsedShipping.data as unknown as Json,
 		}
 
-		const items: Omit<InsertOrderItem, 'order_id'>[] = parsedItems.data.map(
-			item => ({
+		const items: Omit<InsertOrderItem, 'order_id'>[] =
+			parsedItems.data.map((item) => ({
 				variant_id: item.variantId,
 				product_name: item.productName,
 				variant_details: item.variantDetails ?? null,
 				quantity: item.quantity,
 				unit_price: item.unitPrice,
-			}),
-		)
+			}))
 
 		const { data, error } = await createOrder(orderData, items)
 
@@ -103,7 +106,9 @@ export async function create(
 	}
 }
 
-const ORDER_STATUS_TRANSITIONS: Partial<Record<OrderStatus, OrderStatus>> = {
+const ORDER_STATUS_TRANSITIONS: Partial<
+	Record<OrderStatus, OrderStatus>
+> = {
 	pending: 'paid',
 	paid: 'processing',
 	processing: 'shipped',
@@ -113,7 +118,8 @@ const ORDER_STATUS_TRANSITIONS: Partial<Record<OrderStatus, OrderStatus>> = {
 export async function advanceStatus(
 	orderId: string,
 ): Promise<ActionResult<{ status: OrderStatus }>> {
-	if (!orderId) return { success: false, error: 'ID de orden requerido' }
+	if (!orderId)
+		return { success: false, error: 'ID de orden requerido' }
 
 	try {
 		await getAdminStoreContext()
@@ -121,7 +127,8 @@ export async function advanceStatus(
 		return { success: false, error: 'Sin acceso de administrador' }
 	}
 
-	const { data: order, error: fetchError } = await getOrderWithItems(orderId)
+	const { data: order, error: fetchError } =
+		await getOrderWithItems(orderId)
 	if (fetchError || !order) {
 		return { success: false, error: 'Orden no encontrada' }
 	}
@@ -136,14 +143,20 @@ export async function advanceStatus(
 		}
 	}
 
-	const { data: updated, error } = await updateOrderStatus(orderId, nextStatus)
+	const { data: updated, error } = await updateOrderStatus(
+		orderId,
+		nextStatus,
+	)
 	if (error || !updated) {
-		return { success: false, error: error ?? 'Error al actualizar estado' }
+		return {
+			success: false,
+			error: error ?? 'Error al actualizar estado',
+		}
 	}
 
 	if (nextStatus === 'paid') {
 		await applyPaidInventory(
-			order.order_items.map(i => ({
+			order.order_items.map((i) => ({
 				variantId: i.variant_id,
 				quantity: i.quantity,
 			})),
@@ -156,7 +169,10 @@ export async function advanceStatus(
 	return { success: true, data: { status: nextStatus } }
 }
 
-type OrderItemInventory = { variantId: string | null; quantity: number }
+type OrderItemInventory = {
+	variantId: string | null
+	quantity: number
+}
 
 type VariantStock = {
 	stock_quantity: number | null
@@ -164,7 +180,9 @@ type VariantStock = {
 	track_inventory: boolean | null
 }
 
-async function applyPaidInventory(items: OrderItemInventory[]): Promise<void> {
+async function applyPaidInventory(
+	items: OrderItemInventory[],
+): Promise<void> {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const db = (await createClient()) as any
 
@@ -190,13 +208,17 @@ async function applyPaidInventory(items: OrderItemInventory[]): Promise<void> {
 
 		await db
 			.from('product_variants')
-			.update({ stock_quantity: newStock, reserved_stock: newReserved })
+			.update({
+				stock_quantity: newStock,
+				reserved_stock: newReserved,
+			})
 			.eq('id', item.variantId)
 	}
 }
 
 export async function cancel(orderId: string): Promise<ActionResult> {
-	if (!orderId) return { success: false, error: 'ID de orden requerido' }
+	if (!orderId)
+		return { success: false, error: 'ID de orden requerido' }
 
 	try {
 		await getAdminStoreContext()
@@ -204,7 +226,8 @@ export async function cancel(orderId: string): Promise<ActionResult> {
 		return { success: false, error: 'Sin acceso de administrador' }
 	}
 
-	const { data: order, error: fetchError } = await getOrderWithItems(orderId)
+	const { data: order, error: fetchError } =
+		await getOrderWithItems(orderId)
 	if (fetchError || !order) {
 		return { success: false, error: 'Orden no encontrada' }
 	}
@@ -219,7 +242,7 @@ export async function cancel(orderId: string): Promise<ActionResult> {
 
 	if (order.status === 'pending' || order.status === 'paid') {
 		await releaseReservedInventory(
-			order.order_items.map(i => ({
+			order.order_items.map((i) => ({
 				variantId: i.variant_id,
 				quantity: i.quantity,
 			})),
@@ -248,7 +271,10 @@ async function releaseReservedInventory(
 			.select('reserved_stock, track_inventory')
 			.eq('id', item.variantId)
 			.single()) as {
-			data: Pick<VariantStock, 'reserved_stock' | 'track_inventory'> | null
+			data: Pick<
+				VariantStock,
+				'reserved_stock' | 'track_inventory'
+			> | null
 		}
 
 		if (!variant?.track_inventory) continue

@@ -70,7 +70,10 @@ export async function getTopProducts(
 
 	if (result.error) {
 		console.error('[getTopProducts]', result.error)
-		return { data: null, error: 'Error al cargar productos más vistos' }
+		return {
+			data: null,
+			error: 'Error al cargar productos más vistos',
+		}
 	}
 
 	type ProductRow = {
@@ -81,7 +84,9 @@ export async function getTopProducts(
 		total_views: number | null
 	}
 
-	const rows: TopProductRow[] = ((result.data ?? []) as ProductRow[]).map(p => ({
+	const rows: TopProductRow[] = (
+		(result.data ?? []) as ProductRow[]
+	).map((p) => ({
 		product_id: p.id,
 		total_views: p.total_views ?? 0,
 		name: p.name,

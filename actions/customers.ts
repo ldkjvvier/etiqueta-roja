@@ -20,7 +20,8 @@ export async function updateProfile(
 	customerId: string,
 	payload: z.infer<typeof profileSchema>,
 ): Promise<ActionResult> {
-	if (!customerId) return { success: false, error: 'ID de cliente requerido' }
+	if (!customerId)
+		return { success: false, error: 'ID de cliente requerido' }
 
 	const supabase = await createClient()
 	const {
@@ -39,7 +40,10 @@ export async function updateProfile(
 		}
 	}
 
-	const { error } = await updateCustomerProfile(customerId, parsed.data)
+	const { error } = await updateCustomerProfile(
+		customerId,
+		parsed.data,
+	)
 	if (error) return { success: false, error }
 
 	return { success: true }

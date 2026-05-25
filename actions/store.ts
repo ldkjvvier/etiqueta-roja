@@ -33,7 +33,10 @@ export async function updateConfig(
 	visibility: SiteConfigVisibility = 'private',
 ): Promise<ActionResult> {
 	if (!isValidConfigKey(key)) {
-		return { success: false, error: 'Clave de configuración no permitida' }
+		return {
+			success: false,
+			error: 'Clave de configuración no permitida',
+		}
 	}
 
 	let store

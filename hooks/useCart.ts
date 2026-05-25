@@ -29,11 +29,14 @@ type CartAction =
 	| { type: 'SET_OPEN'; open: boolean }
 	| { type: 'HYDRATE'; items: CartItem[] }
 
-function cartReducer(state: CartState, action: CartAction): CartState {
+function cartReducer(
+	state: CartState,
+	action: CartAction,
+): CartState {
 	switch (action.type) {
 		case 'ADD_ITEM': {
 			const idx = state.items.findIndex(
-				i => i.variantId === action.item.variantId,
+				(i) => i.variantId === action.item.variantId,
 			)
 			if (idx >= 0) {
 				const updated = [...state.items]
@@ -52,20 +55,27 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 		case 'REMOVE_ITEM':
 			return {
 				...state,
-				items: state.items.filter(i => i.variantId !== action.variantId),
+				items: state.items.filter(
+					(i) => i.variantId !== action.variantId,
+				),
 			}
 		case 'UPDATE_QUANTITY': {
 			if (action.quantity <= 0) {
 				return {
 					...state,
-					items: state.items.filter(i => i.variantId !== action.variantId),
+					items: state.items.filter(
+						(i) => i.variantId !== action.variantId,
+					),
 				}
 			}
 			return {
 				...state,
-				items: state.items.map(i =>
+				items: state.items.map((i) =>
 					i.variantId === action.variantId
-						? { ...i, quantity: Math.min(action.quantity, i.maxStock) }
+						? {
+								...i,
+								quantity: Math.min(action.quantity, i.maxStock),
+							}
 						: i,
 				),
 			}
@@ -101,14 +111,20 @@ export function useCart() {
 
 	useEffect(() => {
 		try {
-			localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state.items))
+			localStorage.setItem(
+				CART_STORAGE_KEY,
+				JSON.stringify(state.items),
+			)
 		} catch {
 			// Ignore write errors (storage full, private mode, etc.)
 		}
 	}, [state.items])
 
 	const count = state.items.reduce((sum, i) => sum + i.quantity, 0)
-	const total = state.items.reduce((sum, i) => sum + i.price * i.quantity, 0)
+	const total = state.items.reduce(
+		(sum, i) => sum + i.price * i.quantity,
+		0,
+	)
 
 	const addItem = useCallback((item: CartItem) => {
 		dispatch({ type: 'ADD_ITEM', item })
@@ -118,9 +134,12 @@ export function useCart() {
 		dispatch({ type: 'REMOVE_ITEM', variantId })
 	}, [])
 
-	const updateQuantity = useCallback((variantId: string, quantity: number) => {
-		dispatch({ type: 'UPDATE_QUANTITY', variantId, quantity })
-	}, [])
+	const updateQuantity = useCallback(
+		(variantId: string, quantity: number) => {
+			dispatch({ type: 'UPDATE_QUANTITY', variantId, quantity })
+		},
+		[],
+	)
 
 	const clear = useCallback(() => {
 		dispatch({ type: 'CLEAR' })

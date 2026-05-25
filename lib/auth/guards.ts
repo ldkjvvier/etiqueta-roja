@@ -56,7 +56,9 @@ export async function requireStoreAdmin(storeId: string) {
  * Verifies the current user has a non-deleted customer profile in the given store.
  * Throws if not found — caller decides whether to create or reject.
  */
-export async function requireCustomer(storeId: string): Promise<Customer> {
+export async function requireCustomer(
+	storeId: string,
+): Promise<Customer> {
 	const supabase = await createClient()
 	const {
 		data: { user },

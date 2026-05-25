@@ -22,14 +22,13 @@ const productSchema = z.object({
 		.string()
 		.min(1)
 		.max(255)
-		.regex(/^[a-z0-9-]+$/, 'El slug solo puede tener letras minúsculas, números y guiones'),
+		.regex(
+			/^[a-z0-9-]+$/,
+			'El slug solo puede tener letras minúsculas, números y guiones',
+		),
 	description: z.string().nullable().optional(),
 	base_price: z.number().positive('El precio debe ser mayor a 0'),
-	compare_at_price: z
-		.number()
-		.positive()
-		.nullable()
-		.optional(),
+	compare_at_price: z.number().positive().nullable().optional(),
 	main_image: z.string().min(1, 'La imagen principal es requerida'),
 	status: z.enum(['draft', 'active', 'archived']).default('draft'),
 	is_customizable: z.boolean().default(false),
@@ -59,12 +58,16 @@ export async function create(
 	}
 
 	const store = await getStore()
-	if (!store) return { success: false, error: 'Sin acceso de administrador' }
+	if (!store)
+		return { success: false, error: 'Sin acceso de administrador' }
 
 	const { data, error } = await createProduct(store.id, parsed.data)
 
 	if (error || !data) {
-		return { success: false, error: error ?? 'Error al crear producto' }
+		return {
+			success: false,
+			error: error ?? 'Error al crear producto',
+		}
 	}
 
 	revalidatePath('/admin/products')
@@ -77,7 +80,8 @@ export async function update(
 	productId: string,
 	payload: Partial<ProductPayload>,
 ): Promise<ActionResult> {
-	if (!productId) return { success: false, error: 'ID de producto requerido' }
+	if (!productId)
+		return { success: false, error: 'ID de producto requerido' }
 
 	const parsed = productSchema.partial().safeParse(payload)
 	if (!parsed.success) {
@@ -88,7 +92,8 @@ export async function update(
 	}
 
 	const store = await getStore()
-	if (!store) return { success: false, error: 'Sin acceso de administrador' }
+	if (!store)
+		return { success: false, error: 'Sin acceso de administrador' }
 
 	const { error } = await updateProduct(productId, parsed.data)
 	if (error) return { success: false, error }
@@ -100,11 +105,15 @@ export async function update(
 	return { success: true }
 }
 
-export async function softDelete(productId: string): Promise<ActionResult> {
-	if (!productId) return { success: false, error: 'ID de producto requerido' }
+export async function softDelete(
+	productId: string,
+): Promise<ActionResult> {
+	if (!productId)
+		return { success: false, error: 'ID de producto requerido' }
 
 	const store = await getStore()
-	if (!store) return { success: false, error: 'Sin acceso de administrador' }
+	if (!store)
+		return { success: false, error: 'Sin acceso de administrador' }
 
 	const { error } = await softDeleteProduct(productId)
 	if (error) return { success: false, error }
@@ -119,15 +128,21 @@ export async function updateStatus(
 	productId: string,
 	status: ProductStatus,
 ): Promise<ActionResult> {
-	if (!productId) return { success: false, error: 'ID de producto requerido' }
+	if (!productId)
+		return { success: false, error: 'ID de producto requerido' }
 
-	const validStatuses: ProductStatus[] = ['draft', 'active', 'archived']
+	const validStatuses: ProductStatus[] = [
+		'draft',
+		'active',
+		'archived',
+	]
 	if (!validStatuses.includes(status)) {
 		return { success: false, error: 'Estado inválido' }
 	}
 
 	const store = await getStore()
-	if (!store) return { success: false, error: 'Sin acceso de administrador' }
+	if (!store)
+		return { success: false, error: 'Sin acceso de administrador' }
 
 	const { error } = await updateProduct(productId, { status })
 	if (error) return { success: false, error }
