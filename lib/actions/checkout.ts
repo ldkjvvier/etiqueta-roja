@@ -20,17 +20,8 @@ function combinationKeyFromSize(size: string) {
 	return `size:${normalizeSize(size)}`
 }
 
-function generateOrderNumber() {
-	const now = new Date()
-	const yy = String(now.getFullYear()).slice(2)
-	const mm = String(now.getMonth() + 1).padStart(2, '0')
-	const dd = String(now.getDate()).padStart(2, '0')
-	const rand = Math.floor(Math.random() * 9000 + 1000)
-	return `ER-${yy}${mm}${dd}-${rand}`
-}
-
-async function createOrderWithRetry(
-	db: any,
+async function createOrder(
+	supabase: any,
 	payload: {
 		store_id: string
 		customer_id: string
@@ -39,27 +30,23 @@ async function createOrderWithRetry(
 		shipping_address: Record<string, unknown>
 	},
 ) {
-	for (let attempt = 0; attempt < 3; attempt++) {
-		const orderNumber = generateOrderNumber()
-		const { data, error } = await db
-			.from('orders')
-			.insert({ ...payload, order_number: orderNumber })
-			.select('id,order_number')
-			.single()
-
-		if (!error && data) {
-			return { data, error: null }
-		}
-
-		if (error?.code !== '23505') {
-			return { data: null, error }
+	const { data: orderNumber, error: seqError } = await supabase.rpc(
+		'next_order_number',
+	)
+	if (seqError || !orderNumber) {
+		return {
+			data: null,
+			error: seqError ?? {
+				message: 'No se pudo generar número de orden',
+			},
 		}
 	}
 
-	return {
-		data: null,
-		error: { message: 'No se pudo generar un número de orden único' },
-	}
+	return await supabase
+		.from('orders')
+		.insert({ ...payload, order_number: orderNumber })
+		.select('id,order_number')
+		.single()
 }
 
 export async function createPendingOrderFromCart(input: {
@@ -246,7 +233,7 @@ export async function createPendingOrderFromCart(input: {
 		}
 
 		const { data: order, error: orderError } =
-			await createOrderWithRetry(db, {
+			await createOrder(supabase, {
 				store_id: storeId,
 				customer_id: customer.id,
 				status: 'pending',
