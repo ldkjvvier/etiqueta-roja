@@ -4,7 +4,7 @@ import type { CSSProperties } from 'react'
 import Link from 'next/link'
 import { cva } from 'class-variance-authority'
 import { Button } from '@/components/ui/button'
-import { HeroCTAConfig } from '@/lib/services/site-config-server'
+import { HeroCTAConfig } from '@/lib/data/site-config'
 import { cn } from '@/lib/utils'
 
 const ctaButtonVariants = cva(

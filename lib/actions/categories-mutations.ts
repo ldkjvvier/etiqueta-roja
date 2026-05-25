@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { getAdminStoreContext } from '@/lib/services/admin-context'
+import { getAdminStoreContext } from '@/lib/data/admin-context'
 
 function generateSlug(name: string): string {
 	return name
@@ -28,7 +28,7 @@ export async function createCategory(formData: any) {
 		const { data, error } = await supabase
 			.from('categories')
 			.insert({
-				store_id: store.id,
+				store_id: store.storeId,
 				name: formData.name,
 				slug: slug,
 				description: formData.description || null,
@@ -84,7 +84,7 @@ export async function updateCategory(id: string, formData: any) {
 
 		const { error } = await (supabase.from('categories') as any)
 			.update(updates)
-			.eq('store_id', store.id)
+			.eq('store_id', store.storeId)
 			.eq('id', id)
 
 		if (error) throw error
@@ -124,7 +124,7 @@ export async function deleteCategory(id: string) {
 		const { error } = await supabase
 			.from('categories')
 			.delete()
-			.eq('store_id', store.id)
+			.eq('store_id', store.storeId)
 			.eq('id', id)
 
 		if (error) throw error

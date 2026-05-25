@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { getAdminStoreContext } from '@/lib/services/admin-context'
+import { getAdminStoreContext } from '@/lib/data/admin-context'
 
 type ProductVariantInput = {
 	id?: string
@@ -344,12 +344,12 @@ export async function createProductV3(
 			throw new Error('Debe subir al menos una imagen')
 		}
 
-		const slug = await ensureUniqueSlug(db, store.id, payload.name)
+		const slug = await ensureUniqueSlug(db, store.storeId, payload.name)
 
 		const { data: product, error } = await db
 			.from('products')
 			.insert({
-				store_id: store.id,
+				store_id: store.storeId,
 				name: payload.name,
 				slug,
 				description: payload.description || null,
@@ -406,7 +406,7 @@ export async function updateProductV3(
 	try {
 		const slug = await ensureUniqueSlug(
 			db,
-			store.id,
+			store.storeId,
 			payload.name,
 			id,
 		)
@@ -429,7 +429,7 @@ export async function updateProductV3(
 				updated_at: new Date().toISOString(),
 			} as any)
 			.eq('id', id)
-			.eq('store_id', store.id)
+			.eq('store_id', store.storeId)
 			.is('deleted_at', null)
 
 		if (error) throw error
@@ -469,7 +469,7 @@ export async function archiveProductV3(id: string) {
 			updated_at: new Date().toISOString(),
 		} as any)
 		.eq('id', id)
-		.eq('store_id', store.id)
+		.eq('store_id', store.storeId)
 		.is('deleted_at', null)
 
 	if (error) {
@@ -496,7 +496,7 @@ export async function hardDeleteProductV3(id: string) {
 			.from('products')
 			.select('id,main_image')
 			.eq('id', id)
-			.eq('store_id', store.id)
+			.eq('store_id', store.storeId)
 			.maybeSingle()
 
 		if (productError) {
@@ -578,7 +578,7 @@ export async function hardDeleteProductV3(id: string) {
 			.from('products')
 			.delete()
 			.eq('id', id)
-			.eq('store_id', store.id)
+			.eq('store_id', store.storeId)
 
 		if (deleteProductError) {
 			throw deleteProductError
@@ -632,7 +632,7 @@ export async function toggleProductStatusV3(
 			updated_at: new Date().toISOString(),
 		} as any)
 		.eq('id', id)
-		.eq('store_id', store.id)
+		.eq('store_id', store.storeId)
 		.is('deleted_at', null)
 
 	if (error) {

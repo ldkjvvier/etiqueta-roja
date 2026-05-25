@@ -1,4 +1,4 @@
-import { getAdminCustomers } from '@/lib/services/customers'
+import { getAdminCustomers } from '@/lib/data/customers'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import {

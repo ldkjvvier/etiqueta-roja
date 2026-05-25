@@ -1,5 +1,5 @@
 import { useMemo, useReducer } from 'react'
-import { HomeHeroBannerConfig } from '@/lib/services/site-config-server'
+import { HomeHeroBannerConfig } from '@/lib/data/site-config'
 import { getHeroCTAConfig } from '@/lib/services/hero-cta-config'
 import {
 	HERO_DEFAULT_POSITIONS,

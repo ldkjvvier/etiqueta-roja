@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { getAdminStoreContext } from '@/lib/services/admin-context'
+import { getAdminStoreContext } from '@/lib/data/admin-context'
 
 const ORDER_STATUS_FLOW: Record<string, string> = {
 	pending: 'paid',
@@ -94,7 +94,7 @@ export async function advanceOrderStatus(formData: FormData) {
 		.from('orders')
 		.select('id,status')
 		.eq('id', orderId)
-		.eq('store_id', store.id)
+		.eq('store_id', store.storeId)
 		.maybeSingle()
 
 	if (!order) return
@@ -113,7 +113,7 @@ export async function advanceOrderStatus(formData: FormData) {
 		.from('orders')
 		.update({ status: nextStatus })
 		.eq('id', orderId)
-		.eq('store_id', store.id)
+		.eq('store_id', store.storeId)
 
 	revalidatePath('/admin/orders')
 }

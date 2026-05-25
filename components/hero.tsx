@@ -1,12 +1,12 @@
 import { HeroDropCountdown } from '@/components/HeroDropCountdown'
 import { HeroBannerLayout } from '@/components/hero-studio/HeroBannerLayout'
 import { HeroCTA } from '@/components/hero-studio/HeroCTA'
-import { getHeroLinkedDropSummary } from '@/lib/services/drops-server'
+import { getHeroLinkedDropSummary } from '@/lib/data/drops'
 import {
 	getSiteConfig,
 	HeroCTAConfig,
 	HomeHeroBannerConfig,
-} from '@/lib/services/site-config-server'
+} from '@/lib/data/site-config'
 import { getHeroCTAConfig } from '@/lib/services/hero-cta-config'
 
 type StandardHeroConfigInput = {
@@ -378,9 +378,7 @@ export async function Hero() {
 
 	const value = normalizeHeroConfig(rawValue)
 	const ctaConfig = value.cta ?? fallbackCTA
-	const linkedDrop = await getHeroLinkedDropSummary(
-		value.linked_drop_id,
-	)
+	const { data: linkedDrop } = await getHeroLinkedDropSummary()
 
 	const ctaState: 'default' | 'scheduled' | 'live' | 'ended' =
 		linkedDrop?.status === 'scheduled'

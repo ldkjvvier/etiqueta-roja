@@ -20,7 +20,7 @@ import {
 } from '@/services/heroDropService'
 import { useHeroStudioState } from '@/hooks/useHeroStudioState'
 import { HeroDropOption } from '@/types/heroStudio.types'
-import { HomeHeroBannerConfig } from '@/lib/services/site-config-server'
+import { HomeHeroBannerConfig } from '@/lib/data/site-config'
 
 const initialActionState = { message: '', error: false }
 

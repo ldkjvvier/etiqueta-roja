@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { getCategoryById } from '@/lib/services/categories-server'
+import { getCategoryById } from '@/lib/data/categories'
 import { CategoryForm } from '@/components/admin/category-form'
 
 interface PageProps {
@@ -10,7 +10,7 @@ export default async function EditCategoryPage({
 	params,
 }: PageProps) {
 	const { id } = await params
-	const category = await getCategoryById(id)
+	const { data: category } = await getCategoryById(id)
 
 	if (!category) {
 		notFound()

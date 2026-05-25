@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { DropForm } from '@/components/admin/drop-form'
-import { getAdminDropById } from '@/lib/services/drops'
+import { getAdminDropById, AdminDrop } from '@/lib/data/drops'
 
 interface PageProps {
 	params: Promise<{ id: string }>
@@ -8,7 +8,7 @@ interface PageProps {
 
 export default async function EditDropPage({ params }: PageProps) {
 	const { id } = await params
-	const drop = await getAdminDropById(id)
+	const { data: drop } = await getAdminDropById(id)
 
 	if (!drop) {
 		notFound()
@@ -16,7 +16,7 @@ export default async function EditDropPage({ params }: PageProps) {
 
 	return (
 		<div className="space-y-6">
-			<DropForm initialData={drop} />
+			<DropForm initialData={drop as AdminDrop} />
 		</div>
 	)
 }

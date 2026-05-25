@@ -2,12 +2,12 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { getAdminStoreContext } from '@/lib/services/admin-context'
+import { getAdminStoreContext } from '@/lib/data/admin-context'
 import {
 	PromoBannerConfig,
 	ContactInfoConfig,
 	HomeHeroBannerConfig,
-} from '@/lib/services/site-config-server'
+} from '@/lib/data/site-config'
 import { parseHeroCTAConfig } from '@/lib/validation/hero-cta'
 import {
 	STORE_SETTINGS_CURRENCY,
@@ -86,7 +86,7 @@ async function upsertSiteConfigValue(params: {
 	}
 
 	const payload: SiteConfigInsert = {
-		store_id: store.id,
+		store_id: store.storeId,
 		key: params.key,
 		value: params.value,
 		description: params.description,
@@ -278,7 +278,7 @@ export async function updateGenericSiteConfig(
 			: 'public'
 
 	const payload: SiteConfigInsert = {
-		store_id: store.id,
+		store_id: store.storeId,
 		key,
 		value: parsedValue as SiteConfigJson,
 		description,
@@ -337,7 +337,7 @@ export async function updatePromoBanner(
 	}
 
 	const payload: SiteConfigInsert = {
-		store_id: store.id,
+		store_id: store.storeId,
 		key: 'promo_banner',
 		value: value as unknown as SiteConfigJson,
 		description,
@@ -392,7 +392,7 @@ export async function updateContactInfo(
 	}
 
 	const payload: SiteConfigInsert = {
-		store_id: store.id,
+		store_id: store.storeId,
 		key: 'contact_info',
 		value: value as unknown as SiteConfigJson,
 		description,
@@ -629,7 +629,7 @@ export async function updateHomeHeroBanner(
 				}
 
 				const payload: SiteConfigInsert = {
-					store_id: store.id,
+					store_id: store.storeId,
 					key: 'home_hero_banner',
 					value: value as unknown as SiteConfigJson,
 					description: parsedPayload.internal_description || null,
@@ -973,7 +973,7 @@ export async function updateHomeHeroBanner(
 	}
 
 	const payload: SiteConfigInsert = {
-		store_id: store.id,
+		store_id: store.storeId,
 		key: 'home_hero_banner',
 		value: value as unknown as SiteConfigJson,
 		description: internalDescription,

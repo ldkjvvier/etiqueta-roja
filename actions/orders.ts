@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
-import { getAdminStoreContext } from '@/lib/services/admin-context'
+import { getAdminStoreContext } from '@/lib/data/admin-context'
 import {
 	createOrder,
 	updateOrderStatus,
@@ -123,7 +123,8 @@ export async function advanceStatus(
 
 	try {
 		await getAdminStoreContext()
-	} catch {
+	} catch (e: unknown) {
+		if (e && typeof e === 'object' && 'digest' in e) throw e
 		return { success: false, error: 'Sin acceso de administrador' }
 	}
 
@@ -156,7 +157,7 @@ export async function advanceStatus(
 
 	if (nextStatus === 'paid') {
 		await applyPaidInventory(
-			order.order_items.map((i) => ({
+			order.order_items.map((i: { variant_id: string | null; quantity: number }) => ({
 				variantId: i.variant_id,
 				quantity: i.quantity,
 			})),
@@ -222,7 +223,8 @@ export async function cancel(orderId: string): Promise<ActionResult> {
 
 	try {
 		await getAdminStoreContext()
-	} catch {
+	} catch (e: unknown) {
+		if (e && typeof e === 'object' && 'digest' in e) throw e
 		return { success: false, error: 'Sin acceso de administrador' }
 	}
 
@@ -242,7 +244,7 @@ export async function cancel(orderId: string): Promise<ActionResult> {
 
 	if (order.status === 'pending' || order.status === 'paid') {
 		await releaseReservedInventory(
-			order.order_items.map((i) => ({
+			order.order_items.map((i: { variant_id: string | null; quantity: number }) => ({
 				variantId: i.variant_id,
 				quantity: i.quantity,
 			})),
@@ -289,4 +291,40 @@ async function releaseReservedInventory(
 			.update({ reserved_stock: newReserved })
 			.eq('id', item.variantId)
 	}
+}
+
+export async function advanceOrderStatus(
+	formData: FormData,
+): Promise<ActionResult> {
+	const { storeId } = await getAdminStoreContext()
+	const orderId = formData.get('orderId') as string
+	const status = formData.get('status') as string
+
+	const validStatuses = [
+		'pending',
+		'paid',
+		'processing',
+		'shipped',
+		'delivered',
+		'cancelled',
+	]
+	if (!validStatuses.includes(status))
+		return { success: false, error: 'Estado inválido' }
+
+	const supabase = await createClient()
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const db = supabase as any
+	const { error } = await db
+		.from('orders')
+		.update({ status })
+		.eq('id', orderId)
+		.eq('store_id', storeId)
+
+	if (error) {
+		console.error('[advanceOrderStatus]', error)
+		return { success: false, error: 'Error al actualizar estado' }
+	}
+
+	revalidatePath('/admin/orders')
+	return { success: true }
 }

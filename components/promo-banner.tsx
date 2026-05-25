@@ -2,7 +2,7 @@ import Link from 'next/link'
 import {
 	getSiteConfig,
 	PromoBannerConfig,
-} from '@/lib/services/site-config-server'
+} from '@/lib/data/site-config'
 
 export async function PromoBanner() {
 	const config = await getSiteConfig<PromoBannerConfig>(

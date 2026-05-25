@@ -27,7 +27,7 @@ import {
 	deleteCategory,
 } from '@/lib/actions/categories-mutations'
 import { toast } from 'sonner'
-import { Category } from '@/lib/services/categories-server'
+import { Category } from '@/lib/data/categories'
 
 const formSchema = z.object({
 	name: z

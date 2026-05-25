@@ -2,7 +2,7 @@ import { Star } from 'lucide-react'
 import {
 	getSiteConfig,
 	ContactInfoConfig,
-} from '@/lib/services/site-config-server'
+} from '@/lib/data/site-config'
 
 export async function Footer() {
 	const config =

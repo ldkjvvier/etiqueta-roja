@@ -3,8 +3,8 @@ import {
 	PromoBannerConfig,
 	ContactInfoConfig,
 	HomeHeroBannerConfig,
-} from '@/lib/services/site-config-server'
-import { getAdminDrops } from '@/lib/services/drops'
+} from '@/lib/data/site-config'
+import { getAdminDrops } from '@/lib/data/drops'
 import { ConfigDashboard } from './config-dashboard'
 
 export default async function ConfigPage() {
@@ -22,12 +22,8 @@ export default async function ConfigPage() {
 	>('announcement_bar')
 	const storeSettingsConfig =
 		await getSiteConfig<Record<string, unknown>>('store_settings')
-	const drops = await getAdminDrops({
-		page: 1,
-		limit: 100,
-		status: 'all',
-	})
-	const dropOptions = drops.items.map((drop) => ({
+	const { data: allDrops } = await getAdminDrops()
+	const dropOptions = (allDrops ?? []).map((drop) => ({
 		id: drop.id,
 		name: drop.name,
 		status: drop.status,

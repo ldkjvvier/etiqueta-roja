@@ -1,7 +1,7 @@
 import {
 	HeroCTAConfig,
 	HomeHeroBannerConfig,
-} from '@/lib/services/site-config-server'
+} from '@/lib/data/site-config'
 import {
 	createDefaultHeroCTAConfig,
 	parseHeroCTAConfig,

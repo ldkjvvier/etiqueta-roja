@@ -1,12 +1,12 @@
-import { getCategories } from '@/lib/services/categories-server'
+import { getCategories } from '@/lib/data/categories'
 import { CategoriesClient } from '@/components/admin/categories-client'
 
 export default async function CategoriesPage() {
-	const categories = await getCategories()
+	const { data: categories } = await getCategories()
 
 	return (
 		<div className="space-y-6">
-			<CategoriesClient data={categories} />
+			<CategoriesClient data={categories ?? []} />
 		</div>
 	)
 }

@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { getAdminStoreContext } from '@/lib/services/admin-context'
+import { getAdminStoreContext } from '@/lib/data/admin-context'
 
 export async function getDashboardMetrics() {
 	const supabase = await createClient()
@@ -18,34 +18,34 @@ export async function getDashboardMetrics() {
 		db
 			.from('products')
 			.select('id', { count: 'exact', head: true })
-			.eq('store_id', store.id)
+			.eq('store_id', store.storeId)
 			.is('deleted_at', null),
 		db
 			.from('categories')
 			.select('id', { count: 'exact', head: true })
-			.eq('store_id', store.id),
+			.eq('store_id', store.storeId),
 		db
 			.from('orders')
 			.select('id', { count: 'exact', head: true })
-			.eq('store_id', store.id),
+			.eq('store_id', store.storeId),
 		db
 			.from('customers')
 			.select('id', { count: 'exact', head: true })
-			.eq('store_id', store.id)
+			.eq('store_id', store.storeId)
 			.is('deleted_at', null),
 		db
 			.from('product_variants')
 			.select(
 				'stock_quantity,reserved_stock,low_stock_threshold,track_inventory,product:products!inner(store_id,deleted_at)',
 			)
-			.eq('product.store_id', store.id)
+			.eq('product.store_id', store.storeId)
 			.is('product.deleted_at', null)
 			.eq('is_active', true)
 			.is('deleted_at', null),
 		db
 			.from('daily_metrics')
 			.select('date,total_sales,total_orders,total_views')
-			.eq('store_id', store.id)
+			.eq('store_id', store.storeId)
 			.order('date', { ascending: false })
 			.limit(7),
 		db
@@ -53,7 +53,7 @@ export async function getDashboardMetrics() {
 			.select(
 				'product_id,views,product:products!inner(name,main_image,base_price,store_id,deleted_at)',
 			)
-			.eq('store_id', store.id)
+			.eq('store_id', store.storeId)
 			.gte(
 				'date',
 				new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
@@ -131,7 +131,7 @@ export async function getRecentProducts(limit = 5) {
 	const { data } = await db
 		.from('products')
 		.select('id,name,base_price,main_image,created_at')
-		.eq('store_id', store.id)
+		.eq('store_id', store.storeId)
 		.is('deleted_at', null)
 		.order('created_at', { ascending: false })
 		.limit(limit)

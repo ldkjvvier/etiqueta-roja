@@ -34,7 +34,7 @@ import {
 	PromoBannerConfig,
 	ContactInfoConfig,
 	HomeHeroBannerConfig,
-} from '@/lib/services/site-config-server'
+} from '@/lib/data/site-config'
 import { HeroStudio } from '@/components/hero-studio/HeroStudio'
 import { HeroDropOption } from '@/types/heroStudio.types'
 import {

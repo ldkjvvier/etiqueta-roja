@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
-import { getAdminStoreContext } from '@/lib/services/admin-context'
+import { getAdminStoreContext } from '@/lib/data/admin-context'
 import type { SiteConfigVisibility } from '@/types/database.types'
 
 type ActionResult<T = undefined> = {
@@ -42,7 +42,8 @@ export async function updateConfig(
 	let store
 	try {
 		store = await getAdminStoreContext()
-	} catch {
+	} catch (e: unknown) {
+		if (e && typeof e === 'object' && 'digest' in e) throw e
 		return { success: false, error: 'Sin acceso de administrador' }
 	}
 
@@ -55,7 +56,7 @@ export async function updateConfig(
 	const db = supabase as any
 	const { error } = await db.from('site_config').upsert(
 		{
-			store_id: store.id,
+			store_id: store.storeId,
 			key,
 			value: value as import('@/lib/supabase/types').Json,
 			visibility,
@@ -94,7 +95,8 @@ export async function updateStoreInfo(
 	let store
 	try {
 		store = await getAdminStoreContext()
-	} catch {
+	} catch (e: unknown) {
+		if (e && typeof e === 'object' && 'digest' in e) throw e
 		return { success: false, error: 'Sin acceso de administrador' }
 	}
 
@@ -104,7 +106,7 @@ export async function updateStoreInfo(
 	const { error } = await db
 		.from('stores')
 		.update({ name: parsed.data.name })
-		.eq('id', store.id)
+		.eq('id', store.storeId)
 
 	if (error) {
 		console.error('[updateStoreInfo]', error)

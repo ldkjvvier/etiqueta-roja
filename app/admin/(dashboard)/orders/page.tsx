@@ -1,4 +1,4 @@
-import { getAdminOrders } from '@/lib/services/orders'
+import { getAdminOrders } from '@/lib/data/orders'
 import { advanceOrderStatus } from '@/lib/actions/orders-admin'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'

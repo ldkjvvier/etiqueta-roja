@@ -1,111 +1,82 @@
 import { createClient } from '@/lib/supabase/server'
-import type {
-	DataResult,
-	Customer,
-	InsertCustomer,
-	UpdateCustomer,
-} from '@/types/database.types'
+import { getAdminStoreContext } from '@/lib/data/admin-context'
 
-const CUSTOMER_SELECT =
-	'id, store_id, auth_user_id, email, first_name, last_name, phone, total_spent, deleted_at, created_at'
+type DataResult<T> = { data: T | null; error: string | null }
 
-export async function getOrCreateCustomer(
-	storeId: string,
-	authUserId: string,
-	email: string,
-): Promise<DataResult<Customer>> {
-	const supabase = await createClient()
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const db = supabase as any
-
-	const { data: existing } = await db
-		.from('customers')
-		.select(CUSTOMER_SELECT)
-		.eq('store_id', storeId)
-		.eq('auth_user_id', authUserId)
-		.is('deleted_at', null)
-		.single()
-
-	if (existing) {
-		return { data: existing as Customer, error: null }
-	}
-
-	const insertData: InsertCustomer = {
-		store_id: storeId,
-		auth_user_id: authUserId,
-		email,
-	}
-
-	const { data: created, error } = await db
-		.from('customers')
-		.insert(insertData)
-		.select(CUSTOMER_SELECT)
-		.single()
-
-	if (error) {
-		console.error('[getOrCreateCustomer]', error)
-
-		if (error.code === '23505') {
-			const { data: raceCustomer } = await db
-				.from('customers')
-				.select(CUSTOMER_SELECT)
-				.eq('store_id', storeId)
-				.eq('auth_user_id', authUserId)
-				.is('deleted_at', null)
-				.single()
-
-			if (raceCustomer)
-				return { data: raceCustomer as Customer, error: null }
-		}
-
-		return { data: null, error: 'Error al crear perfil de cliente' }
-	}
-
-	return { data: created as Customer, error: null }
+export interface GetAdminCustomersParams {
+	page?: number
+	limit?: number
+	fromDate?: string
+	toDate?: string
 }
 
-export async function getCustomerProfile(
-	authUserId: string,
-): Promise<DataResult<Customer>> {
+export async function getAdminCustomers({
+	page = 1,
+	limit = 20,
+	fromDate,
+	toDate,
+}: GetAdminCustomersParams) {
 	const supabase = await createClient()
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const db = supabase as any
+	const store = await getAdminStoreContext()
+	const from = (page - 1) * limit
+	const to = from + limit - 1
 
-	const { data, error } = await db
+	let request = db
 		.from('customers')
-		.select(CUSTOMER_SELECT)
-		.eq('auth_user_id', authUserId)
+		.select(
+			'id,email,first_name,last_name,phone,total_spent,created_at',
+			{
+				count: 'exact',
+			},
+		)
+		.eq('store_id', store.storeId)
 		.is('deleted_at', null)
-		.single()
 
-	if (error) {
-		console.error('[getCustomerProfile]', error)
-		return { data: null, error: 'Perfil no encontrado' }
+	if (fromDate) {
+		request = request.gte('created_at', `${fromDate}T00:00:00`)
+	}
+	if (toDate) {
+		request = request.lte('created_at', `${toDate}T23:59:59`)
 	}
 
-	return { data: data as Customer, error: null }
+	const { data, error, count } = await request
+		.order('created_at', { ascending: false })
+		.range(from, to)
+
+	if (error) {
+		console.error('Error loading customers:', error)
+		return { items: [], totalCount: 0, totalPages: 0 }
+	}
+
+	return {
+		items: data ?? [],
+		totalCount: count ?? 0,
+		totalPages: Math.ceil((count ?? 0) / limit),
+	}
 }
 
 export async function updateCustomerProfile(
 	customerId: string,
-	data: UpdateCustomer,
-): Promise<DataResult<Customer>> {
+	payload: {
+		first_name?: string | null
+		last_name?: string | null
+		phone?: string | null
+	},
+): Promise<DataResult<null>> {
 	const supabase = await createClient()
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const db = supabase as any
 
-	const { data: updated, error } = await db
+	const { error } = await db
 		.from('customers')
-		.update(data)
+		.update(payload)
 		.eq('id', customerId)
-		.is('deleted_at', null)
-		.select(CUSTOMER_SELECT)
-		.single()
 
 	if (error) {
 		console.error('[updateCustomerProfile]', error)
 		return { data: null, error: 'Error al actualizar perfil' }
 	}
-
-	return { data: updated as Customer, error: null }
+	return { data: null, error: null }
 }

@@ -1,5 +1,21 @@
 import { z } from 'zod'
-import { HeroCTAConfig } from '@/lib/services/site-config-server'
+
+export type HeroCTAConfig = {
+	text: string
+	link: string
+	openInNewTab: boolean
+	variant: 'solid' | 'outline' | 'ghost'
+	size: 'sm' | 'md' | 'lg'
+	radius: 'none' | 'sm' | 'md' | 'lg' | 'full'
+	hoverEffect: 'none' | 'lift' | 'scale' | 'invert'
+	alignment: 'left' | 'center' | 'right'
+	fullWidth: boolean
+	backgroundColor: string
+	textColor: string
+	borderColor: string
+	hoverBackgroundColor: string
+	hoverTextColor: string
+}
 
 const colorSchema = z
 	.string()

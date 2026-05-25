@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { getSiteConfig } from '@/lib/services/site-config-server'
+import { getSiteConfig } from '@/lib/data/site-config'
 
 type AnnouncementBarConfig = {
 	messages?: unknown

@@ -7,7 +7,7 @@ import { Providers } from './providers'
 import {
 	getSiteConfig,
 	ContactInfoConfig,
-} from '@/lib/services/site-config-server'
+} from '@/lib/data/site-config'
 
 const _inter = Inter({ subsets: ['latin'] })
 const _geistMono = Geist_Mono({ subsets: ['latin'] })

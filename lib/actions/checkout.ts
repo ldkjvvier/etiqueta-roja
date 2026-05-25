@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { getPublicStoreContext } from '@/lib/services/public-store-context'
+import { getPublicStoreContext } from '@/lib/data/admin-context'
 
 export type CheckoutCartItem = {
 	id: string
@@ -68,7 +68,7 @@ export async function createPendingOrderFromCart(input: {
 }) {
 	const supabase = await createClient()
 	const db = supabase as any
-	const store = await getPublicStoreContext()
+	const { storeId } = await getPublicStoreContext()
 
 	const {
 		data: { user },
@@ -124,7 +124,7 @@ export async function createPendingOrderFromCart(input: {
 			.from('products')
 			.select('id,name,base_price,store_id,status,deleted_at')
 			.in('id', distinctProductIds)
-			.eq('store_id', store.id)
+			.eq('store_id', storeId)
 			.eq('status', 'active')
 			.is('deleted_at', null),
 		db
@@ -232,7 +232,7 @@ export async function createPendingOrderFromCart(input: {
 		const { data: customer } = await db
 			.from('customers')
 			.select('id,email')
-			.eq('store_id', store.id)
+			.eq('store_id', storeId)
 			.eq('auth_user_id', user.id)
 			.is('deleted_at', null)
 			.maybeSingle()
@@ -247,7 +247,7 @@ export async function createPendingOrderFromCart(input: {
 
 		const { data: order, error: orderError } =
 			await createOrderWithRetry(db, {
-				store_id: store.id,
+				store_id: storeId,
 				customer_id: customer.id,
 				status: 'pending',
 				total_amount: totalAmount,

@@ -1,5 +1,5 @@
-import { HomeHeroBannerConfig } from '@/lib/services/site-config-server'
-import { HeroCTAConfig } from '@/lib/services/site-config-server'
+import { HomeHeroBannerConfig } from '@/lib/data/site-config'
+import { HeroCTAConfig } from '@/lib/data/site-config'
 
 export type HeroDropStatus = 'scheduled' | 'live' | 'ended'
 

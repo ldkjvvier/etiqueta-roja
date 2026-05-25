@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
-import { getAdminStoreContext } from '@/lib/services/admin-context'
+import { getAdminStoreContext } from '@/lib/data/admin-context'
 import {
 	createProduct,
 	updateProduct,
@@ -41,7 +41,9 @@ type ProductPayload = z.infer<typeof productSchema>
 async function getStore() {
 	try {
 		return await getAdminStoreContext()
-	} catch {
+	} catch (e: unknown) {
+		// Re-throw Next.js redirect/not-found errors
+		if (e && typeof e === 'object' && 'digest' in e) throw e
 		return null
 	}
 }
@@ -61,7 +63,7 @@ export async function create(
 	if (!store)
 		return { success: false, error: 'Sin acceso de administrador' }
 
-	const { data, error } = await createProduct(store.id, parsed.data)
+	const { data, error } = await createProduct(store.storeId, parsed.data)
 
 	if (error || !data) {
 		return {

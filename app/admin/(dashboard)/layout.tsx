@@ -1,7 +1,7 @@
 import { AdminSidebar } from '@/components/admin-sidebar'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getAdminStoreContext } from '@/lib/services/admin-context'
+import { getAdminStoreContext } from '@/lib/data/admin-context'
 
 function isAdminAccessError(error: unknown) {
 	if (!(error instanceof Error)) return false

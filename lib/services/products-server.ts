@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import type { Product } from '@/lib/store-context'
-import { getPublicStoreContext } from '@/lib/services/public-store-context'
+import { getPublicStoreContext } from '@/lib/data/admin-context'
 
 type VariantRow = {
 	id: string
@@ -123,8 +123,8 @@ function getPublicProductsListQuery(db: any, storeId: string) {
 export async function getProducts(): Promise<Product[]> {
 	const supabase = await createClient()
 	const db = supabase as any
-	const store = await getPublicStoreContext()
-	const query = getPublicProductsListQuery(db, store.id)
+	const { storeId } = await getPublicStoreContext()
+	const query = getPublicProductsListQuery(db, storeId)
 	const { data, error } = await query.order('created_at', {
 		ascending: false,
 	})
@@ -142,8 +142,8 @@ export async function getProduct(
 ): Promise<Product | null> {
 	const supabase = await createClient()
 	const db = supabase as any
-	const store = await getPublicStoreContext()
-	const query = getPublicProductsBaseQuery(db, store.id)
+	const { storeId } = await getPublicStoreContext()
+	const query = getPublicProductsBaseQuery(db, storeId)
 	const { data, error } = await query.eq('id', id).maybeSingle()
 
 	if (error || !data) {
@@ -158,8 +158,8 @@ export async function getProductBySlug(
 ): Promise<Product | null> {
 	const supabase = await createClient()
 	const db = supabase as any
-	const store = await getPublicStoreContext()
-	const query = getPublicProductsBaseQuery(db, store.id)
+	const { storeId } = await getPublicStoreContext()
+	const query = getPublicProductsBaseQuery(db, storeId)
 	const { data, error } = await query.eq('slug', slug).maybeSingle()
 
 	if (error || !data) {
@@ -174,8 +174,8 @@ export async function getRelatedProducts(
 ): Promise<Product[]> {
 	const supabase = await createClient()
 	const db = supabase as any
-	const store = await getPublicStoreContext()
-	const query = getPublicProductsBaseQuery(db, store.id)
+	const { storeId } = await getPublicStoreContext()
+	const query = getPublicProductsBaseQuery(db, storeId)
 	const { data, error } = await query
 		.neq('id', excludeId)
 		.order('created_at', { ascending: false })

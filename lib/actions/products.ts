@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { hardDeleteProductV3 } from '@/lib/actions/products-admin'
-import { getPublicStoreContext } from '@/lib/services/public-store-context'
+import { getPublicStoreContext } from '@/lib/data/admin-context'
 
 export async function deleteProduct(id: string) {
 	const result = await hardDeleteProductV3(id)
@@ -16,7 +16,7 @@ export async function validateCartStock(
 	items: { id: string; size: string; variantId?: string }[],
 ) {
 	const supabase = await createClient()
-	const store = await getPublicStoreContext()
+	const { storeId } = await getPublicStoreContext()
 	const normalize = (value: string) =>
 		(value || '').trim().toLowerCase().replace(/\s+/g, '-')
 	const productIds = Array.from(new Set(items.map((i) => i.id)))
@@ -29,7 +29,7 @@ export async function validateCartStock(
 			'id, product_id, combination_key, stock_quantity, reserved_stock, track_inventory, product:products!inner(store_id,deleted_at,status)',
 		)
 		.in('product_id', productIds)
-		.eq('product.store_id', store.id)
+		.eq('product.store_id', storeId)
 		.eq('product.status', 'active')
 		.is('product.deleted_at', null)
 		.eq('is_active', true)

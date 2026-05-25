@@ -1,4 +1,4 @@
-import { getAdminDrops } from '@/lib/services/drops'
+import { getAdminDrops } from '@/lib/data/drops'
 import { advanceDropStatus } from '@/lib/actions/drops-admin'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
@@ -26,11 +26,14 @@ export default async function AdminDropsPage({
 	const limit = 20
 	const status =
 		(params.status as 'scheduled' | 'live' | 'ended' | 'all') || 'all'
-	const { items, totalCount, totalPages } = await getAdminDrops({
-		page,
-		limit,
-		status,
-	})
+
+	const { data: allDrops } = await getAdminDrops()
+	const filtered = (allDrops ?? []).filter(
+		(d) => status === 'all' || d.status === status,
+	)
+	const totalCount = filtered.length
+	const totalPages = Math.ceil(totalCount / limit)
+	const items = filtered.slice((page - 1) * limit, page * limit)
 	const hasPreviousPage = page > 1
 	const hasNextPage = totalPages > 0 && page < totalPages
 

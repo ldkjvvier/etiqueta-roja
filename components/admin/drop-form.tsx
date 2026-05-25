@@ -33,7 +33,7 @@ import {
 	deleteDrop,
 	updateDrop,
 } from '@/lib/actions/drops-admin'
-import { AdminDrop } from '@/lib/services/drops'
+import { AdminDrop } from '@/lib/data/drops'
 import { toast } from 'sonner'
 
 const formSchema = z

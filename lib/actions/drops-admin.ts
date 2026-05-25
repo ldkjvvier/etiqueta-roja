@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { getAdminStoreContext } from '@/lib/services/admin-context'
+import { getAdminStoreContext } from '@/lib/data/admin-context'
 
 const DROP_STATUS_FLOW: Record<
 	'scheduled' | 'live' | 'ended',
@@ -128,14 +128,14 @@ export async function createDrop(payload: DropMutationPayload) {
 
 		const slug = await ensureUniqueDropSlug(
 			db,
-			store.id,
+			store.storeId,
 			payload.slug || payload.name,
 		)
 
 		const { data, error } = await db
 			.from('drops')
 			.insert({
-				store_id: store.id,
+				store_id: store.storeId,
 				name: payload.name,
 				slug,
 				description: payload.description || null,
@@ -192,7 +192,7 @@ export async function updateDrop(
 
 		const slug = await ensureUniqueDropSlug(
 			db,
-			store.id,
+			store.storeId,
 			payload.slug || payload.name,
 			id,
 		)
@@ -209,7 +209,7 @@ export async function updateDrop(
 				end_time: endTime,
 			} as any)
 			.eq('id', id)
-			.eq('store_id', store.id)
+			.eq('store_id', store.storeId)
 
 		if (error) {
 			throw error
@@ -245,7 +245,7 @@ export async function deleteDrop(id: string) {
 			.from('drops')
 			.select('cover_image')
 			.eq('id', id)
-			.eq('store_id', store.id)
+			.eq('store_id', store.storeId)
 			.maybeSingle()
 
 		if (dropError) throw dropError
@@ -254,7 +254,7 @@ export async function deleteDrop(id: string) {
 			.from('drops')
 			.delete()
 			.eq('id', id)
-			.eq('store_id', store.id)
+			.eq('store_id', store.storeId)
 
 		if (error) throw error
 
@@ -305,7 +305,7 @@ export async function advanceDropStatus(formData: FormData) {
 		.from('drops')
 		.select('id,status,start_time,end_time')
 		.eq('id', dropId)
-		.eq('store_id', store.id)
+		.eq('store_id', store.storeId)
 		.maybeSingle()
 
 	if (!drop) return
@@ -329,7 +329,7 @@ export async function advanceDropStatus(formData: FormData) {
 		.from('drops')
 		.update(updates)
 		.eq('id', dropId)
-		.eq('store_id', store.id)
+		.eq('store_id', store.storeId)
 
 	revalidatePath('/admin/drops')
 	revalidatePath('/admin/products')

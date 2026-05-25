@@ -5,7 +5,7 @@ import type {
 	ContactInfoConfig,
 	HomeHeroBannerConfig,
 	PromoBannerConfig,
-} from '@/lib/services/site-config-server'
+} from '@/lib/data/site-config'
 import type { HeroDropOption } from '@/types/heroStudio.types'
 import {
 	ContactInfoForm,

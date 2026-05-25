@@ -22,7 +22,7 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ConfirmDialog } from '@/components/admin/confirm-dialog'
-import { Category } from '@/lib/services/categories-server'
+import { Category } from '@/lib/data/categories'
 import { deleteCategory } from '@/lib/actions/categories-mutations'
 import { toast } from 'sonner'
 

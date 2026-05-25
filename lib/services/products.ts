@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { getAdminStoreContext } from '@/lib/services/admin-context'
+import { getAdminStoreContext } from '@/lib/data/admin-context'
 
 export type AdminProductRow = {
 	id: string
@@ -68,7 +68,7 @@ export async function getAdminProductsPage({
 			`id,name,slug,base_price,compare_at_price,main_image,status,category_id,drop_id,deleted_at,created_at,updated_at,category:categories(name),drop:drops(name,status),variants:product_variants(id,stock_quantity,reserved_stock,low_stock_threshold,track_inventory,is_active,deleted_at)`,
 			{ count: 'exact' },
 		)
-		.eq('store_id', store.id)
+		.eq('store_id', store.storeId)
 		.is('deleted_at', null)
 
 	if (query) {
@@ -161,7 +161,7 @@ export async function getAdminProductById(id: string) {
 			'id,store_id,name,slug,description,base_price,compare_at_price,main_image,category_id,drop_id,status,is_customizable,created_at,updated_at',
 		)
 		.eq('id', id)
-		.eq('store_id', store.id)
+		.eq('store_id', store.storeId)
 		.is('deleted_at', null)
 		.maybeSingle()
 
@@ -250,7 +250,7 @@ export async function getCategoryOptions() {
 	const { data, error } = await db
 		.from('categories')
 		.select('id,name,slug')
-		.eq('store_id', store.id)
+		.eq('store_id', store.storeId)
 		.order('name', { ascending: true })
 
 	if (error) {
@@ -269,7 +269,7 @@ export async function getDropOptions() {
 	const { data, error } = await db
 		.from('drops')
 		.select('id,name,status,start_time,end_time')
-		.eq('store_id', store.id)
+		.eq('store_id', store.storeId)
 		.order('start_time', { ascending: false })
 		.limit(100)
 
