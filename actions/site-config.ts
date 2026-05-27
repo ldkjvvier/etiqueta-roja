@@ -4,7 +4,11 @@ import { revalidatePath, revalidateTag } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getAdminStoreContext } from '@/lib/data/admin-context'
 
-type ActionResult<T = void> = { success: boolean; data?: T; error?: string }
+type ActionResult<T = void> = {
+	success: boolean
+	data?: T
+	error?: string
+}
 
 export async function upsertConfig(
 	key: string,
@@ -33,7 +37,7 @@ export async function upsertConfig(
 		return { success: false, error: 'Error al guardar configuración' }
 	}
 
-	revalidateTag('site-config', {})
+	revalidateTag('site-config', 'max')
 	revalidatePath('/admin/config', 'page')
 	revalidatePath('/', 'layout')
 	return { success: true }
@@ -56,10 +60,13 @@ export async function toggleConfigActive(
 
 	if (error) {
 		console.error('[toggleConfigActive]', error)
-		return { success: false, error: 'Error al actualizar configuración' }
+		return {
+			success: false,
+			error: 'Error al actualizar configuración',
+		}
 	}
 
-	revalidateTag('site-config', {})
+	revalidateTag('site-config', 'max')
 	revalidatePath('/admin/config', 'page')
 	return { success: true }
 }

@@ -259,7 +259,6 @@ export async function createPendingOrderFromCart(input: {
 			variant_details: `Talla: ${item.size}`,
 			quantity: item.quantity,
 			unit_price: item.unitPrice,
-			total_price: item.unitPrice * item.quantity,
 		}))
 
 		const { error: itemsError } = await supabase

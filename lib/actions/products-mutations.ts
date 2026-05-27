@@ -20,10 +20,9 @@ export async function createProduct(formData: any) {
 		variants: (formData.variants || []).map((variant: any) => ({
 			id: variant.id,
 			size: variant.size,
-			// Cambiado: soportar pricing/imagen/peso por variante.
 			price:
 				variant.price === '' || variant.price == null
-					? null
+					? undefined
 					: Number(variant.price),
 			stock_quantity: Number(variant.stock_quantity || 0),
 			reserved_stock: Number(variant.reserved_stock || 0),
@@ -54,10 +53,9 @@ export async function updateProduct(id: string, formData: any) {
 		variants: (formData.variants || []).map((variant: any) => ({
 			id: variant.id,
 			size: variant.size,
-			// Cambiado: soportar pricing/imagen/peso por variante.
 			price:
 				variant.price === '' || variant.price == null
-					? null
+					? undefined
 					: Number(variant.price),
 			stock_quantity: Number(variant.stock_quantity || 0),
 			reserved_stock: Number(variant.reserved_stock || 0),

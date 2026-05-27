@@ -157,6 +157,7 @@ async function upsertVariantGraph(
 	supabase: any,
 	productId: string,
 	variants: ProductVariantInput[],
+	basePrice: number,
 ) {
 	validateVariants(variants)
 
@@ -284,11 +285,10 @@ async function upsertVariantGraph(
 			product_id: productId,
 			sku: variant.sku || null,
 			combination_key: combinationKey,
-			// Cambiado: persistir columnas de variante soportadas por el nuevo modelo.
 			price:
-				variant.price === undefined || variant.price === null
-					? null
-					: Number(variant.price),
+				variant.price != null && !Number.isNaN(Number(variant.price))
+					? Number(variant.price)
+					: Number(basePrice),
 			stock_quantity: Number(variant.stock_quantity || 0),
 			reserved_stock: Number(variant.reserved_stock || 0),
 			low_stock_threshold: Number(variant.low_stock_threshold ?? 5),
@@ -344,7 +344,11 @@ export async function createProductV3(
 			throw new Error('Debe subir al menos una imagen')
 		}
 
-		const slug = await ensureUniqueSlug(db, store.storeId, payload.name)
+		const slug = await ensureUniqueSlug(
+			db,
+			store.storeId,
+			payload.name,
+		)
 
 		const { data: product, error } = await db
 			.from('products')
@@ -372,7 +376,12 @@ export async function createProductV3(
 
 		await Promise.all([
 			replaceProductImages(db, product.id, payload.images),
-			upsertVariantGraph(db, product.id, payload.variants),
+			upsertVariantGraph(
+				db,
+				product.id,
+				payload.variants,
+				Number(payload.base_price),
+			),
 		])
 
 		revalidatePath('/admin')
@@ -436,7 +445,12 @@ export async function updateProductV3(
 
 		await Promise.all([
 			replaceProductImages(db, id, payload.images),
-			upsertVariantGraph(db, id, payload.variants),
+			upsertVariantGraph(
+				db,
+				id,
+				payload.variants,
+				Number(payload.base_price),
+			),
 		])
 
 		revalidatePath('/admin')

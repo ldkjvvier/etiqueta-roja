@@ -508,7 +508,12 @@ export function ProductForm({
 										)}
 									</div>
 									<div className="space-y-2">
-										<Label>Precio Var.</Label>
+										<Label>
+											Precio Var.{' '}
+											<span className="text-xs text-muted-foreground font-normal">
+												(vacio = usa precio base)
+											</span>
+										</Label>
 										<Input
 											type="number"
 											step="0.01"
