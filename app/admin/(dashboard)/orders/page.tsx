@@ -11,6 +11,7 @@ import {
 	TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { AdvanceStatusButton } from '@/components/admin/advance-status-button'
 
 export default async function AdminOrdersPage({
 	searchParams,
@@ -99,23 +100,16 @@ export default async function AdminOrdersPage({
 									)}
 								</TableCell>
 								<TableCell className="text-right">
-									<form action={advanceOrderStatus}>
-										<input
-											type="hidden"
-											name="orderId"
-											value={order.id}
-										/>
-										<Button
-											size="sm"
-											variant="outline"
-											disabled={
-												order.status === 'delivered' ||
-												order.status === 'cancelled'
-											}
-										>
-											Avanzar estado
-										</Button>
-									</form>
+									<AdvanceStatusButton
+										itemId={order.id}
+										fieldName="orderId"
+										label="Avanzar estado"
+										disabled={
+											order.status === 'delivered' ||
+											order.status === 'cancelled'
+										}
+										action={advanceOrderStatus}
+									/>
 								</TableCell>
 							</TableRow>
 						))}

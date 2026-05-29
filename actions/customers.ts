@@ -43,6 +43,7 @@ export async function updateProfile(
 	const { error } = await updateCustomerProfile(
 		customerId,
 		parsed.data,
+		user.id,
 	)
 	if (error) return { success: false, error }
 

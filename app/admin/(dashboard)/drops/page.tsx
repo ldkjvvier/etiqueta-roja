@@ -11,6 +11,7 @@ import {
 	TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { AdvanceStatusButton } from '@/components/admin/advance-status-button'
 
 export default async function AdminDropsPage({
 	searchParams,
@@ -115,24 +116,19 @@ export default async function AdminDropsPage({
 												Editar
 											</Link>
 										</Button>
-										<form action={advanceDropStatus}>
-											<input
-												type="hidden"
-												name="dropId"
-												value={drop.id}
-											/>
-											<Button
-												size="sm"
-												variant="outline"
-												disabled={drop.status === 'ended'}
-											>
-												{drop.status === 'scheduled'
+										<AdvanceStatusButton
+											itemId={drop.id}
+											fieldName="dropId"
+											label={
+												drop.status === 'scheduled'
 													? 'Pasar a live'
 													: drop.status === 'live'
 														? 'Finalizar'
-														: 'Cerrado'}
-											</Button>
-										</form>
+														: 'Cerrado'
+											}
+											disabled={drop.status === 'ended'}
+											action={advanceDropStatus}
+										/>
 									</div>
 								</TableCell>
 							</TableRow>

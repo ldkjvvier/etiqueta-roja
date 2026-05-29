@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useMemo, useState } from 'react'
 import { updateHomeHeroBanner } from '@/lib/actions/site-config'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
 	Card,
@@ -63,6 +64,23 @@ export function HeroStudio({
 	const dropPreview = useMemo(() => {
 		return buildDropPreview(state, selectedDrop, previewNowMs)
 	}, [previewNowMs, selectedDrop, state])
+
+	useEffect(() => {
+		if (!actionState.message) {
+			return
+		}
+
+		if (actionState.error) {
+			toast.error('Error al guardar', {
+				description: actionState.message,
+			})
+			return
+		}
+
+		toast.success('Hero guardado correctamente', {
+			description: actionState.message,
+		})
+	}, [actionState.error, actionState.message])
 
 	useEffect(() => {
 		if (!isStudioOpen && isRealViewOpen) {

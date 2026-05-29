@@ -64,6 +64,7 @@ export async function updateCustomerProfile(
 		last_name?: string | null
 		phone?: string | null
 	},
+	authUserId: string,
 ): Promise<DataResult<null>> {
 	const supabase = await createClient()
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -73,6 +74,7 @@ export async function updateCustomerProfile(
 		.from('customers')
 		.update(payload)
 		.eq('id', customerId)
+		.eq('auth_user_id', authUserId)
 
 	if (error) {
 		console.error('[updateCustomerProfile]', error)

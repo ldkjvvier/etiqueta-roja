@@ -13,20 +13,33 @@ const ORDER_STATUS_FLOW: Record<string, string> = {
 	cancelled: 'cancelled',
 }
 
+type StatusActionResult = {
+	error: boolean
+	message: string
+}
+
 async function applyPaidInventoryMovement(db: any, orderId: string) {
-	const { data: items } = await db
+	const { data: items, error: itemsError } = await db
 		.from('order_items')
 		.select('variant_id,quantity')
 		.eq('order_id', orderId)
 
+	if (itemsError) {
+		throw itemsError
+	}
+
 	for (const item of items ?? []) {
 		if (!item.variant_id) continue
 
-		const { data: variant } = await db
+		const { data: variant, error: variantError } = await db
 			.from('product_variants')
 			.select('id,stock_quantity,reserved_stock')
 			.eq('id', item.variant_id)
 			.maybeSingle()
+
+		if (variantError) {
+			throw variantError
+		}
 
 		if (!variant) continue
 
@@ -37,30 +50,42 @@ async function applyPaidInventoryMovement(db: any, orderId: string) {
 			0,
 		)
 
-		await db
+		const { error: updateError } = await db
 			.from('product_variants')
 			.update({
 				stock_quantity: nextStock,
 				reserved_stock: nextReserved,
 			})
 			.eq('id', item.variant_id)
+
+		if (updateError) {
+			throw updateError
+		}
 	}
 }
 
 async function releaseReservedInventory(db: any, orderId: string) {
-	const { data: items } = await db
+	const { data: items, error: itemsError } = await db
 		.from('order_items')
 		.select('variant_id,quantity')
 		.eq('order_id', orderId)
 
+	if (itemsError) {
+		throw itemsError
+	}
+
 	for (const item of items ?? []) {
 		if (!item.variant_id) continue
 
-		const { data: variant } = await db
+		const { data: variant, error: variantError } = await db
 			.from('product_variants')
 			.select('id,reserved_stock')
 			.eq('id', item.variant_id)
 			.maybeSingle()
+
+		if (variantError) {
+			throw variantError
+		}
 
 		if (!variant) continue
 
@@ -70,16 +95,25 @@ async function releaseReservedInventory(db: any, orderId: string) {
 			0,
 		)
 
-		await db
+		const { error: updateError } = await db
 			.from('product_variants')
 			.update({ reserved_stock: nextReserved })
 			.eq('id', item.variant_id)
+
+		if (updateError) {
+			throw updateError
+		}
 	}
 }
 
-export async function advanceOrderStatus(formData: FormData) {
+
+export async function advanceOrderStatus(
+	formData: FormData,
+): Promise<StatusActionResult> {
 	const orderId = String(formData.get('orderId') || '')
-	if (!orderId) return
+	if (!orderId) {
+		return { error: true, message: 'Orden inválida' }
+	}
 
 	const supabase = await createClient()
 	const db = supabase as any
@@ -88,32 +122,66 @@ export async function advanceOrderStatus(formData: FormData) {
 	const {
 		data: { user },
 	} = await supabase.auth.getUser()
-	if (!user) return
-
-	const { data: order } = await db
-		.from('orders')
-		.select('id,status')
-		.eq('id', orderId)
-		.eq('store_id', store.storeId)
-		.maybeSingle()
-
-	if (!order) return
-
-	const nextStatus = ORDER_STATUS_FLOW[order.status] || order.status
-
-	if (order.status === 'pending' && nextStatus === 'paid') {
-		await applyPaidInventoryMovement(db, orderId)
+	if (!user) {
+		return { error: true, message: 'Unauthorized' }
 	}
 
-	if (order.status === 'pending' && nextStatus === 'cancelled') {
-		await releaseReservedInventory(db, orderId)
+	try {
+		const { data: order, error: orderError } = await db
+			.from('orders')
+			.select('id,status')
+			.eq('id', orderId)
+			.eq('store_id', store.storeId)
+			.maybeSingle()
+
+		if (orderError) {
+			throw orderError
+		}
+
+		if (!order) {
+			return { error: true, message: 'Orden no encontrada' }
+		}
+
+		if (
+			order.status === 'delivered' ||
+			order.status === 'cancelled'
+		) {
+			return {
+				error: false,
+				message: 'La orden ya se encuentra en un estado final',
+			}
+		}
+
+		const nextStatus = ORDER_STATUS_FLOW[order.status] || order.status
+
+		if (order.status === 'pending' && nextStatus === 'paid') {
+			await applyPaidInventoryMovement(db, orderId)
+		}
+
+		if (order.status === 'pending' && nextStatus === 'cancelled') {
+			await releaseReservedInventory(db, orderId)
+		}
+
+		const { error: updateError } = await db
+			.from('orders')
+			.update({ status: nextStatus })
+			.eq('id', orderId)
+			.eq('store_id', store.storeId)
+
+		if (updateError) {
+			throw updateError
+		}
+
+		revalidatePath('/admin/orders')
+		return {
+			error: false,
+			message: 'Estado de la orden actualizado',
+		}
+	} catch (error) {
+		console.error('[advanceOrderStatus]', error)
+		return {
+			error: true,
+			message: 'No se pudo actualizar el estado de la orden',
+		}
 	}
-
-	await db
-		.from('orders')
-		.update({ status: nextStatus })
-		.eq('id', orderId)
-		.eq('store_id', store.storeId)
-
-	revalidatePath('/admin/orders')
 }

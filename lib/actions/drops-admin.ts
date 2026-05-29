@@ -4,13 +4,14 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { getAdminStoreContext } from '@/lib/data/admin-context'
 
-const DROP_STATUS_FLOW: Record<
-	'scheduled' | 'live' | 'ended',
-	'scheduled' | 'live' | 'ended'
-> = {
+const DROP_STATUS_FLOW: Record<'scheduled' | 'live', 'live' | 'ended'> = {
 	scheduled: 'live',
 	live: 'ended',
-	ended: 'ended',
+}
+
+type StatusActionResult = {
+	error: boolean
+	message: string
 }
 
 type DropMutationPayload = {
@@ -288,9 +289,13 @@ export async function deleteDrop(id: string) {
 	}
 }
 
-export async function advanceDropStatus(formData: FormData) {
+export async function advanceDropStatus(
+	formData: FormData,
+): Promise<StatusActionResult> {
 	const dropId = String(formData.get('dropId') || '')
-	if (!dropId) return
+	if (!dropId) {
+		return { error: true, message: 'Drop inválido' }
+	}
 
 	const supabase = await createClient()
 	const db = supabase as any
@@ -299,38 +304,75 @@ export async function advanceDropStatus(formData: FormData) {
 	const {
 		data: { user },
 	} = await supabase.auth.getUser()
-	if (!user) return
-
-	const { data: drop } = await db
-		.from('drops')
-		.select('id,status,start_time,end_time')
-		.eq('id', dropId)
-		.eq('store_id', store.storeId)
-		.maybeSingle()
-
-	if (!drop) return
-
-	const currentStatus = drop.status as 'scheduled' | 'live' | 'ended'
-	const nextStatus = DROP_STATUS_FLOW[currentStatus]
-
-	const nowIso = new Date().toISOString()
-	const updates: Record<string, unknown> = {
-		status: nextStatus,
+	if (!user) {
+		return { error: true, message: 'Unauthorized' }
 	}
 
-	if (currentStatus === 'scheduled' && nextStatus === 'live') {
-		updates.start_time = drop.start_time || nowIso
-	}
-	if (currentStatus === 'live' && nextStatus === 'ended') {
-		updates.end_time = drop.end_time || nowIso
-	}
+	try {
+		const { data: drop, error: dropError } = await db
+			.from('drops')
+			.select('id,status,start_time,end_time')
+			.eq('id', dropId)
+			.eq('store_id', store.storeId)
+			.maybeSingle()
 
-	await db
-		.from('drops')
-		.update(updates)
-		.eq('id', dropId)
-		.eq('store_id', store.storeId)
+		if (dropError) {
+			throw dropError
+		}
 
-	revalidatePath('/admin/drops')
-	revalidatePath('/admin/products')
+		if (!drop) {
+			return { error: true, message: 'Drop no encontrado' }
+		}
+
+		if (drop.status === 'ended') {
+			return {
+				error: false,
+				message: 'El drop ya está cerrado',
+			}
+		}
+
+		const currentStatus = drop.status as 'scheduled' | 'live'
+		const nextStatus = DROP_STATUS_FLOW[currentStatus]
+		if (!nextStatus) {
+			return {
+				error: true,
+				message: 'Estado de drop inválido',
+			}
+		}
+
+		const nowIso = new Date().toISOString()
+		const updates: Record<string, unknown> = {
+			status: nextStatus,
+		}
+
+		if (currentStatus === 'scheduled' && nextStatus === 'live') {
+			updates.start_time = drop.start_time || nowIso
+		}
+		if (currentStatus === 'live' && nextStatus === 'ended') {
+			updates.end_time = drop.end_time || nowIso
+		}
+
+		const { error: updateError } = await db
+			.from('drops')
+			.update(updates)
+			.eq('id', dropId)
+			.eq('store_id', store.storeId)
+
+		if (updateError) {
+			throw updateError
+		}
+
+		revalidatePath('/admin/drops')
+		revalidatePath('/admin/products')
+		return {
+			error: false,
+			message: 'Estado del drop actualizado',
+		}
+	} catch (error) {
+		console.error('[advanceDropStatus]', error)
+		return {
+			error: true,
+			message: 'No se pudo actualizar el estado del drop',
+		}
+	}
 }

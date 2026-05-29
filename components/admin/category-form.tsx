@@ -95,8 +95,11 @@ export function CategoryForm({ initialData }: CategoryFormProps) {
 				router.refresh()
 			}
 		} catch (error) {
+			const message =
+				error instanceof Error ? error.message : 'Error desconocido'
+			console.error('[CategoryForm.onSubmit]', error)
 			toast.error('Error', {
-				description: 'Algo salió mal.',
+				description: message,
 			})
 		} finally {
 			setLoading(false)
@@ -117,6 +120,11 @@ export function CategoryForm({ initialData }: CategoryFormProps) {
 				router.push('/admin/categories')
 				router.refresh()
 			}
+		} catch (error) {
+			const message =
+				error instanceof Error ? error.message : 'Error desconocido'
+			console.error('[CategoryForm.onDelete]', error)
+			toast.error('Error', { description: message })
 		} finally {
 			setLoading(false)
 		}

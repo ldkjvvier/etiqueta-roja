@@ -152,6 +152,11 @@ export function DropForm({ initialData }: DropFormProps) {
 			)
 			router.push('/admin/drops')
 			router.refresh()
+		} catch (error) {
+			const message =
+				error instanceof Error ? error.message : 'Error desconocido'
+			console.error('[DropForm.onSubmit]', error)
+			toast.error('Error', { description: message })
 		} finally {
 			setLoading(false)
 		}
@@ -174,6 +179,11 @@ export function DropForm({ initialData }: DropFormProps) {
 			setIsDeleteDialogOpen(false)
 			router.push('/admin/drops')
 			router.refresh()
+		} catch (error) {
+			const message =
+				error instanceof Error ? error.message : 'Error desconocido'
+			console.error('[DropForm.onDelete]', error)
+			toast.error('Error', { description: message })
 		} finally {
 			setLoading(false)
 		}

@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { useState } from 'react'
 import { Minus, Plus, X, MessageCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
 	Sheet,
 	SheetContent,
@@ -31,15 +32,27 @@ export function CartSheet() {
 		type: 'error' | 'success'
 		message: string
 	} | null>(null)
+	const [customerEmail, setCustomerEmail] = useState('')
+	const [emailError, setEmailError] = useState('')
+
+	const isValidEmail = (email: string) =>
+		/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 
 	const handleWhatsAppCheckout = () => {
 		setCheckoutNotice(null)
+		setEmailError('')
 
 		if (!whatsappNumber) {
 			setCheckoutNotice({
 				type: 'error',
 				message: 'WhatsApp no está configurado para esta tienda.',
 			})
+			return
+		}
+
+		const normalizedEmail = customerEmail.trim().toLowerCase()
+		if (!normalizedEmail || !isValidEmail(normalizedEmail)) {
+			setEmailError('Ingresa un email válido para continuar')
 			return
 		}
 
@@ -55,6 +68,7 @@ export function CartSheet() {
 				price: item.price,
 			})),
 			whatsappNumber,
+			customerEmail: normalizedEmail,
 		})
 			.then((result) => {
 				if (result.error) {
@@ -77,6 +91,7 @@ export function CartSheet() {
 						? `Pedido ${result.orderNumber} creado correctamente. Si WhatsApp no se abrió, revisa el bloqueo de ventanas emergentes.`
 						: 'Pedido creado correctamente. Si WhatsApp no se abrió, revisa el bloqueo de ventanas emergentes.',
 				})
+				setCustomerEmail('')
 				clearCart()
 			})
 			.catch(() => {
@@ -233,6 +248,34 @@ export function CartSheet() {
 								<span className="text-xl font-black">
 									{formatPrice(cartTotal)}
 								</span>
+							</div>
+							<div className="space-y-2">
+								<label
+									htmlFor="checkout-email"
+									className="text-sm font-bold uppercase tracking-wide"
+								>
+									Tu email
+								</label>
+								<Input
+									id="checkout-email"
+									type="email"
+									autoComplete="email"
+									inputMode="email"
+									placeholder="nombre@ejemplo.com"
+									value={customerEmail}
+									onChange={(event) => {
+										setCustomerEmail(event.target.value)
+										if (emailError) {
+											setEmailError('')
+										}
+									}}
+								/>
+								<p className="text-xs text-muted-foreground">
+									Lo usamos para identificar y dar seguimiento a tu pedido.
+								</p>
+								{emailError ? (
+									<p className="text-xs text-destructive">{emailError}</p>
+								) : null}
 							</div>
 							<Button
 								onClick={handleWhatsAppCheckout}

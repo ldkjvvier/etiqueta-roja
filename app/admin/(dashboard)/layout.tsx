@@ -1,7 +1,6 @@
 import { AdminSidebar } from '@/components/admin-sidebar'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getAdminStoreContext } from '@/lib/data/admin-context'
 
 function isAdminAccessError(error: unknown) {
 	if (!(error instanceof Error)) return false
@@ -43,15 +42,34 @@ export default async function AdminLayout({
 		redirect('/admin/login')
 	}
 
-	// Ensures store context resolves before rendering protected admin routes.
-	try {
-		await getAdminStoreContext()
-	} catch (error) {
-		if (error instanceof Error && isAdminAccessError(error)) {
-			redirect(buildUnauthorizedRedirect(error))
-		}
+	const storeId = process.env.NEXT_PUBLIC_STORE_ID?.trim()
+	if (!storeId) {
+		throw new Error('Missing NEXT_PUBLIC_STORE_ID')
+	}
 
-		throw error
+	// Check admin access here so we can redirect back to login with a reason
+	// instead of silently bouncing the user after a successful sign-in.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const db = supabase as any
+	const { data: role, error: roleError } = await db
+		.from('user_roles')
+		.select('role')
+		.eq('user_id', user.id)
+		.eq('store_id', storeId)
+		.in('role', ['super_admin', 'store_admin'])
+		.maybeSingle()
+
+	if (roleError) {
+		console.error('[AdminLayout.roleCheck]', roleError)
+		redirect(buildUnauthorizedRedirect(new Error('Unauthorized')))
+	}
+
+	if (!role) {
+		redirect(
+			buildUnauthorizedRedirect(
+				new Error(`No admin access for store ${storeId}`),
+			),
+		)
 	}
 
 	return (

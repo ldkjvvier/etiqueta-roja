@@ -1,5 +1,6 @@
 'use server'
 
+import { createHash } from 'node:crypto'
 import { createClient } from '@/lib/supabase/server'
 import { getPublicStoreContext } from '@/lib/data/admin-context'
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -14,12 +15,40 @@ export type CheckoutCartItem = {
 	price: number
 }
 
+export type CheckoutInput = {
+	items: CheckoutCartItem[]
+	whatsappNumber?: string
+	customerEmail: string
+	customerFirstName?: string
+	customerPhone?: string
+}
+
 function normalizeSize(size: string) {
 	return (size || '').toLowerCase().trim().replace(/\s+/g, '-')
 }
 
 function combinationKeyFromSize(size: string) {
 	return `size:${normalizeSize(size)}`
+}
+
+function isValidEmail(value: string) {
+	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+}
+
+function createDeterministicCustomerId(
+	storeId: string,
+	email: string,
+) {
+	const bytes = createHash('sha256')
+		.update(`${storeId}:${email}`)
+		.digest()
+		.subarray(0, 16)
+
+	bytes[6] = (bytes[6] & 0x0f) | 0x50
+	bytes[8] = (bytes[8] & 0x3f) | 0x80
+
+	const hex = bytes.toString('hex')
+	return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`
 }
 
 async function createOrder(
@@ -51,10 +80,7 @@ async function createOrder(
 		.single()
 }
 
-export async function createPendingOrderFromCart(input: {
-	items: CheckoutCartItem[]
-	whatsappNumber?: string
-}) {
+export async function createPendingOrderFromCart(input: CheckoutInput) {
 	const supabase = await createClient()
 	const { storeId } = await getPublicStoreContext()
 
@@ -62,11 +88,18 @@ export async function createPendingOrderFromCart(input: {
 		data: { user },
 	} = await supabase.auth.getUser()
 
-	if (!user?.id) {
+	const normalizedEmail = input.customerEmail.trim().toLowerCase()
+	if (!normalizedEmail) {
 		return {
 			error: true,
-			message:
-				'Debes iniciar sesión para confirmar tu pedido con la configuración actual de seguridad.',
+			message: 'Email requerido para completar el pedido',
+		}
+	}
+
+	if (!isValidEmail(normalizedEmail)) {
+		return {
+			error: true,
+			message: 'Ingresa un email válido para continuar',
 		}
 	}
 
@@ -215,21 +248,27 @@ export async function createPendingOrderFromCart(input: {
 			0,
 		)
 
-		const customerEmail = user.email || ''
+		const customerId = createDeterministicCustomerId(
+			storeId,
+			normalizedEmail,
+		)
 
-		const { data: customer } = await supabase
+		const { error: customerError } = await supabase
 			.from('customers')
-			.select('id,email')
-			.eq('store_id', storeId)
-			.eq('auth_user_id', user.id)
-			.is('deleted_at', null)
-			.maybeSingle()
+			.insert({
+				id: customerId,
+				store_id: storeId,
+				email: normalizedEmail,
+				first_name: input.customerFirstName?.trim() || null,
+				phone: input.customerPhone?.trim() || null,
+				auth_user_id: user?.id ?? null,
+			})
 
-		if (!customer?.id) {
+		if (customerError && customerError.code !== '23505') {
+			console.error('[createPendingOrderFromCart.customer]', customerError)
 			return {
 				error: true,
-				message:
-					'No encontramos tu perfil de cliente para esta tienda. Contacta al administrador para habilitar tu cuenta.',
+				message: 'Error al registrar cliente',
 			}
 		}
 
@@ -237,13 +276,16 @@ export async function createPendingOrderFromCart(input: {
 			supabase,
 			{
 				store_id: storeId,
-				customer_id: customer.id,
+				customer_id: customerId,
 				status: 'pending',
 				total_amount: totalAmount,
 				shipping_address: {
 					channel: 'whatsapp',
-					customerEmail: customer.email || customerEmail,
-					authUserId: user.id,
+					customerEmail: normalizedEmail,
+					customerFirstName:
+						input.customerFirstName?.trim() || null,
+					customerPhone: input.customerPhone?.trim() || null,
+					authUserId: user?.id ?? null,
 				} as Json,
 			},
 		)

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
@@ -45,7 +45,20 @@ export function LoginForm({ unauthorizedReason }: LoginFormProps) {
 	const [errorMessage, setErrorMessage] = useState<string | null>(
 		null,
 	)
-	const router = useRouter()
+
+	useEffect(() => {
+		if (!unauthorizedReason) return
+
+		const supabase = createClient()
+		void supabase.auth
+			.signOut({ scope: 'local' })
+			.catch((error) => {
+				console.error(
+					'[LoginForm.clearUnauthorizedSession]',
+					error,
+				)
+			})
+	}, [unauthorizedReason])
 
 	const handleLogin = async (e: React.FormEvent) => {
 		e.preventDefault()
@@ -69,8 +82,7 @@ export function LoginForm({ unauthorizedReason }: LoginFormProps) {
 				setEmail(normalizedEmail)
 			}
 
-			router.push('/admin')
-			router.refresh()
+			window.location.replace('/admin')
 		} catch (error) {
 			console.error(error)
 			setErrorMessage(
