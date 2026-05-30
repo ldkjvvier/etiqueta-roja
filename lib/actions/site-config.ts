@@ -555,6 +555,11 @@ export async function updateHomeHeroBanner(
 	const badge = (formData.get('badge') as string) || ''
 	const title = (formData.get('title') as string) || ''
 	const description = (formData.get('description') as string) || ''
+	const showBadge = (formData.get('show_badge') as string) !== 'false'
+	const showTitle = (formData.get('show_title') as string) !== 'false'
+	const showDescription =
+		(formData.get('show_description') as string) !== 'false'
+	const showCta = (formData.get('show_cta') as string) !== 'false'
 	const ctaText = (formData.get('ctaContentText') as string) || ''
 	const ctaLink = (formData.get('ctaContentLink') as string) || ''
 	const ctaVariant =
@@ -729,6 +734,10 @@ export async function updateHomeHeroBanner(
 		badge,
 		title,
 		description,
+		show_badge: showBadge,
+		show_title: showTitle,
+		show_description: showDescription,
+		show_cta: showCta,
 		cta: parsedCta.data,
 		background_image: backgroundImage,
 		background_image_mobile: backgroundImageMobile,

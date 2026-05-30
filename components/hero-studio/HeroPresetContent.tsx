@@ -16,11 +16,14 @@ export interface HeroPresetContentProps {
 	preset: HeroLayoutPreset
 	/** Alineación del copy. Ignorada en el preset `centered` (siempre centrado). */
 	contentAlignment: HeroContentAlignment
+	showBadge: boolean
 	badge?: string
 	badgeColor: string
+	showTitle: boolean
 	title: string
 	titleColor: string
 	titleFontWeight: HeroTitleFontWeight
+	showDescription: boolean
 	description?: string
 	descriptionColor: string
 
@@ -59,7 +62,7 @@ export function HeroPresetContent(props: HeroPresetContentProps) {
 
 	return (
 		<div className={`flex flex-col gap-5 ${alignmentClass}`}>
-			{props.badge && (
+			{props.showBadge && props.badge && (
 				<p
 					className="text-sm font-bold tracking-widest"
 					style={{ color: props.badgeColor }}
@@ -68,16 +71,18 @@ export function HeroPresetContent(props: HeroPresetContentProps) {
 				</p>
 			)}
 
-			<h1
-				className={`max-w-2xl text-balance text-5xl leading-none tracking-tighter md:text-6xl lg:text-7xl ${titleWeightClass(
-					props.titleFontWeight,
-				)}`}
-				style={{ color: props.titleColor }}
-			>
-				{props.title || 'Título principal del Hero'}
-			</h1>
+			{props.showTitle && (
+				<h1
+					className={`max-w-2xl text-balance text-5xl leading-none tracking-tighter md:text-6xl lg:text-7xl ${titleWeightClass(
+						props.titleFontWeight,
+					)}`}
+					style={{ color: props.titleColor }}
+				>
+					{props.title || 'Título principal del Hero'}
+				</h1>
+			)}
 
-			{props.description && (
+			{props.showDescription && props.description && (
 				<p
 					className="max-w-md text-lg leading-relaxed"
 					style={{ color: props.descriptionColor }}

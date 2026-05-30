@@ -54,11 +54,14 @@ function HeroStudioPreviewComponent({
 					<HeroPresetContent
 						preset={preset}
 						contentAlignment={state.layout.contentAlignment}
+						showBadge={state.content.showBadge}
 						badge={state.content.badge}
 						badgeColor={state.styles.badgeColor}
+						showTitle={state.content.showTitle}
 						title={state.content.title}
 						titleColor={state.styles.titleColor}
 						titleFontWeight={state.styles.titleFontWeight}
+						showDescription={state.content.showDescription}
 						description={state.content.description}
 						descriptionColor={state.styles.descriptionColor}
 						showDropMessage={dropPreview.showMessage}
@@ -71,7 +74,7 @@ function HeroStudioPreviewComponent({
 						liveBadgeText={state.dropConfig.dropLiveBadgeText}
 						liveBadgeBgColor={state.dropConfig.dropLiveBadgeBgColor}
 						liveBadgeTextColor={state.dropConfig.dropLiveBadgeTextColor}
-						showCta={dropPreview.showCta}
+						showCta={dropPreview.showCta && state.cta.show}
 						ctaConfig={state.cta}
 						ctaLabel={dropPreview.ctaText}
 						ctaHref={state.cta.link}

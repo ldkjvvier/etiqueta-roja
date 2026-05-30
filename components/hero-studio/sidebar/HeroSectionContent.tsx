@@ -25,6 +25,16 @@ export function HeroSectionContent({
 	const badge = form.watch('badge')
 	const title = form.watch('title')
 	const description = form.watch('description')
+	const showBadge = form.watch('showBadge')
+	const showTitle = form.watch('showTitle')
+	const showDescription = form.watch('showDescription')
+	const toggleVisibility = (
+		key: 'showBadge' | 'showTitle' | 'showDescription',
+		checked: boolean,
+	) => {
+		form.setValue(key, checked)
+		setField('content', key, checked)
+	}
 	const descriptionWordCount = countWords(description ?? '')
 	const descriptionOverLimit =
 		descriptionWordCount > MAX_SUBTITLE_WORDS
@@ -91,7 +101,21 @@ export function HeroSectionContent({
 			</div>
 
 			<div className="space-y-2">
-				<Label htmlFor="badge">Pre-título (Badge)</Label>
+				<div className="flex items-center justify-between gap-2">
+					<Label htmlFor="badge">Pre-título (Badge)</Label>
+					<div className="flex items-center gap-2">
+						<span className="text-[11px] text-muted-foreground">
+							{showBadge ? 'Visible' : 'Oculto'}
+						</span>
+						<Switch
+							checked={showBadge}
+							onCheckedChange={(checked) =>
+								toggleVisibility('showBadge', checked)
+							}
+							aria-label="Mostrar badge en el hero"
+						/>
+					</div>
+				</div>
 				<Input
 					id="badge"
 					{...form.register('badge', {
@@ -102,7 +126,21 @@ export function HeroSectionContent({
 				/>
 			</div>
 			<div className="space-y-2">
-				<Label htmlFor="title">Título Principal</Label>
+				<div className="flex items-center justify-between gap-2">
+					<Label htmlFor="title">Título Principal</Label>
+					<div className="flex items-center gap-2">
+						<span className="text-[11px] text-muted-foreground">
+							{showTitle ? 'Visible' : 'Oculto'}
+						</span>
+						<Switch
+							checked={showTitle}
+							onCheckedChange={(checked) =>
+								toggleVisibility('showTitle', checked)
+							}
+							aria-label="Mostrar título en el hero"
+						/>
+					</div>
+				</div>
 				<Input
 					id="title"
 					{...form.register('title', {
@@ -117,7 +155,21 @@ export function HeroSectionContent({
 				)}
 			</div>
 			<div className="space-y-2">
-				<Label htmlFor="description">Descripción</Label>
+				<div className="flex items-center justify-between gap-2">
+					<Label htmlFor="description">Descripción</Label>
+					<div className="flex items-center gap-2">
+						<span className="text-[11px] text-muted-foreground">
+							{showDescription ? 'Visible' : 'Oculto'}
+						</span>
+						<Switch
+							checked={showDescription}
+							onCheckedChange={(checked) =>
+								toggleVisibility('showDescription', checked)
+							}
+							aria-label="Mostrar descripción en el hero"
+						/>
+					</div>
+				</div>
 				<Textarea
 					id="description"
 					className="min-h-20"

@@ -154,6 +154,10 @@ export interface HomeHeroBannerConfig {
 	badge: string
 	title: string
 	description: string
+	show_badge?: boolean
+	show_title?: boolean
+	show_description?: boolean
+	show_cta?: boolean
 	cta: import('@/lib/validation/hero-cta').HeroCTAConfig
 	background_image: string
 	background_image_mobile?: string

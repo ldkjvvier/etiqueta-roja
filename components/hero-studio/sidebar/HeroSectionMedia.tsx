@@ -1,111 +1,221 @@
 'use client'
 
-import { ImageIcon, Smartphone, Video } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { ImageIcon, Loader2, Smartphone, Upload, Video, X } from 'lucide-react'
+import Image from 'next/image'
+import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import { HeroSidebarSection } from './HeroSidebarSection'
 import { HeroSectionProps } from './section-props'
 
-async function fileToDataUrl(file: File) {
-	return new Promise<string>((resolve, reject) => {
-		const reader = new FileReader()
-		reader.onload = () => resolve(String(reader.result ?? ''))
-		reader.onerror = () =>
-			reject(new Error('No se pudo leer la imagen'))
-		reader.readAsDataURL(file)
-	})
+const MAX_BYTES = 5 * 1024 * 1024 // 5 MB
+const ALLOWED_TYPES = [
+	'image/jpeg',
+	'image/png',
+	'image/webp',
+	'image/avif',
+]
+
+interface HeroImageFieldProps {
+	label: string
+	help?: string
+	value: string
+	required?: boolean
+	aspect: 'video' | 'portrait'
+	icon?: React.ReactNode
+	onChange: (url: string) => void
 }
 
-export function HeroSectionMedia({
-	form,
-	setField,
-}: HeroSectionProps) {
-	const backgroundImage = form.watch('backgroundImage')
-	const backgroundImageMobile = form.watch('backgroundImageMobile')
-	const backgroundVideoUrl = form.watch('backgroundVideoUrl')
-	const missingImage = !backgroundImage?.trim()
+function HeroImageField({
+	label,
+	help,
+	value,
+	required = false,
+	aspect,
+	icon,
+	onChange,
+}: HeroImageFieldProps) {
+	const [uploading, setUploading] = useState(false)
+	const inputRef = useRef<HTMLInputElement>(null)
+	const storeId = process.env.NEXT_PUBLIC_STORE_ID ?? 'store'
 
 	const handleUpload = async (
 		event: React.ChangeEvent<HTMLInputElement>,
-		target: 'backgroundImage' | 'backgroundImageMobile',
 	) => {
 		const file = event.target.files?.[0]
+		event.target.value = ''
 		if (!file) {
 			return
 		}
-		const url = await fileToDataUrl(file)
-		form.setValue(target, url)
-		setField('media', target, url)
+		if (!ALLOWED_TYPES.includes(file.type)) {
+			toast.error('Formato no permitido', {
+				description: 'Usa JPG, PNG, WEBP o AVIF.',
+			})
+			return
+		}
+		if (file.size > MAX_BYTES) {
+			toast.error('Imagen demasiado grande', {
+				description: `${file.name} supera el máximo de 5 MB.`,
+			})
+			return
+		}
+
+		try {
+			setUploading(true)
+			const supabase = createClient()
+			const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+			const path = `${storeId}/hero/${crypto.randomUUID()}.${ext}`
+
+			const { error: uploadError } = await supabase.storage
+				.from('products')
+				.upload(path, file, {
+					contentType: file.type,
+					cacheControl: '3600',
+				})
+			if (uploadError) {
+				throw uploadError
+			}
+
+			const {
+				data: { publicUrl },
+			} = supabase.storage.from('products').getPublicUrl(path)
+
+			onChange(publicUrl)
+			toast.success('Imagen subida correctamente')
+		} catch (error) {
+			toast.error('Error al subir imagen', {
+				description:
+					'Revisa el archivo o intenta nuevamente en unos segundos.',
+			})
+			console.error('[HeroSectionMedia.upload]', error)
+		} finally {
+			setUploading(false)
+		}
+	}
+
+	return (
+		<div className="space-y-2">
+			<div className="flex items-center gap-2">
+				{icon}
+				<Label>
+					{label}
+					{required && <span className="text-destructive"> *</span>}
+				</Label>
+			</div>
+
+			<div
+				className={`relative w-full overflow-hidden rounded-md border bg-secondary ${
+					aspect === 'portrait' ? 'aspect-9/16 max-w-40' : 'aspect-video'
+				}`}
+			>
+				{value ? (
+					<>
+						<Image
+							src={value}
+							alt=""
+							fill
+							sizes="(max-width: 768px) 100vw, 320px"
+							className="object-cover"
+						/>
+						<button
+							type="button"
+							onClick={() => onChange('')}
+							aria-label="Quitar imagen"
+							className="absolute right-2 top-2 z-10 inline-flex h-7 w-7 items-center justify-center rounded-md bg-destructive text-destructive-foreground shadow"
+						>
+							<X className="h-4 w-4" />
+						</button>
+					</>
+				) : (
+					<div className="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground">
+						<ImageIcon className="h-6 w-6" />
+						<span className="text-[11px]">Sin imagen</span>
+					</div>
+				)}
+			</div>
+
+			<div className="flex items-center gap-2">
+				<Button
+					type="button"
+					variant="secondary"
+					size="sm"
+					disabled={uploading}
+					aria-busy={uploading}
+					onClick={() => inputRef.current?.click()}
+				>
+					{uploading ? (
+						<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+					) : (
+						<Upload className="mr-2 h-4 w-4" />
+					)}
+					{uploading ? 'Subiendo...' : value ? 'Reemplazar' : 'Subir imagen'}
+				</Button>
+				<input
+					ref={inputRef}
+					type="file"
+					accept={ALLOWED_TYPES.join(',')}
+					className="hidden"
+					onChange={handleUpload}
+					disabled={uploading}
+				/>
+			</div>
+
+			{help && (
+				<p className="text-xs text-muted-foreground">{help}</p>
+			)}
+			{required && !value && (
+				<p className="text-xs text-destructive">
+					La imagen de fondo es obligatoria.
+				</p>
+			)}
+		</div>
+	)
+}
+
+export function HeroSectionMedia({ form, setField }: HeroSectionProps) {
+	const backgroundImage = form.watch('backgroundImage')
+	const backgroundImageMobile = form.watch('backgroundImageMobile')
+
+	const setImage = (
+		field: 'backgroundImage' | 'backgroundImageMobile',
+		url: string,
+	) => {
+		form.setValue(field, url)
+		setField('media', field, url)
 	}
 
 	return (
 		<HeroSidebarSection
 			title="Media"
-			description="Imagen, video y vista mobile"
+			description="Imagen de fondo y video (solo carga de archivos)"
 			icon={<ImageIcon className="h-4 w-4" />}
 		>
-			<div className="space-y-2">
-				<Label htmlFor="background_image">
-					Imagen de Fondo (URL){' '}
-					<span className="text-destructive">*</span>
-				</Label>
-				<Input
-					id="background_image"
-					{...form.register('backgroundImage', {
-						onChange: (event) =>
-							setField(
-								'media',
-								'backgroundImage',
-								event.target.value,
-							),
-					})}
-					placeholder="https://..."
-				/>
-				<Input
-					type="file"
-					accept="image/*"
-					onChange={(event) => handleUpload(event, 'backgroundImage')}
-				/>
-				{missingImage && (
-					<p className="text-xs text-destructive">
-						La imagen de fondo es obligatoria.
-					</p>
-				)}
-			</div>
+			<HeroImageField
+				label="Imagen de fondo"
+				help="Formatos: JPG, PNG, WEBP, AVIF · Máx 5 MB. Se sube a tu almacenamiento seguro."
+				value={backgroundImage}
+				required
+				aspect="video"
+				onChange={(url) => setImage('backgroundImage', url)}
+			/>
 
-			<div className="space-y-2">
-				<div className="flex items-center gap-2">
-					<Smartphone className="h-4 w-4 text-muted-foreground" />
-					<Label htmlFor="background_image_mobile">
-						Imagen Mobile (URL)
-					</Label>
-				</div>
-				<Input
-					id="background_image_mobile"
-					{...form.register('backgroundImageMobile', {
-						onChange: (event) =>
-							setField(
-								'media',
-								'backgroundImageMobile',
-								event.target.value,
-							),
-					})}
-					placeholder="https://..."
-				/>
-				<Input
-					type="file"
-					accept="image/*"
-					onChange={(event) =>
-						handleUpload(event, 'backgroundImageMobile')
-					}
-				/>
-			</div>
+			<HeroImageField
+				label="Imagen mobile (opcional)"
+				help="Si la dejas vacía se usa la imagen de fondo principal."
+				value={backgroundImageMobile}
+				aspect="portrait"
+				icon={<Smartphone className="h-4 w-4 text-muted-foreground" />}
+				onChange={(url) => setImage('backgroundImageMobile', url)}
+			/>
 
 			<div className="space-y-2">
 				<div className="flex items-center gap-2">
 					<Video className="h-4 w-4 text-muted-foreground" />
 					<Label htmlFor="background_video_url">
-						Video Fondo (URL)
+						Video de fondo (URL externa)
 					</Label>
 				</div>
 				<Input
@@ -120,42 +230,11 @@ export function HeroSectionMedia({
 					})}
 					placeholder="https://player.vimeo.com/..."
 				/>
+				<p className="text-xs text-muted-foreground">
+					Solo para video embebible (Vimeo/YouTube). Las imágenes deben
+					subirse como archivo.
+				</p>
 			</div>
-
-			<div className="grid grid-cols-2 gap-3">
-				<div className="space-y-2">
-					<p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-						Desktop
-					</p>
-					<div className="aspect-video overflow-hidden rounded-md border bg-secondary">
-						{backgroundImage ? (
-							<img
-								src={backgroundImage}
-								alt="Preview desktop"
-								className="h-full w-full object-cover"
-							/>
-						) : null}
-					</div>
-				</div>
-				<div className="space-y-2">
-					<p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-						Mobile
-					</p>
-					<div className="aspect-[9/16] overflow-hidden rounded-md border bg-secondary">
-						{backgroundImageMobile || backgroundImage ? (
-							<img
-								src={backgroundImageMobile || backgroundImage}
-								alt="Preview mobile"
-								className="h-full w-full object-cover"
-							/>
-						) : null}
-					</div>
-				</div>
-			</div>
-			<p className="text-xs text-muted-foreground">
-				Focal point y crop avanzado: recomendado integrar en siguiente
-				iteración con editor visual dedicado.
-			</p>
 		</HeroSidebarSection>
 	)
 }

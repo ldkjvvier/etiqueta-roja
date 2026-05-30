@@ -46,6 +46,9 @@ function buildInitialState(
 			badge: initialData?.badge ?? '',
 			title: initialData?.title ?? '',
 			description: initialData?.description ?? '',
+			showBadge: initialData?.show_badge ?? true,
+			showTitle: initialData?.show_title ?? true,
+			showDescription: initialData?.show_description ?? true,
 		},
 		media: {
 			backgroundImage: initialData?.background_image ?? '',
@@ -68,6 +71,7 @@ function buildInitialState(
 			borderColor: normalizedCTA.borderColor,
 			hoverBackgroundColor: normalizedCTA.hoverBackgroundColor,
 			hoverTextColor: normalizedCTA.hoverTextColor,
+			show: initialData?.show_cta ?? true,
 		},
 		layout: {
 			contentAlignment: initialData?.content_alignment ?? 'left',
@@ -169,6 +173,10 @@ export function useHeroStudioState({
 				badge: state.content.badge,
 				title: state.content.title,
 				description: state.content.description,
+				show_badge: state.content.showBadge,
+				show_title: state.content.showTitle,
+				show_description: state.content.showDescription,
+				show_cta: state.cta.show,
 				cta: {
 					text: state.cta.text,
 					link: state.cta.link,

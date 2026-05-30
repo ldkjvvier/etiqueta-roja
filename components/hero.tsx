@@ -49,6 +49,10 @@ const fallback: HomeHeroBannerConfig = {
 	title: 'LA CALLE ES NUESTRA',
 	description:
 		'Piezas únicas que definen el estilo urbano. Una vez que se acaban, no vuelven.',
+	show_badge: true,
+	show_title: true,
+	show_description: true,
+	show_cta: true,
 	cta: fallbackCTA,
 	background_image: '',
 	background_image_mobile: '',
@@ -427,11 +431,14 @@ export async function Hero() {
 			<HeroPresetContent
 				preset={preset}
 				contentAlignment={value.content_alignment}
+				showBadge={value.show_badge ?? true}
 				badge={value.badge}
 				badgeColor={value.badge_color}
+				showTitle={value.show_title ?? true}
 				title={value.title}
 				titleColor={value.title_color}
 				titleFontWeight={titleFontWeight}
+				showDescription={value.show_description ?? true}
 				description={value.description}
 				descriptionColor={value.description_color ?? '#6B7280'}
 				showDropMessage={Boolean(shouldShowDropMessage && resolvedDropMessage)}
@@ -444,7 +451,7 @@ export async function Hero() {
 				liveBadgeText={value.drop_live_badge_text}
 				liveBadgeBgColor={value.drop_live_badge_bg_color ?? '#E62727'}
 				liveBadgeTextColor={value.drop_live_badge_text_color ?? '#FFFFFF'}
-				showCta={Boolean(shouldShowCta)}
+				showCta={Boolean(shouldShowCta && (value.show_cta ?? true))}
 				ctaConfig={ctaConfig}
 				ctaLabel={ctaLabel}
 				ctaHref={ctaConfig.link}

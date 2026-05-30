@@ -47,6 +47,7 @@ function ColorField({
 }
 
 export function HeroSectionCTA({ form, setField }: HeroSectionProps) {
+	const showCta = form.watch('showCta')
 	const ctaText = form.watch('ctaText')
 	const ctaLink = form.watch('ctaLink')
 	const ctaOpenInNewTab = form.watch('ctaOpenInNewTab')
@@ -70,6 +71,23 @@ export function HeroSectionCTA({ form, setField }: HeroSectionProps) {
 			description="Mensaje y llamada a la acción"
 			icon={<MousePointerClick className="h-4 w-4" />}
 		>
+			<div className="flex items-center justify-between gap-2 rounded-md border bg-background p-3">
+				<div>
+					<p className="text-sm font-medium">Mostrar botón CTA</p>
+					<p className="text-xs text-muted-foreground">
+						Oculta el botón sin perder su configuración.
+					</p>
+				</div>
+				<Switch
+					checked={showCta}
+					onCheckedChange={(checked) => {
+						form.setValue('showCta', checked)
+						setField('cta', 'show', checked)
+					}}
+					aria-label="Mostrar CTA en el hero"
+				/>
+			</div>
+
 			<div className="grid grid-cols-1 gap-3 md:grid-cols-2">
 				<div className="space-y-2">
 					<Label htmlFor="cta_content_text">Texto del botón</Label>

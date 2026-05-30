@@ -44,6 +44,9 @@ export interface HeroStudioState {
 		badge: string
 		title: string
 		description: string
+		showBadge: boolean
+		showTitle: boolean
+		showDescription: boolean
 	}
 	media: {
 		backgroundImage: string
@@ -65,6 +68,7 @@ export interface HeroStudioState {
 		borderColor: HeroCTAConfig['borderColor']
 		hoverBackgroundColor: HeroCTAConfig['hoverBackgroundColor']
 		hoverTextColor: HeroCTAConfig['hoverTextColor']
+		show: boolean
 	}
 	layout: {
 		contentAlignment: HeroContentAlignment
