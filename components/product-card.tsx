@@ -1,117 +1,98 @@
 'use client'
 
 import Link from 'next/link'
+import { motion, useReducedMotion } from 'motion/react'
 import type { Product } from '@/lib/store-context'
-import { ProductCardCarousel } from './product-card-carousel'
+import { ProductCardImage } from './product-card-image'
 import { formatPrice } from '@/lib/utils'
 
 export type { Product } from '@/lib/store-context'
 
+const MotionLink = motion(Link)
+
 export function ProductCard({ product }: { product: Product }) {
+	const reduce = useReducedMotion()
 	const isSoldOut = product.stockStatus === 'sold_out'
 
-	// Optimize: Only show up to 2 images in the card to reduce load
-	// Always prioritize the main 'image' column
 	const MAX_IMAGES = 2
 	const allImages = [product.image, ...(product.images || [])]
 	const uniqueImages = Array.from(new Set(allImages.filter(Boolean)))
-
-	const carouselImages =
+	const cardImages =
 		uniqueImages.length > 0
 			? uniqueImages.slice(0, MAX_IMAGES)
 			: ['/placeholder.svg']
 
-	const className = `group border border-border bg-card ${
-		!isSoldOut ? 'cursor-pointer' : ''
-	} ${isSoldOut ? 'opacity-70' : ''}`
+	const imageSection = (
+		<div className="relative aspect-[4/5] bg-secondary overflow-hidden">
+			<ProductCardImage
+				images={cardImages}
+				alt={product.name}
+				isSoldOut={isSoldOut}
+			/>
 
-	const content = (
-		<>
-			<div className="relative aspect-square bg-secondary overflow-hidden">
-				<ProductCardCarousel
-					images={carouselImages}
-					alt={product.name}
-					isSoldOut={isSoldOut}
-				/>
+			{product.stockStatus === 'low' && (
+				<span className="absolute top-3 left-3 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-1 uppercase tracking-wider z-20">
+					Poco Stock
+				</span>
+			)}
+			{isSoldOut && (
+				<span className="absolute top-3 left-3 bg-foreground text-background text-[10px] font-bold px-2 py-1 uppercase tracking-wider z-20">
+					Agotado
+				</span>
+			)}
+			{product.originalPrice && !isSoldOut && (
+				<span className="absolute top-3 right-3 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-1 z-20">
+					OFERTA
+				</span>
+			)}
+		</div>
+	)
 
-				{/* Stock Badge - High z-index to overlay carousel */}
-				{product.stockStatus === 'low' && (
-					<span className="absolute top-3 left-3 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-1 uppercase tracking-wider z-20">
-						Poco Stock
-					</span>
-				)}
-				{isSoldOut && (
-					<span className="absolute top-3 left-3 bg-foreground text-background text-[10px] font-bold px-2 py-1 uppercase tracking-wider z-20">
-						Agotado
-					</span>
-				)}
-
-				{/* Sale Badge */}
-				{product.originalPrice && !isSoldOut && (
-					<span className="absolute top-3 right-3 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-1 z-20">
-						OFERTA
+	const infoSection = (
+		<div className="p-3 md:p-4 space-y-1.5">
+			<h3 className="font-bold text-xs md:text-sm uppercase tracking-wide line-clamp-2 leading-snug">
+				{product.name}
+			</h3>
+			<div className="flex items-baseline gap-2">
+				<span className="font-mono font-bold text-sm md:text-base">
+					{formatPrice(product.price)}
+				</span>
+				{product.originalPrice && (
+					<span className="font-mono text-muted-foreground line-through text-xs">
+						{formatPrice(product.originalPrice)}
 					</span>
 				)}
 			</div>
-
-			{/* Info */}
-			<div className="p-3 md:p-4">
-				<h3 className="font-bold text-xs md:text-sm uppercase tracking-wide mb-2 line-clamp-1">
-					{product.name}
-				</h3>
-
-				<div className="flex items-center gap-2 mb-3">
-					<span className="font-black text-base md:text-lg">
-						{formatPrice(product.price)}
-					</span>
-					{product.originalPrice && (
-						<span className="text-muted-foreground line-through text-xs md:text-sm">
-							{formatPrice(product.originalPrice)}
-						</span>
-					)}
-				</div>
-
-				{!isSoldOut && product.sizes.length > 0 && (
-					<div className="flex flex-wrap gap-1 mb-2">
-						{product.sizes.map((size) => (
-							<span
-								key={size}
-								className="text-[10px] font-bold border border-border px-1.5 py-0.5 text-muted-foreground"
-							>
-								{size}
-							</span>
-						))}
-					</div>
-				)}
-
-				{!isSoldOut ? (
-					<p className="text-[10px] md:text-xs font-bold text-primary uppercase tracking-wide">
-						Ver detalles →
-					</p>
-				) : (
-					<p className="text-[10px] md:text-xs font-bold text-muted-foreground uppercase tracking-wide">
-						Agotado
-					</p>
-				)}
-			</div>
-		</>
+		</div>
 	)
 
 	if (isSoldOut) {
-		return <div className={className}>{content}</div>
+		return (
+			<div className="group/card border border-border bg-card opacity-70">
+				{imageSection}
+				{infoSection}
+			</div>
+		)
 	}
 
 	return (
-		<Link
+		<MotionLink
 			href={
 				product.slug
 					? `/producto/${product.slug}`
 					: `/producto/${product.id}`
 			}
-			className={className}
-			aria-label={`Ver detalles de ${product.name}`}
+			className="group/card relative block border border-border bg-card cursor-pointer hover:z-10"
+			aria-label={`Ver ${product.name}`}
+			whileHover={reduce ? undefined : { scale: 1.02 }}
+			transition={
+				reduce
+					? undefined
+					: { type: 'spring', stiffness: 300, damping: 25 }
+			}
 		>
-			{content}
-		</Link>
+			{imageSection}
+			{infoSection}
+		</MotionLink>
 	)
 }

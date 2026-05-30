@@ -14,16 +14,36 @@ interface ProductGridProps {
 export function ProductGrid({ products }: ProductGridProps) {
 	const { searchQuery, setSearchQuery } = useStore()
 	const [currentPage, setCurrentPage] = useState(1)
+	const [activeCategory, setActiveCategory] = useState('TODOS')
+
+	const categories = useMemo(() => {
+		const cats = new Set<string>()
+		for (const p of products) {
+			if (p.category) cats.add(p.category.toUpperCase())
+		}
+		const sorted = Array.from(cats).sort()
+		return sorted.length > 0 ? ['TODOS', ...sorted] : []
+	}, [products])
 
 	const filteredProducts = useMemo(() => {
+		let filtered = products
+		if (activeCategory !== 'TODOS') {
+			filtered = filtered.filter(
+				(p) => p.category?.toUpperCase() === activeCategory,
+			)
+		}
 		const q = searchQuery.trim().toLowerCase()
-		if (!q) return products
-		return products.filter((p) => p.name.toLowerCase().includes(q))
-	}, [searchQuery, products])
+		if (q) {
+			filtered = filtered.filter((p) =>
+				p.name.toLowerCase().includes(q),
+			)
+		}
+		return filtered
+	}, [searchQuery, products, activeCategory])
 
 	useEffect(() => {
 		setCurrentPage(1)
-	}, [searchQuery])
+	}, [searchQuery, activeCategory])
 
 	const totalPages = Math.max(
 		1,
@@ -43,13 +63,14 @@ export function ProductGrid({ products }: ProductGridProps) {
 	}
 
 	return (
-		<section id="stock" className="py-16 border-b border-border">
+		<section id="stock" className="py-24 border-b border-border">
 			<div className="container mx-auto px-4">
-				<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
+				{/* Header */}
+				<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
 					<h2 className="text-3xl md:text-4xl font-black tracking-tight">
 						STOCK
 					</h2>
-					<div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-end md:gap-6">
+					<div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-6">
 						<form
 							role="search"
 							className="border border-border bg-background flex items-center gap-2 px-3 py-2"
@@ -77,17 +98,43 @@ export function ProductGrid({ products }: ProductGridProps) {
 					</div>
 				</div>
 
+				{/* Category tabs */}
+				{categories.length > 1 && (
+					<div className="flex border-b border-border mb-8 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+						{categories.map((cat) => (
+							<button
+								key={cat}
+								type="button"
+								onClick={() => setActiveCategory(cat)}
+								className={`px-5 py-3 text-xs font-bold tracking-widest whitespace-nowrap border-b-2 -mb-px transition-colors ${
+									activeCategory === cat
+										? 'border-primary text-foreground'
+										: 'border-transparent text-muted-foreground hover:text-foreground'
+								}`}
+							>
+								{cat}
+							</button>
+						))}
+					</div>
+				)}
+
 				{filteredProducts.length === 0 ? (
-					<div className="border border-border p-8 text-center">
+					<div className="border border-border p-12 text-center">
 						<p className="font-bold uppercase tracking-wide">
-							No se encontraron productos
+							{searchQuery.trim()
+								? 'Sin resultados'
+								: activeCategory !== 'TODOS'
+									? `Sin productos en ${activeCategory}`
+									: 'Sin productos disponibles'}
 						</p>
-						<p className="mt-2 text-sm text-muted-foreground">
-							Probá con otro término de búsqueda.
-						</p>
+						{searchQuery.trim() && (
+							<p className="mt-2 text-sm text-muted-foreground">
+								Probá con otro término.
+							</p>
+						)}
 					</div>
 				) : (
-					<div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+					<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
 						{currentProducts.map((product) => (
 							<ProductCard key={product.id} product={product} />
 						))}
@@ -96,7 +143,7 @@ export function ProductGrid({ products }: ProductGridProps) {
 
 				{filteredProducts.length > 0 && (
 					<div className="mt-12 flex flex-col items-center gap-6">
-						{/* Desktop pagination numbers */}
+						{/* Desktop pagination */}
 						<div className="hidden md:flex items-center gap-2">
 							<button
 								onClick={() =>
@@ -138,7 +185,7 @@ export function ProductGrid({ products }: ProductGridProps) {
 							</button>
 						</div>
 
-						{/* Mobile: Load More button - brutalist full width */}
+						{/* Mobile: Load More */}
 						{currentPage < totalPages && (
 							<button
 								onClick={handleLoadMore}
@@ -148,7 +195,6 @@ export function ProductGrid({ products }: ProductGridProps) {
 							</button>
 						)}
 
-						{/* Page indicator */}
 						<span className="text-xs font-mono text-muted-foreground">
 							PÁGINA {currentPage.toString().padStart(2, '0')} /{' '}
 							{totalPages.toString().padStart(2, '0')}
