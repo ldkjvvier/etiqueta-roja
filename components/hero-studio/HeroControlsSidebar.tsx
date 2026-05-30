@@ -208,7 +208,7 @@ export function HeroControlsSidebar({
 	}
 
 	return (
-		<aside className="col-span-12 overflow-auto rounded-lg border bg-card p-4 lg:col-span-4">
+		<aside className="rounded-lg border bg-card p-4 lg:col-span-5 lg:h-full lg:min-h-0 lg:overflow-auto">
 			<div className="mb-4 rounded-xl border bg-muted/30 p-4">
 				<div className="flex items-center gap-2">
 					<SlidersHorizontal className="h-4 w-4 text-muted-foreground" />

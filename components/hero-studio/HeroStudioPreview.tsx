@@ -22,7 +22,7 @@ function HeroStudioPreviewComponent({
 
 	return (
 		<section
-			className="col-span-12 overflow-auto rounded-lg border bg-card p-4 lg:col-span-6"
+			className="rounded-lg border bg-card p-4 lg:col-span-7 lg:h-full lg:min-h-0 lg:overflow-auto"
 			aria-labelledby="hero-preview-title"
 			aria-describedby="hero-preview-description"
 		>

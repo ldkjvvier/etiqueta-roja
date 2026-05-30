@@ -181,7 +181,7 @@ export function HeroStudio({
 								name="hero_payload"
 								value={JSON.stringify(submitPayload)}
 							/>
-							<div className="flex items-center justify-between border-b bg-background px-5 py-3">
+							<div className="flex flex-wrap items-center justify-between gap-2 border-b bg-background px-4 py-3 sm:px-5">
 								<div>
 									<h2
 										id="hero-studio-title"
@@ -223,7 +223,7 @@ export function HeroStudio({
 								</div>
 							</div>
 
-							<div className="grid flex-1 grid-cols-12 gap-4 overflow-hidden p-4">
+							<div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 lg:grid lg:grid-cols-12 lg:grid-rows-1 lg:overflow-hidden">
 								<HeroStudioPreview
 									state={state}
 									dropPreview={dropPreview}
