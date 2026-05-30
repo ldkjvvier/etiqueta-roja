@@ -5,39 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { HeroSidebarSection } from './HeroSidebarSection'
 import { HeroSectionProps } from './section-props'
-import { HeroLayoutPreset } from '@/types/heroStudio.types'
-
-const LAYOUT_PRESETS: {
-	value: HeroLayoutPreset
-	label: string
-	description: string
-	visual: string
-}[] = [
-	{
-		value: 'editorial-left',
-		label: 'Editorial',
-		description: 'Texto izquierda, foto derecha (50/50)',
-		visual: '▐▌',
-	},
-	{
-		value: 'centered',
-		label: 'Centrado',
-		description: 'Foto full-bleed, copy centrado',
-		visual: '▬',
-	},
-	{
-		value: 'product-right',
-		label: 'Producto',
-		description: 'Foto dominante derecha (40/60)',
-		visual: '▐▐▌',
-	},
-	{
-		value: 'fullbleed-bottom',
-		label: 'Cine',
-		description: 'Foto full-bleed, texto al fondo',
-		visual: '▬▄',
-	},
-]
+import { HERO_LAYOUT_PRESETS } from '@/lib/hero/presets'
 
 const ALIGNMENT_OPTIONS = [
 	{ value: 'left', label: 'Izquierda' },
@@ -86,12 +54,13 @@ export function HeroSectionLayout({
 					Preset de layout
 				</Label>
 				<div className="grid grid-cols-2 gap-2">
-					{LAYOUT_PRESETS.map((preset) => {
+					{HERO_LAYOUT_PRESETS.map((preset) => {
 						const isActive = layoutPreset === preset.value
 						return (
 							<button
 								key={preset.value}
 								type="button"
+								title={preset.helpText}
 								onClick={() => {
 									form.setValue('layoutPreset', preset.value)
 									setField('layout', 'layoutPreset', preset.value)
@@ -109,24 +78,12 @@ export function HeroSectionLayout({
 									{preset.label}
 								</p>
 								<p className="mt-0.5 text-[10px] text-muted-foreground leading-tight">
-									{preset.description}
+									{preset.helpText}
 								</p>
 							</button>
 						)
 					})}
 				</div>
-				{layoutPreset && (
-					<button
-						type="button"
-						className="w-full text-left text-xs text-muted-foreground underline-offset-2 hover:underline"
-						onClick={() => {
-							form.setValue('layoutPreset', undefined)
-							setField('layout', 'layoutPreset', '')
-						}}
-					>
-						Quitar preset (usar posicionamiento libre)
-					</button>
-				)}
 			</div>
 
 			{/* Alignment — relevant for legacy / fullbleed-bottom / centered */}
