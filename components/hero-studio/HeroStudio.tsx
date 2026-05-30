@@ -232,6 +232,7 @@ export function HeroStudio({
 									state={state}
 									dispatch={dispatch}
 									dropOptions={dropOptions}
+									saveSignal={actionState}
 								/>
 							</div>
 

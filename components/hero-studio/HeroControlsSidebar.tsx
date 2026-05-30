@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { SlidersHorizontal } from 'lucide-react'
@@ -46,12 +46,15 @@ interface HeroControlsSidebarProps {
 	state: HeroStudioState
 	dispatch: HeroControlsDispatch
 	dropOptions?: HeroDropOption[]
+	/** Changes identity after each save; triggers a re-seed of the form. */
+	saveSignal?: unknown
 }
 
 export function HeroControlsSidebar({
 	state,
 	dispatch,
 	dropOptions,
+	saveSignal,
 }: HeroControlsSidebarProps) {
 	const defaults = useMemo(() => getSidebarDefaults(state), [state])
 
@@ -60,6 +63,20 @@ export function HeroControlsSidebar({
 		defaultValues: defaults,
 		mode: 'onChange',
 	})
+
+	// React 19 auto-resets uncontrolled fields of a <form action> after submit,
+	// blanking the register-based text inputs. The reducer `state` is the source
+	// of truth and survives, so re-seed RHF from it after each save.
+	const stateRef = useRef(state)
+	stateRef.current = state
+	const skipInitialResync = useRef(true)
+	useEffect(() => {
+		if (skipInitialResync.current) {
+			skipInitialResync.current = false
+			return
+		}
+		form.reset(getSidebarDefaults(stateRef.current))
+	}, [saveSignal, form])
 
 	const setField = (
 		section:
