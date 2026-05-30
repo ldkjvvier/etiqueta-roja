@@ -9,6 +9,7 @@ import {
 	HomeHeroBannerConfig,
 } from '@/lib/data/site-config'
 import { parseHeroCTAConfig } from '@/lib/validation/hero-cta'
+import { validateHeroForSave } from '@/lib/hero/validation'
 import {
 	STORE_SETTINGS_CURRENCY,
 	STORE_SETTINGS_TIMEZONE,
@@ -466,6 +467,21 @@ export async function updateHomeHeroBanner(
 					return {
 						message:
 							'La URL del video de fondo debe ser externa y comenzar con http:// o https://',
+						error: true,
+					}
+				}
+
+				const heroValidationResult = validateHeroForSave({
+					backgroundImage:
+						parsedPayload.value.background_image || '',
+					description: parsedPayload.value.description || '',
+				})
+				if (!heroValidationResult.ok) {
+					return {
+						message:
+							heroValidationResult.errors.backgroundImage ??
+							heroValidationResult.errors.description ??
+							'Datos del hero inválidos',
 						error: true,
 					}
 				}

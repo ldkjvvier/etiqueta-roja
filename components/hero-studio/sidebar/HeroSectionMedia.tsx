@@ -23,6 +23,7 @@ export function HeroSectionMedia({
 	const backgroundImage = form.watch('backgroundImage')
 	const backgroundImageMobile = form.watch('backgroundImageMobile')
 	const backgroundVideoUrl = form.watch('backgroundVideoUrl')
+	const missingImage = !backgroundImage?.trim()
 
 	const handleUpload = async (
 		event: React.ChangeEvent<HTMLInputElement>,
@@ -45,7 +46,8 @@ export function HeroSectionMedia({
 		>
 			<div className="space-y-2">
 				<Label htmlFor="background_image">
-					Imagen de Fondo (URL)
+					Imagen de Fondo (URL){' '}
+					<span className="text-destructive">*</span>
 				</Label>
 				<Input
 					id="background_image"
@@ -64,6 +66,11 @@ export function HeroSectionMedia({
 					accept="image/*"
 					onChange={(event) => handleUpload(event, 'backgroundImage')}
 				/>
+				{missingImage && (
+					<p className="text-xs text-destructive">
+						La imagen de fondo es obligatoria.
+					</p>
+				)}
 			</div>
 
 			<div className="space-y-2">

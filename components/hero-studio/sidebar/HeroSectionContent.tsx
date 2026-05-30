@@ -9,6 +9,11 @@ import { Button } from '@/components/ui/button'
 import { HERO_PRESETS } from './hero-sidebar-form'
 import { HeroSidebarSection } from './HeroSidebarSection'
 import { HeroSectionProps } from './section-props'
+import {
+	countWords,
+	MAX_SUBTITLE_WORDS,
+	TITLE_SOFT_MAX,
+} from '@/lib/hero/validation'
 
 export function HeroSectionContent({
 	form,
@@ -20,6 +25,10 @@ export function HeroSectionContent({
 	const badge = form.watch('badge')
 	const title = form.watch('title')
 	const description = form.watch('description')
+	const descriptionWordCount = countWords(description ?? '')
+	const descriptionOverLimit =
+		descriptionWordCount > MAX_SUBTITLE_WORDS
+	const titleTooLong = (title?.length ?? 0) > TITLE_SOFT_MAX
 
 	return (
 		<HeroSidebarSection
@@ -101,6 +110,11 @@ export function HeroSectionContent({
 							setField('content', 'title', event.target.value),
 					})}
 				/>
+				{titleTooLong && (
+					<p className="text-xs text-amber-600">
+						Título largo: puede superar 2 líneas en mobile.
+					</p>
+				)}
 			</div>
 			<div className="space-y-2">
 				<Label htmlFor="description">Descripción</Label>
@@ -112,6 +126,17 @@ export function HeroSectionContent({
 							setField('content', 'description', event.target.value),
 					})}
 				/>
+				<p
+					className={`text-xs ${
+						descriptionOverLimit
+							? 'text-destructive'
+							: 'text-muted-foreground'
+					}`}
+				>
+					{descriptionWordCount}/{MAX_SUBTITLE_WORDS} palabras
+					{descriptionOverLimit &&
+						' — supera el máximo recomendado'}
+				</p>
 			</div>
 
 			<div className="rounded-lg border bg-background p-3">

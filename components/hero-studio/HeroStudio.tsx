@@ -20,6 +20,7 @@ import {
 import { useHeroStudioState } from '@/hooks/useHeroStudioState'
 import { HeroDropOption } from '@/types/heroStudio.types'
 import { HomeHeroBannerConfig } from '@/lib/data/site-config'
+import { validateHeroForSave } from '@/lib/hero/validation'
 
 const initialActionState = { message: '', error: false }
 
@@ -56,6 +57,15 @@ export function HeroStudio({
 	const hasInvalidVideoUrl = useMemo(
 		() => !isValidExternalVideoUrl(state.media.backgroundVideoUrl),
 		[state.media.backgroundVideoUrl],
+	)
+
+	const heroValidation = useMemo(
+		() =>
+			validateHeroForSave({
+				backgroundImage: state.media.backgroundImage,
+				description: state.content.description,
+			}),
+		[state.media.backgroundImage, state.content.description],
 	)
 
 	const dropPreview = useMemo(() => {
@@ -187,6 +197,12 @@ export function HeroStudio({
 									</p>
 								</div>
 								<div className="flex items-center gap-2">
+									{!heroValidation.ok && (
+										<span className="self-center text-xs text-destructive">
+											{heroValidation.errors.backgroundImage ??
+												heroValidation.errors.description}
+										</span>
+									)}
 									<Button
 										type="button"
 										variant="outline"
@@ -196,7 +212,11 @@ export function HeroStudio({
 									</Button>
 									<Button
 										type="submit"
-										disabled={isPending || hasInvalidVideoUrl}
+										disabled={
+											isPending ||
+											hasInvalidVideoUrl ||
+											!heroValidation.ok
+										}
 									>
 										{isPending ? 'Guardando...' : 'Guardar Hero'}
 									</Button>
