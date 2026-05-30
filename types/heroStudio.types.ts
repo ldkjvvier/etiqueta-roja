@@ -4,24 +4,6 @@ import type { HeroContentAlignment, HeroTitleFontWeight, HeroLayoutPreset } from
 
 export type HeroDropStatus = 'scheduled' | 'live' | 'ended'
 
-export type HeroElementType =
-	| 'badge'
-	| 'title'
-	| 'description'
-	| 'drop-message'
-	| 'countdown'
-	| 'live-badge'
-	| 'cta'
-
-export type HeroDragTarget = HeroElementType | null
-
-export interface HeroPosition {
-	x: number
-	y: number
-}
-
-export type HeroPositions = Record<HeroElementType, HeroPosition>
-
 export type { HeroContentAlignment } from '@/lib/hero/presets'
 export type HeroBannerHeight = 'normal' | 'large' | 'fullscreen'
 export type { HeroTitleFontWeight } from '@/lib/hero/presets'
@@ -97,7 +79,6 @@ export interface HeroStudioState {
 		overlayOpacity: number
 	}
 	dropConfig: HeroDropConfig
-	positions: HeroPositions
 }
 
 export interface HeroDropOption {
@@ -116,12 +97,3 @@ export interface HeroSubmitPayload {
 	value: HeroBannerConfig
 }
 
-export const HERO_DEFAULT_POSITIONS: HeroPositions = {
-	badge: { x: 50, y: 30 },
-	title: { x: 50, y: 44 },
-	description: { x: 50, y: 58 },
-	'drop-message': { x: 50, y: 68 },
-	countdown: { x: 50, y: 76 },
-	'live-badge': { x: 50, y: 76 },
-	cta: { x: 50, y: 78 },
-}

@@ -2,10 +2,7 @@ import { useMemo, useReducer } from 'react'
 import { HomeHeroBannerConfig } from '@/lib/data/site-config'
 import { getHeroCTAConfig } from '@/lib/services/hero-cta-config'
 import {
-	HERO_DEFAULT_POSITIONS,
 	HeroDropOption,
-	HeroElementType,
-	HeroPosition,
 	HeroStudioState,
 } from '@/types/heroStudio.types'
 
@@ -34,12 +31,6 @@ type HeroStudioAction =
 			key: 'isActive' | 'internalDescription'
 			value: string | boolean
 	  }
-	| {
-			type: 'setPosition'
-			element: HeroElementType
-			position: HeroPosition
-	  }
-	| { type: 'resetPositions' }
 
 function buildInitialState(
 	initialData?: HomeHeroBannerConfig,
@@ -121,66 +112,6 @@ function buildInitialState(
 			dropShowCountdown: initialData?.drop_show_countdown ?? true,
 			dropShowLiveBadge: initialData?.drop_show_live_badge ?? true,
 		},
-		positions: {
-			badge: {
-				x:
-					initialData?.hero_badge_pos_x ??
-					HERO_DEFAULT_POSITIONS.badge.x,
-				y:
-					initialData?.hero_badge_pos_y ??
-					HERO_DEFAULT_POSITIONS.badge.y,
-			},
-			title: {
-				x:
-					initialData?.hero_title_pos_x ??
-					initialData?.hero_text_pos_x ??
-					HERO_DEFAULT_POSITIONS.title.x,
-				y:
-					initialData?.hero_title_pos_y ??
-					initialData?.hero_text_pos_y ??
-					HERO_DEFAULT_POSITIONS.title.y,
-			},
-			description: {
-				x:
-					initialData?.hero_description_pos_x ??
-					initialData?.hero_text_pos_x ??
-					HERO_DEFAULT_POSITIONS.description.x,
-				y:
-					initialData?.hero_description_pos_y ??
-					initialData?.hero_text_pos_y ??
-					HERO_DEFAULT_POSITIONS.description.y,
-			},
-			'drop-message': {
-				x:
-					initialData?.hero_drop_message_pos_x ??
-					HERO_DEFAULT_POSITIONS['drop-message'].x,
-				y:
-					initialData?.hero_drop_message_pos_y ??
-					HERO_DEFAULT_POSITIONS['drop-message'].y,
-			},
-			countdown: {
-				x:
-					initialData?.hero_countdown_pos_x ??
-					HERO_DEFAULT_POSITIONS.countdown.x,
-				y:
-					initialData?.hero_countdown_pos_y ??
-					HERO_DEFAULT_POSITIONS.countdown.y,
-			},
-			'live-badge': {
-				x:
-					initialData?.hero_live_badge_pos_x ??
-					HERO_DEFAULT_POSITIONS['live-badge'].x,
-				y:
-					initialData?.hero_live_badge_pos_y ??
-					HERO_DEFAULT_POSITIONS['live-badge'].y,
-			},
-			cta: {
-				x:
-					initialData?.hero_cta_pos_x ?? HERO_DEFAULT_POSITIONS.cta.x,
-				y:
-					initialData?.hero_cta_pos_y ?? HERO_DEFAULT_POSITIONS.cta.y,
-			},
-		},
 	}
 }
 
@@ -207,21 +138,6 @@ function heroStudioReducer(
 				...state,
 				[action.key]: action.value,
 			} as HeroStudioState
-		}
-		case 'setPosition': {
-			return {
-				...state,
-				positions: {
-					...state.positions,
-					[action.element]: action.position,
-				},
-			}
-		}
-		case 'resetPositions': {
-			return {
-				...state,
-				positions: HERO_DEFAULT_POSITIONS,
-			}
 		}
 		default:
 			return state
@@ -298,22 +214,6 @@ export function useHeroStudioState({
 				drop_show_cta_ended: state.dropConfig.dropShowCtaEnded,
 				drop_show_countdown: state.dropConfig.dropShowCountdown,
 				drop_show_live_badge: state.dropConfig.dropShowLiveBadge,
-				hero_badge_pos_x: state.positions.badge.x,
-				hero_badge_pos_y: state.positions.badge.y,
-				hero_title_pos_x: state.positions.title.x,
-				hero_title_pos_y: state.positions.title.y,
-				hero_description_pos_x: state.positions.description.x,
-				hero_description_pos_y: state.positions.description.y,
-				hero_drop_message_pos_x: state.positions['drop-message'].x,
-				hero_drop_message_pos_y: state.positions['drop-message'].y,
-				hero_countdown_pos_x: state.positions.countdown.x,
-				hero_countdown_pos_y: state.positions.countdown.y,
-				hero_live_badge_pos_x: state.positions['live-badge'].x,
-				hero_live_badge_pos_y: state.positions['live-badge'].y,
-				hero_text_pos_x: state.positions.title.x,
-				hero_text_pos_y: state.positions.title.y,
-				hero_cta_pos_x: state.positions.cta.x,
-				hero_cta_pos_y: state.positions.cta.y,
 				title_color: state.styles.titleColor,
 				description_color: state.styles.descriptionColor,
 				badge_color: state.styles.badgeColor,
