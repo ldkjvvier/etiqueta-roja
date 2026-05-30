@@ -491,134 +491,6 @@ export async function updateHomeHeroBanner(
 				const value: HomeHeroBannerConfig = {
 					...parsedPayload.value,
 					cta: parsedCta.data,
-					hero_badge_pos_x: Math.max(
-						0,
-						Math.min(
-							100,
-							Number(parsedPayload.value.hero_badge_pos_x ?? 50),
-						),
-					),
-					hero_badge_pos_y: Math.max(
-						0,
-						Math.min(
-							100,
-							Number(parsedPayload.value.hero_badge_pos_y ?? 30),
-						),
-					),
-					hero_title_pos_x: Math.max(
-						0,
-						Math.min(
-							100,
-							Number(parsedPayload.value.hero_title_pos_x ?? 50),
-						),
-					),
-					hero_title_pos_y: Math.max(
-						0,
-						Math.min(
-							100,
-							Number(parsedPayload.value.hero_title_pos_y ?? 44),
-						),
-					),
-					hero_description_pos_x: Math.max(
-						0,
-						Math.min(
-							100,
-							Number(
-								parsedPayload.value.hero_description_pos_x ?? 50,
-							),
-						),
-					),
-					hero_description_pos_y: Math.max(
-						0,
-						Math.min(
-							100,
-							Number(
-								parsedPayload.value.hero_description_pos_y ?? 58,
-							),
-						),
-					),
-					hero_drop_message_pos_x: Math.max(
-						0,
-						Math.min(
-							100,
-							Number(
-								parsedPayload.value.hero_drop_message_pos_x ?? 50,
-							),
-						),
-					),
-					hero_drop_message_pos_y: Math.max(
-						0,
-						Math.min(
-							100,
-							Number(
-								parsedPayload.value.hero_drop_message_pos_y ?? 68,
-							),
-						),
-					),
-					hero_countdown_pos_x: Math.max(
-						0,
-						Math.min(
-							100,
-							Number(parsedPayload.value.hero_countdown_pos_x ?? 50),
-						),
-					),
-					hero_countdown_pos_y: Math.max(
-						0,
-						Math.min(
-							100,
-							Number(parsedPayload.value.hero_countdown_pos_y ?? 76),
-						),
-					),
-					hero_live_badge_pos_x: Math.max(
-						0,
-						Math.min(
-							100,
-							Number(parsedPayload.value.hero_live_badge_pos_x ?? 50),
-						),
-					),
-					hero_live_badge_pos_y: Math.max(
-						0,
-						Math.min(
-							100,
-							Number(parsedPayload.value.hero_live_badge_pos_y ?? 76),
-						),
-					),
-					hero_cta_pos_x: Math.max(
-						0,
-						Math.min(
-							100,
-							Number(parsedPayload.value.hero_cta_pos_x ?? 50),
-						),
-					),
-					hero_cta_pos_y: Math.max(
-						0,
-						Math.min(
-							100,
-							Number(parsedPayload.value.hero_cta_pos_y ?? 78),
-						),
-					),
-					hero_text_pos_x: Math.max(
-						0,
-						Math.min(
-							100,
-							Number(
-								parsedPayload.value.hero_text_pos_x ??
-									parsedPayload.value.hero_title_pos_x ??
-									50,
-							),
-						),
-					),
-					hero_text_pos_y: Math.max(
-						0,
-						Math.min(
-							100,
-							Number(
-								parsedPayload.value.hero_text_pos_y ??
-									parsedPayload.value.hero_title_pos_y ??
-									44,
-							),
-						),
-					),
 					overlay_opacity: Math.max(
 						0,
 						Math.min(
@@ -740,98 +612,6 @@ export async function updateHomeHeroBanner(
 		(formData.get('drop_show_countdown') as string) !== 'false'
 	const dropShowLiveBadge =
 		(formData.get('drop_show_live_badge') as string) !== 'false'
-	const heroBadgePosXRaw = Number(
-		formData.get('hero_badge_pos_x') || 50,
-	)
-	const heroBadgePosYRaw = Number(
-		formData.get('hero_badge_pos_y') || 30,
-	)
-	const heroTitlePosXRaw = Number(
-		formData.get('hero_title_pos_x') || 50,
-	)
-	const heroTitlePosYRaw = Number(
-		formData.get('hero_title_pos_y') || 44,
-	)
-	const heroDescriptionPosXRaw = Number(
-		formData.get('hero_description_pos_x') || 50,
-	)
-	const heroDescriptionPosYRaw = Number(
-		formData.get('hero_description_pos_y') || 58,
-	)
-	const heroDropMessagePosXRaw = Number(
-		formData.get('hero_drop_message_pos_x') || 50,
-	)
-	const heroDropMessagePosYRaw = Number(
-		formData.get('hero_drop_message_pos_y') || 68,
-	)
-	const heroCountdownPosXRaw = Number(
-		formData.get('hero_countdown_pos_x') || 50,
-	)
-	const heroCountdownPosYRaw = Number(
-		formData.get('hero_countdown_pos_y') || 76,
-	)
-	const heroLiveBadgePosXRaw = Number(
-		formData.get('hero_live_badge_pos_x') || 50,
-	)
-	const heroLiveBadgePosYRaw = Number(
-		formData.get('hero_live_badge_pos_y') || 76,
-	)
-	const heroTextPosXRaw = Number(
-		formData.get('hero_text_pos_x') || 50,
-	)
-	const heroTextPosYRaw = Number(
-		formData.get('hero_text_pos_y') || 48,
-	)
-	const heroCtaPosXRaw = Number(formData.get('hero_cta_pos_x') || 50)
-	const heroCtaPosYRaw = Number(formData.get('hero_cta_pos_y') || 78)
-	const heroBadgePosX = Number.isFinite(heroBadgePosXRaw)
-		? Math.max(0, Math.min(100, heroBadgePosXRaw))
-		: 50
-	const heroBadgePosY = Number.isFinite(heroBadgePosYRaw)
-		? Math.max(0, Math.min(100, heroBadgePosYRaw))
-		: 30
-	const heroTitlePosX = Number.isFinite(heroTitlePosXRaw)
-		? Math.max(0, Math.min(100, heroTitlePosXRaw))
-		: 50
-	const heroTitlePosY = Number.isFinite(heroTitlePosYRaw)
-		? Math.max(0, Math.min(100, heroTitlePosYRaw))
-		: 44
-	const heroDescriptionPosX = Number.isFinite(heroDescriptionPosXRaw)
-		? Math.max(0, Math.min(100, heroDescriptionPosXRaw))
-		: 50
-	const heroDescriptionPosY = Number.isFinite(heroDescriptionPosYRaw)
-		? Math.max(0, Math.min(100, heroDescriptionPosYRaw))
-		: 58
-	const heroDropMessagePosX = Number.isFinite(heroDropMessagePosXRaw)
-		? Math.max(0, Math.min(100, heroDropMessagePosXRaw))
-		: 50
-	const heroDropMessagePosY = Number.isFinite(heroDropMessagePosYRaw)
-		? Math.max(0, Math.min(100, heroDropMessagePosYRaw))
-		: 68
-	const heroCountdownPosX = Number.isFinite(heroCountdownPosXRaw)
-		? Math.max(0, Math.min(100, heroCountdownPosXRaw))
-		: 50
-	const heroCountdownPosY = Number.isFinite(heroCountdownPosYRaw)
-		? Math.max(0, Math.min(100, heroCountdownPosYRaw))
-		: 76
-	const heroLiveBadgePosX = Number.isFinite(heroLiveBadgePosXRaw)
-		? Math.max(0, Math.min(100, heroLiveBadgePosXRaw))
-		: 50
-	const heroLiveBadgePosY = Number.isFinite(heroLiveBadgePosYRaw)
-		? Math.max(0, Math.min(100, heroLiveBadgePosYRaw))
-		: 76
-	const heroTextPosX = Number.isFinite(heroTextPosXRaw)
-		? Math.max(0, Math.min(100, heroTextPosXRaw))
-		: 50
-	const heroTextPosY = Number.isFinite(heroTextPosYRaw)
-		? Math.max(0, Math.min(100, heroTextPosYRaw))
-		: 48
-	const heroCtaPosX = Number.isFinite(heroCtaPosXRaw)
-		? Math.max(0, Math.min(100, heroCtaPosXRaw))
-		: 50
-	const heroCtaPosY = Number.isFinite(heroCtaPosYRaw)
-		? Math.max(0, Math.min(100, heroCtaPosYRaw))
-		: 78
 	const titleColor =
 		(formData.get('title_color') as string) || '#111111'
 	const descriptionColor =
@@ -861,6 +641,14 @@ export async function updateHomeHeroBanner(
 	) as string) || 'left') as 'left' | 'center' | 'right'
 	const bannerHeight = ((formData.get('banner_height') as string) ||
 		'normal') as 'normal' | 'large' | 'fullscreen'
+	const layoutPresetRaw = formData.get('layout_preset') as string | null
+	const layoutPreset =
+		layoutPresetRaw === 'editorial-left' ||
+		layoutPresetRaw === 'centered' ||
+		layoutPresetRaw === 'product-right' ||
+		layoutPresetRaw === 'fullbleed-bottom'
+			? layoutPresetRaw
+			: 'fullbleed-bottom'
 	const isActive = formData.get('is_active') === 'on'
 	const internalDescription =
 		(formData.get('internal_description') as string) || null
@@ -947,22 +735,6 @@ export async function updateHomeHeroBanner(
 		drop_show_cta_ended: dropShowCtaEnded,
 		drop_show_countdown: dropShowCountdown,
 		drop_show_live_badge: dropShowLiveBadge,
-		hero_badge_pos_x: heroBadgePosX,
-		hero_badge_pos_y: heroBadgePosY,
-		hero_title_pos_x: heroTitlePosX,
-		hero_title_pos_y: heroTitlePosY,
-		hero_description_pos_x: heroDescriptionPosX,
-		hero_description_pos_y: heroDescriptionPosY,
-		hero_drop_message_pos_x: heroDropMessagePosX,
-		hero_drop_message_pos_y: heroDropMessagePosY,
-		hero_countdown_pos_x: heroCountdownPosX,
-		hero_countdown_pos_y: heroCountdownPosY,
-		hero_live_badge_pos_x: heroLiveBadgePosX,
-		hero_live_badge_pos_y: heroLiveBadgePosY,
-		hero_text_pos_x: heroTextPosX,
-		hero_text_pos_y: heroTextPosY,
-		hero_cta_pos_x: heroCtaPosX,
-		hero_cta_pos_y: heroCtaPosY,
 		title_color: titleColor,
 		description_color: descriptionColor,
 		badge_color: badgeColor,
@@ -970,6 +742,7 @@ export async function updateHomeHeroBanner(
 		overlay_opacity: overlayOpacity,
 		content_alignment: contentAlignment,
 		banner_height: bannerHeight,
+		layout_preset: layoutPreset,
 	}
 
 	const payload: SiteConfigInsert = {
