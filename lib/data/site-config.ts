@@ -3,6 +3,7 @@ import {
 	getPublicStoreContext,
 	getAdminStoreContext,
 } from '@/lib/data/admin-context'
+import type { HeroLayoutPreset } from '@/lib/hero/presets'
 
 export type SiteConfigVisibility = 'public' | 'private' | 'internal'
 
@@ -147,11 +148,7 @@ export interface ContactInfoConfig {
 
 export type { HeroCTAConfig } from '@/lib/validation/hero-cta'
 
-export type HeroLayoutPreset =
-	| 'editorial-left'
-	| 'centered'
-	| 'product-right'
-	| 'fullbleed-bottom'
+export type { HeroLayoutPreset } from '@/lib/hero/presets'
 
 export interface HomeHeroBannerConfig {
 	badge: string

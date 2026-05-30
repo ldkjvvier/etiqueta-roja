@@ -1,5 +1,6 @@
 import { HomeHeroBannerConfig } from '@/lib/data/site-config'
 import { HeroCTAConfig } from '@/lib/data/site-config'
+import type { HeroContentAlignment, HeroTitleFontWeight, HeroLayoutPreset } from '@/lib/hero/presets'
 
 export type HeroDropStatus = 'scheduled' | 'live' | 'ended'
 
@@ -21,14 +22,10 @@ export interface HeroPosition {
 
 export type HeroPositions = Record<HeroElementType, HeroPosition>
 
-export type HeroContentAlignment = 'left' | 'center' | 'right'
+export type { HeroContentAlignment } from '@/lib/hero/presets'
 export type HeroBannerHeight = 'normal' | 'large' | 'fullscreen'
-export type HeroTitleFontWeight = 'bold' | 'black' | 'outline'
-export type HeroLayoutPreset =
-	| 'editorial-left'
-	| 'centered'
-	| 'product-right'
-	| 'fullbleed-bottom'
+export type { HeroTitleFontWeight } from '@/lib/hero/presets'
+export type { HeroLayoutPreset } from '@/lib/hero/presets'
 
 export type HeroDropDisplayMode =
 	| 'auto'
