@@ -11,10 +11,8 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@/components/ui/card'
-import { HeroCanvasPreview } from './HeroCanvasPreview'
-import { HeroRealViewEditor } from './HeroRealViewEditor'
+import { HeroStudioPreview } from './HeroStudioPreview'
 import { HeroConfigForm } from './HeroConfigForm'
-import { HeroPositionControls } from './HeroPositionControls'
 import {
 	buildDropPreview,
 	isValidExternalVideoUrl,
@@ -43,7 +41,6 @@ export function HeroStudio({
 		initialActionState,
 	)
 	const [isStudioOpen, setIsStudioOpen] = useState(false)
-	const [isRealViewOpen, setIsRealViewOpen] = useState(false)
 	const [previewNowMs, setPreviewNowMs] = useState<number>(() =>
 		Date.now(),
 	)
@@ -83,12 +80,6 @@ export function HeroStudio({
 	}, [actionState.error, actionState.message])
 
 	useEffect(() => {
-		if (!isStudioOpen && isRealViewOpen) {
-			setIsRealViewOpen(false)
-		}
-	}, [isRealViewOpen, isStudioOpen])
-
-	useEffect(() => {
 		if (!isStudioOpen) {
 			return
 		}
@@ -98,10 +89,6 @@ export function HeroStudio({
 
 		const onKeyDown = (event: KeyboardEvent) => {
 			if (event.key === 'Escape') {
-				if (isRealViewOpen) {
-					setIsRealViewOpen(false)
-					return
-				}
 				setIsStudioOpen(false)
 			}
 		}
@@ -111,7 +98,7 @@ export function HeroStudio({
 			document.body.style.overflow = previousOverflow
 			window.removeEventListener('keydown', onKeyDown)
 		}
-	}, [isRealViewOpen, isStudioOpen])
+	}, [isStudioOpen])
 
 	useEffect(() => {
 		if (!isStudioOpen) {
@@ -217,18 +204,9 @@ export function HeroStudio({
 							</div>
 
 							<div className="grid flex-1 grid-cols-12 gap-4 overflow-hidden p-4">
-								<HeroPositionControls
-									state={state}
-									selectedDrop={selectedDrop}
-									dropPreview={dropPreview}
-									onResetPositions={() =>
-										dispatch({ type: 'resetPositions' })
-									}
-								/>
-								<HeroCanvasPreview
+								<HeroStudioPreview
 									state={state}
 									dropPreview={dropPreview}
-									onOpenRealView={() => setIsRealViewOpen(true)}
 								/>
 								<HeroConfigForm
 									state={state}
@@ -255,19 +233,6 @@ export function HeroStudio({
 				</div>
 			)}
 
-			<HeroRealViewEditor
-				open={isRealViewOpen}
-				state={state}
-				dropPreview={dropPreview}
-				onClose={() => setIsRealViewOpen(false)}
-				onPositionChange={(target, x, y) =>
-					dispatch({
-						type: 'setPosition',
-						element: target,
-						position: { x, y },
-					})
-				}
-			/>
 		</>
 	)
 }
