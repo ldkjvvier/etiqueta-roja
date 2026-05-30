@@ -13,12 +13,12 @@ import {
 import { useStore } from '@/lib/store-context'
 import { CartSheet } from './cart-sheet'
 
+// Absolute paths for anchors so funcionan desde otras rutas.
+// Solo se enlazan secciones que existen hoy; DROPS llega en Fase 3.
 const navLinks = [
 	{ label: 'INICIO', href: '/' },
-	// Using absolute paths for anchors to ensure they work from other pages
-	{ label: 'OFERTAS', href: '/#ofertas' },
-	{ label: 'PEDIDOS', href: '/#pedidos' },
 	{ label: 'STOCK', href: '/#stock' },
+	{ label: 'CONTACTO', href: '/#contacto' },
 ]
 
 function Logo() {
@@ -77,7 +77,7 @@ export function Header() {
 										</SheetTitle>
 										<SheetDescription className="sr-only">
 											Menú principal de navegación con accesos a
-											inicio, ofertas, pedidos y stock.
+											inicio, stock y contacto.
 										</SheetDescription>
 										<Button
 											variant="ghost"

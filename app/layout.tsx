@@ -1,6 +1,6 @@
 import type React from 'react'
 import type { Metadata, Viewport } from 'next'
-import { Inter, Geist_Mono } from 'next/font/google'
+import { Archivo, Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import { Providers } from './providers'
@@ -9,8 +9,24 @@ import {
 	ContactInfoConfig,
 } from '@/lib/data/site-config'
 
-const _inter = Inter({ subsets: ['latin'] })
-const _geistMono = Geist_Mono({ subsets: ['latin'] })
+const geist = Geist({
+	subsets: ['latin'],
+	variable: '--font-geist-sans',
+	display: 'swap',
+})
+
+const archivo = Archivo({
+	subsets: ['latin'],
+	axes: ['wdth'], // necesario para el ancho Expanded en titulares
+	variable: '--font-archivo',
+	display: 'swap',
+})
+
+const geistMono = Geist_Mono({
+	subsets: ['latin'],
+	variable: '--font-geist-mono',
+	display: 'swap',
+})
 
 export const metadata: Metadata = {
 	title: 'ETIQUETA ROJA | Streetwear premium',
@@ -50,7 +66,9 @@ export default async function RootLayout({
 
 	return (
 		<html lang="es">
-			<body className={`font-sans antialiased`}>
+			<body
+				className={`${geist.variable} ${archivo.variable} ${geistMono.variable} font-sans antialiased`}
+			>
 				<a
 					href="#main-content"
 					className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:bg-primary focus:px-4 focus:py-2 focus:font-bold focus:text-primary-foreground"

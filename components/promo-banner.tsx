@@ -15,42 +15,26 @@ export async function PromoBanner() {
 
 	const { message, link } = config.value
 
-	const renderContent = (key: number) => {
-		const baseStyles =
-			'mx-8 text-sm font-bold tracking-widest flex items-center gap-2'
+	// Franja estática: una sola capa de comunicación animada por página
+	// (el marquee vive en AnnouncementBar). Aquí, texto centrado fijo.
+	const baseStyles =
+		'text-sm font-bold tracking-widest flex items-center gap-2'
 
-		if (link) {
-			return (
-				<Link
-					key={key}
-					href={link}
-					className={`${baseStyles} hover:text-primary transition-colors cursor-pointer`}
-				>
-					{message}
-				</Link>
-			)
-		}
-
-		return (
-			<span key={key} className={baseStyles}>
-				{message}
-			</span>
-		)
-	}
+	const content = link ? (
+		<Link
+			href={link}
+			className={`${baseStyles} hover:text-primary transition-colors cursor-pointer`}
+		>
+			{message}
+		</Link>
+	) : (
+		<span className={baseStyles}>{message}</span>
+	)
 
 	return (
-		<div className="bg-foreground text-background py-3 border-b border-foreground overflow-hidden flex select-none gap-0">
-			<div className="hidden w-full items-center justify-center px-4 text-center motion-reduce:flex">
-				{renderContent(0)}
-			</div>
-			<div className="flex animate-marquee-infinite whitespace-nowrap min-w-full shrink-0 items-center justify-around motion-reduce:hidden">
-				{Array.from({ length: 8 }).map((_, i) => renderContent(i))}
-			</div>
-			<div
-				aria-hidden="true"
-				className="flex animate-marquee-infinite whitespace-nowrap min-w-full shrink-0 items-center justify-around motion-reduce:hidden"
-			>
-				{Array.from({ length: 8 }).map((_, i) => renderContent(i))}
+		<div className="bg-foreground text-background py-3 border-b border-foreground overflow-hidden">
+			<div className="container mx-auto px-4 flex items-center justify-center text-center">
+				{content}
 			</div>
 		</div>
 	)

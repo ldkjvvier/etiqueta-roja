@@ -46,7 +46,10 @@ export async function Footer() {
 				: 'grid grid-cols-1 gap-8'
 
 	return (
-		<footer className="bg-[#DCDCDC] text-foreground border-t border-border">
+		<footer
+			id="contacto"
+			className="bg-[#DCDCDC] text-foreground border-t border-border"
+		>
 			<div className="container mx-auto px-4 py-12">
 				<div className={gridClassName}>
 					{/* Brand */}
