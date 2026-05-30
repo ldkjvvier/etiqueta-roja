@@ -55,6 +55,14 @@ export const heroSidebarSchema = z.object({
 	dropCountdownTextColor: z.string(),
 	dropLiveBadgeBgColor: z.string(),
 	dropLiveBadgeTextColor: z.string(),
+	layoutPreset: z
+		.enum([
+			'editorial-left',
+			'centered',
+			'product-right',
+			'fullbleed-bottom',
+		])
+		.optional(),
 })
 
 export type HeroSidebarFormValues = z.infer<typeof heroSidebarSchema>
@@ -112,6 +120,7 @@ export function getSidebarDefaults(
 		dropCountdownTextColor: state.dropConfig.dropCountdownTextColor,
 		dropLiveBadgeBgColor: state.dropConfig.dropLiveBadgeBgColor,
 		dropLiveBadgeTextColor: state.dropConfig.dropLiveBadgeTextColor,
+		layoutPreset: state.layout.layoutPreset,
 	}
 }
 

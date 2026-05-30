@@ -51,6 +51,7 @@ function HeroCanvasPreviewComponent({
 			<div className="rounded-xl border bg-secondary p-3">
 				<div className="overflow-hidden rounded-lg border bg-secondary">
 					<HeroBannerLayout
+						preset={state.layout.layoutPreset}
 						bannerHeight={state.layout.bannerHeight}
 						overlayOpacity={state.styles.overlayOpacity}
 						backgroundImage={state.media.backgroundImage}

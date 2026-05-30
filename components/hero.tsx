@@ -6,6 +6,7 @@ import {
 	getSiteConfig,
 	HeroCTAConfig,
 	HomeHeroBannerConfig,
+	HeroLayoutPreset,
 } from '@/lib/data/site-config'
 import { getHeroCTAConfig } from '@/lib/services/hero-cta-config'
 
@@ -91,6 +92,7 @@ const fallback: HomeHeroBannerConfig = {
 	overlay_opacity: 45,
 	content_alignment: 'left',
 	banner_height: 'large',
+	layout_preset: undefined,
 }
 
 function isLikelyExternalVideoUrl(url: string) {
@@ -356,6 +358,14 @@ function normalizeHeroConfig(
 			value?.banner_height === 'fullscreen'
 				? value.banner_height
 				: 'large',
+		layout_preset: (
+			value?.layout_preset === 'editorial-left' ||
+			value?.layout_preset === 'centered' ||
+			value?.layout_preset === 'product-right' ||
+			value?.layout_preset === 'fullbleed-bottom'
+		)
+			? value.layout_preset
+			: undefined,
 	}
 }
 
@@ -486,7 +496,7 @@ export async function Hero() {
 	const heightClassBySetting = {
 		normal: 'min-h-[50vh]',
 		large: 'min-h-[75vh]',
-		fullscreen: 'min-h-screen',
+		fullscreen: 'min-h-[100dvh]',
 	} as const
 
 	const alignmentClassBySetting = {
@@ -509,6 +519,107 @@ export async function Hero() {
 			? value.title_font_weight
 			: 'black'
 
+	// --- PRESET RENDERING (responsive flow layout) ---
+	if (value.layout_preset) {
+		const preset = value.layout_preset as HeroLayoutPreset
+		const isSplit =
+			preset === 'editorial-left' || preset === 'product-right'
+
+		const presetAlignmentClass =
+			preset === 'centered' ? 'items-center text-center' : 'items-start text-left'
+
+		const heroImage =
+			value.background_image ||
+			'https://picsum.photos/seed/etiqueta-roja-hero/1600/900'
+
+		return (
+			<HeroBannerLayout
+				preset={preset}
+				bannerHeight={value.banner_height}
+				overlayOpacity={value.overlay_opacity}
+				backgroundImage={heroImage}
+				backgroundImageMobile={
+					value.background_image_mobile || heroImage
+				}
+				backgroundVideoUrl={isSplit ? '' : (value.background_video_url ?? '')}
+				renderEmbeddableVideo={!isSplit}
+				showBottomBorder
+			>
+				<div
+					className={`flex flex-col gap-5 ${presetAlignmentClass}`}
+				>
+					{value.badge && (
+						<p
+							className="text-sm font-bold tracking-widest"
+							style={{ color: value.badge_color }}
+						>
+							{value.badge}
+						</p>
+					)}
+
+					<h1
+						className={`max-w-2xl text-balance text-5xl leading-none tracking-tighter md:text-6xl lg:text-7xl ${titleWeightClassBySetting[titleFontWeight]}`}
+						style={{ color: value.title_color }}
+					>
+						{value.title}
+					</h1>
+
+					{value.description && (
+						<p
+							className="max-w-md text-lg leading-relaxed"
+							style={{ color: value.description_color }}
+						>
+							{value.description}
+						</p>
+					)}
+
+					{shouldShowDropMessage && resolvedDropMessage && (
+						<p
+							className={`max-w-lg text-sm font-semibold tracking-wide ${
+								isSplit ? 'text-muted-foreground' : 'text-white/90'
+							}`}
+						>
+							{resolvedDropMessage}
+						</p>
+					)}
+
+					{shouldShowCountdown && linkedDrop?.start_time && (
+						<HeroDropCountdown
+							targetDate={linkedDrop.start_time}
+							containerBgColor={value.drop_countdown_bg_color}
+							unitBgColor="rgba(0,0,0,0.35)"
+							textColor={value.drop_countdown_text_color}
+						/>
+					)}
+
+					{shouldShowLiveBadge && (
+						<span
+							className="inline-flex w-fit px-3 py-1 text-xs font-bold tracking-wider"
+							style={{
+								backgroundColor: value.drop_live_badge_bg_color,
+								color: value.drop_live_badge_text_color,
+							}}
+						>
+							{value.drop_live_badge_text}
+						</span>
+					)}
+
+					{shouldShowCta && (
+						<div>
+							<HeroCTA
+								config={ctaConfig}
+								text={ctaLabel}
+								href={ctaConfig.link}
+								disabled={ctaDisabled}
+							/>
+						</div>
+					)}
+				</div>
+			</HeroBannerLayout>
+		)
+	}
+
+	// --- LEGACY RENDERING (absolute coordinate positioning) ---
 	return (
 		<HeroBannerLayout
 			bannerHeight={value.banner_height}

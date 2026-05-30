@@ -81,6 +81,7 @@ function buildInitialState(
 		layout: {
 			contentAlignment: initialData?.content_alignment ?? 'left',
 			bannerHeight: initialData?.banner_height ?? 'normal',
+			layoutPreset: initialData?.layout_preset,
 		},
 		styles: {
 			titleColor: initialData?.title_color ?? '#111111',
@@ -320,6 +321,7 @@ export function useHeroStudioState({
 				overlay_opacity: state.styles.overlayOpacity,
 				content_alignment: state.layout.contentAlignment,
 				banner_height: state.layout.bannerHeight,
+				layout_preset: state.layout.layoutPreset,
 			},
 		}
 	}, [state])

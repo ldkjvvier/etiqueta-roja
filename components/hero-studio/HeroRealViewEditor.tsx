@@ -101,6 +101,7 @@ export function HeroRealViewEditor({
 					</StoreProvider>
 
 					<HeroBannerLayout
+						preset={state.layout.layoutPreset}
 						bannerHeight={state.layout.bannerHeight}
 						overlayOpacity={state.styles.overlayOpacity}
 						backgroundImage={state.media.backgroundImage}

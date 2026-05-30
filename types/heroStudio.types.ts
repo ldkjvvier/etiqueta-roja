@@ -24,6 +24,11 @@ export type HeroPositions = Record<HeroElementType, HeroPosition>
 export type HeroContentAlignment = 'left' | 'center' | 'right'
 export type HeroBannerHeight = 'normal' | 'large' | 'fullscreen'
 export type HeroTitleFontWeight = 'bold' | 'black' | 'outline'
+export type HeroLayoutPreset =
+	| 'editorial-left'
+	| 'centered'
+	| 'product-right'
+	| 'fullbleed-bottom'
 
 export type HeroDropDisplayMode =
 	| 'auto'
@@ -85,6 +90,7 @@ export interface HeroStudioState {
 	layout: {
 		contentAlignment: HeroContentAlignment
 		bannerHeight: HeroBannerHeight
+		layoutPreset?: HeroLayoutPreset
 	}
 	styles: {
 		titleColor: string

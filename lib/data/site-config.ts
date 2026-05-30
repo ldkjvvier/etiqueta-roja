@@ -147,6 +147,12 @@ export interface ContactInfoConfig {
 
 export type { HeroCTAConfig } from '@/lib/validation/hero-cta'
 
+export type HeroLayoutPreset =
+	| 'editorial-left'
+	| 'centered'
+	| 'product-right'
+	| 'fullbleed-bottom'
+
 export interface HomeHeroBannerConfig {
 	badge: string
 	title: string
@@ -201,4 +207,5 @@ export interface HomeHeroBannerConfig {
 	overlay_opacity: number
 	content_alignment: 'left' | 'center' | 'right'
 	banner_height: 'normal' | 'large' | 'fullscreen'
+	layout_preset?: HeroLayoutPreset
 }
