@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import {
 	Sheet,
 	SheetContent,
+	SheetDescription,
 	SheetHeader,
 	SheetTitle,
 } from '@/components/ui/sheet'
@@ -115,6 +116,10 @@ export function CartSheet() {
 					<SheetTitle className="text-xl font-black tracking-tight">
 						TU CARRITO ({cartItems.length})
 					</SheetTitle>
+					<SheetDescription className="sr-only">
+						Revisa los productos agregados al carrito, ajusta
+						cantidades y completa tu pedido por WhatsApp.
+					</SheetDescription>
 				</SheetHeader>
 
 				{checkoutNotice ? (
@@ -271,10 +276,13 @@ export function CartSheet() {
 									}}
 								/>
 								<p className="text-xs text-muted-foreground">
-									Lo usamos para identificar y dar seguimiento a tu pedido.
+									Lo usamos para identificar y dar seguimiento a tu
+									pedido.
 								</p>
 								{emailError ? (
-									<p className="text-xs text-destructive">{emailError}</p>
+									<p className="text-xs text-destructive">
+										{emailError}
+									</p>
 								) : null}
 							</div>
 							<Button

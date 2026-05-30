@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import {
 	Sheet,
 	SheetContent,
+	SheetDescription,
 	SheetTrigger,
 	SheetTitle,
 } from '@/components/ui/sheet'
@@ -74,6 +75,10 @@ export function Header() {
 										<SheetTitle>
 											<Logo />
 										</SheetTitle>
+										<SheetDescription className="sr-only">
+											Menú principal de navegación con accesos a
+											inicio, ofertas, pedidos y stock.
+										</SheetDescription>
 										<Button
 											variant="ghost"
 											size="icon"
