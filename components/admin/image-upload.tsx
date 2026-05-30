@@ -7,19 +7,30 @@ import { ImagePlus, X, Loader2 } from 'lucide-react'
 import Image from 'next/image'
 import { toast } from 'sonner'
 
+const MAX_BYTES = 5 * 1024 * 1024 // 5 MB
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif']
+
 interface ImageUploadProps {
 	value: string[]
 	onChange: (urls: string[]) => void
 	maxImages?: number
+	/** Called right after a file is successfully uploaded to storage */
+	onUploaded?: (url: string) => void
+	/** Called right before an image is removed from the list */
+	onBeforeRemove?: (url: string) => void
 }
 
 export function ImageUpload({
 	value = [],
 	onChange,
 	maxImages = 5,
+	onUploaded,
+	onBeforeRemove,
 }: ImageUploadProps) {
 	const [uploading, setUploading] = useState(false)
 	const inputRef = useRef<HTMLInputElement>(null)
+
+	const storeId = process.env.NEXT_PUBLIC_STORE_ID ?? 'store'
 
 	const onUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		try {
@@ -44,29 +55,44 @@ export function ImageUpload({
 			const newUrls: string[] = []
 
 			for (const file of selectedFiles) {
-				// Determine file extension
-				const fileExt = file.name.split('.').pop()
-				// Unique path
-				const filePath = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`
+				if (!ALLOWED_TYPES.includes(file.type)) {
+					toast.error('Formato no permitido', {
+						description: `${file.name}: usa JPG, PNG, WEBP o AVIF.`,
+					})
+					continue
+				}
+				if (file.size > MAX_BYTES) {
+					toast.error('Imagen demasiado grande', {
+						description: `${file.name} supera 5 MB.`,
+					})
+					continue
+				}
 
-				// Upload to 'products' bucket
+				const fileExt = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+				const filePath = `${storeId}/${crypto.randomUUID()}.${fileExt}`
+
 				const { error: uploadError } = await supabase.storage
 					.from('products')
-					.upload(filePath, file)
+					.upload(filePath, file, {
+						contentType: file.type,
+						cacheControl: '3600',
+					})
 
 				if (uploadError) {
 					throw uploadError
 				}
 
-				// Get Public URL
 				const {
 					data: { publicUrl },
 				} = supabase.storage.from('products').getPublicUrl(filePath)
 
 				newUrls.push(publicUrl)
+				onUploaded?.(publicUrl)
 			}
 
-			onChange([...value, ...newUrls].slice(0, maxImages))
+			if (newUrls.length) {
+				onChange([...value, ...newUrls].slice(0, maxImages))
+			}
 		} catch (error) {
 			toast.error('Error al subir imagen', {
 				description:
@@ -80,6 +106,7 @@ export function ImageUpload({
 	}
 
 	const onRemove = (url: string) => {
+		onBeforeRemove?.(url)
 		onChange(value.filter((current) => current !== url))
 	}
 
@@ -105,7 +132,7 @@ export function ImageUpload({
 						<Image
 							fill
 							className="object-cover"
-							alt="Image"
+							alt="Imagen del producto"
 							src={url}
 						/>
 					</div>
@@ -129,7 +156,7 @@ export function ImageUpload({
 				<input
 					ref={inputRef}
 					type="file"
-					accept="image/*"
+					accept={ALLOWED_TYPES.join(',')}
 					multiple
 					className="hidden"
 					onChange={onUpload}
@@ -137,7 +164,8 @@ export function ImageUpload({
 				/>
 			</div>
 			<p className="text-xs text-muted-foreground">
-				Sube hasta {maxImages} imagenes. La primera será la portada.
+				Sube hasta {maxImages} imagen{maxImages !== 1 ? 'es' : ''}. Formatos: JPG, PNG, WEBP, AVIF · Máx 5 MB.
+				{maxImages > 1 && ' La primera será la portada.'}
 			</p>
 		</div>
 	)

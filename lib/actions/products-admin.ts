@@ -9,7 +9,6 @@ type ProductVariantInput = {
 	size: string
 	price?: number | null
 	stock_quantity: number
-	reserved_stock?: number
 	low_stock_threshold?: number
 	sku?: string | null
 	weight?: number | null
@@ -69,14 +68,6 @@ function validateVariants(variants: ProductVariantInput[]) {
 			throw new Error(`Variante duplicada detectada: ${variant.size}`)
 		}
 		seen.add(key)
-
-		const stock = Number(variant.stock_quantity || 0)
-		const reserved = Number(variant.reserved_stock || 0)
-		if (reserved > stock) {
-			throw new Error(
-				`reserved_stock no puede ser mayor a stock_quantity en ${variant.size}`,
-			)
-		}
 	}
 }
 
@@ -290,7 +281,7 @@ async function upsertVariantGraph(
 					? Number(variant.price)
 					: Number(basePrice),
 			stock_quantity: Number(variant.stock_quantity || 0),
-			reserved_stock: Number(variant.reserved_stock || 0),
+			// reserved_stock intentionally omitted: managed by the system (checkout/orders), not admin input
 			low_stock_threshold: Number(variant.low_stock_threshold ?? 5),
 			weight:
 				variant.weight === undefined || variant.weight === null
@@ -327,6 +318,35 @@ async function upsertVariantGraph(
 	}
 }
 
+export async function deleteStorageObjects(publicUrls: string[]) {
+	const supabase = await createClient()
+	const {
+		data: { user },
+	} = await supabase.auth.getUser()
+	if (!user) return { error: true, message: 'Unauthorized' }
+
+	const paths = publicUrls
+		.map((url) => extractStoragePathFromPublicUrl(url, 'products'))
+		.filter((path): path is string => Boolean(path))
+
+	if (!paths.length) return { error: false }
+
+	const { error } = await supabase.storage.from('products').remove(paths)
+	if (error) return { error: true, message: error.message }
+	return { error: false }
+}
+
+function guardActiveProductHasStock(payload: ProductMutationPayload) {
+	if (
+		payload.status === 'active' &&
+		payload.variants.every((v) => Number(v.stock_quantity || 0) <= 0)
+	) {
+		throw new Error(
+			'No puedes activar un producto sin stock disponible. Cambia el estado a Borrador o agrega stock a al menos una variante.',
+		)
+	}
+}
+
 export async function createProductV3(
 	payload: ProductMutationPayload,
 ) {
@@ -343,6 +363,8 @@ export async function createProductV3(
 		if (!payload.images?.length) {
 			throw new Error('Debe subir al menos una imagen')
 		}
+
+		guardActiveProductHasStock(payload)
 
 		const slug = await ensureUniqueSlug(
 			db,
@@ -413,6 +435,8 @@ export async function updateProductV3(
 	if (!user) return { error: true, message: 'Unauthorized' }
 
 	try {
+		guardActiveProductHasStock(payload)
+
 		const slug = await ensureUniqueSlug(
 			db,
 			store.storeId,

@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { Trash, Plus } from 'lucide-react'
+import { Trash, Plus, AlertTriangle } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -31,6 +31,7 @@ import {
 	createProduct,
 	updateProduct,
 } from '@/lib/actions/products-mutations'
+import { deleteStorageObjects } from '@/lib/actions/products-admin'
 import { toast } from 'sonner'
 import {
 	Category,
@@ -52,38 +53,47 @@ const optionalNullableUrl = z.preprocess((value) => {
 	return value
 }, z.string().url().nullable().optional())
 
-const formSchema = z.object({
-	// Cambiado: exponer campo existente en DB para personalización.
-	is_customizable: z.boolean().default(false),
-	name: z
-		.string()
-		.min(2, 'El nombre debe tener al menos 2 caracteres'),
-	description: z.string().optional(),
-	base_price: z.coerce.number().min(0.01),
-	compare_at_price: optionalNullableNumber,
-	category_id: z.string().min(1, 'Selecciona una categoría'),
-	drop_id: z.string().optional().nullable(),
-	status: z.enum(['draft', 'active', 'archived']),
-	images: z.array(z.string()).min(1, 'Sube al menos una imagen'),
-	variants: z
-		.array(
-			z.object({
-				id: z.string().optional(),
-				size: z.string().min(1, 'Talla requerida'),
-				// Cambiado: aprovechar precio por variante del modelo actual.
-				price: optionalNullableNumber,
-				stock_quantity: z.coerce.number().min(0),
-				reserved_stock: z.coerce.number().min(0),
-				low_stock_threshold: z.coerce.number().min(0),
-				sku: z.string().optional().nullable(),
-				// Cambiado: exponer columnas huérfanas de variantes.
-				weight: optionalNullableNumber,
-				image_url: optionalNullableUrl,
-				track_inventory: z.boolean().default(true),
-			}),
-		)
-		.min(1, 'Agrega al menos una variante (talla/stock)'),
-})
+const formSchema = z
+	.object({
+		is_customizable: z.boolean().default(false),
+		name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
+		description: z.string().optional(),
+		base_price: z.coerce.number().min(0.01),
+		compare_at_price: optionalNullableNumber,
+		category_id: z.string().min(1, 'Selecciona una categoría'),
+		drop_id: z.string().optional().nullable(),
+		status: z.enum(['draft', 'active', 'archived']),
+		images: z.array(z.string()).min(1, 'Sube al menos una imagen'),
+		variants: z
+			.array(
+				z.object({
+					id: z.string().optional(),
+					size: z.string().min(1, 'Talla requerida'),
+					price: optionalNullableNumber,
+					stock_quantity: z.coerce.number().min(0),
+					// reserved_stock removed from form — managed by the system
+					low_stock_threshold: z.coerce.number().min(0),
+					sku: z.string().optional().nullable(),
+					weight: optionalNullableNumber,
+					image_url: optionalNullableUrl,
+					track_inventory: z.boolean().default(true),
+				}),
+			)
+			.min(1, 'Agrega al menos una variante (talla/stock)'),
+	})
+	.superRefine((data, ctx) => {
+		if (
+			data.compare_at_price != null &&
+			data.compare_at_price < data.base_price
+		) {
+			ctx.addIssue({
+				path: ['compare_at_price'],
+				code: z.ZodIssueCode.custom,
+				message:
+					'El precio original debe ser mayor o igual al precio actual.',
+			})
+		}
+	})
 
 type ProductFormValues = z.infer<typeof formSchema>
 
@@ -106,18 +116,15 @@ function normalizeImageKey(url: string) {
 
 function dedupeImages(urls: Array<string | null | undefined>) {
 	const uniqueByNormalized = new Map<string, string>()
-
 	for (const url of urls) {
 		if (!url) continue
 		const trimmed = url.trim()
 		if (!trimmed) continue
-
 		const normalized = normalizeImageKey(trimmed)
 		if (!uniqueByNormalized.has(normalized)) {
 			uniqueByNormalized.set(normalized, trimmed)
 		}
 	}
-
 	return Array.from(uniqueByNormalized.values())
 }
 
@@ -129,13 +136,18 @@ export function ProductForm({
 	const router = useRouter()
 	const [loading, setLoading] = useState(false)
 
-	// Merge image column + images array for UI
 	const defaultImages = initialData
 		? dedupeImages([
 				initialData.main_image,
 				...(initialData.images || []),
 			])
 		: []
+
+	// Track images uploaded this session (for orphan cleanup on abandon)
+	const originalImages = useRef(new Set<string>(defaultImages))
+	const uploadedThisSession = useRef(new Set<string>())
+	const pendingRemovals = useRef(new Set<string>())
+	const submittedSuccessfully = useRef(false)
 
 	const form = useForm<ProductFormValues>({
 		resolver: zodResolver(formSchema),
@@ -155,11 +167,10 @@ export function ProductForm({
 							? initialData.variants.map((v: any) => ({
 									...v,
 									price: v.price ?? null,
-									reserved_stock: v.reserved_stock || 0,
 									low_stock_threshold: v.low_stock_threshold || 5,
 									sku: v.sku || '',
 									weight: v.weight ?? null,
-									image_url: v.image_url ?? '',
+									image_url: v.image_url ?? null,
 									track_inventory: v.track_inventory ?? true,
 								}))
 							: [
@@ -167,11 +178,10 @@ export function ProductForm({
 										size: 'M',
 										price: null,
 										stock_quantity: 0,
-										reserved_stock: 0,
 										low_stock_threshold: 5,
 										sku: '',
 										weight: null,
-										image_url: '',
+										image_url: null,
 										track_inventory: true,
 									},
 								],
@@ -191,11 +201,10 @@ export function ProductForm({
 							size: 'M',
 							price: null,
 							stock_quantity: 0,
-							reserved_stock: 0,
 							low_stock_threshold: 5,
 							sku: '',
 							weight: null,
-							image_url: '',
+							image_url: null,
 							track_inventory: true,
 						},
 					],
@@ -207,13 +216,43 @@ export function ProductForm({
 		name: 'variants',
 	})
 
+	// P-10: Warn before leaving with unsaved changes
+	useEffect(() => {
+		const handler = (e: BeforeUnloadEvent) => {
+			if (form.formState.isDirty) {
+				e.preventDefault()
+				e.returnValue = ''
+			}
+		}
+		window.addEventListener('beforeunload', handler)
+		return () => window.removeEventListener('beforeunload', handler)
+	}, [form.formState.isDirty])
+
+	// P-01: Delete newly uploaded images if the form is abandoned without saving
+	useEffect(() => {
+		return () => {
+			if (submittedSuccessfully.current) return
+			const toDelete = [...uploadedThisSession.current].filter(
+				(url) => !originalImages.current.has(url),
+			)
+			if (toDelete.length) {
+				void deleteStorageObjects(toDelete)
+			}
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [])
+
+	const watchedVariants = form.watch('variants')
+	const watchedStatus = form.watch('status')
+	const allVariantsOutOfStock =
+		watchedStatus === 'active' &&
+		watchedVariants.every((v) => Number(v.stock_quantity || 0) <= 0)
+
 	const onSubmit = async (data: ProductFormValues) => {
 		try {
 			setLoading(true)
 			const normalizedImages = dedupeImages(data.images)
 
-			// Format for backend
-			// First image is 'image', rest are 'images'
 			const payload = {
 				...data,
 				images: normalizedImages,
@@ -232,6 +271,13 @@ export function ProductForm({
 					description: result.message,
 				})
 			} else {
+				submittedSuccessfully.current = true
+
+				// P-02: Delete images removed during this session
+				if (pendingRemovals.current.size > 0) {
+					void deleteStorageObjects([...pendingRemovals.current])
+				}
+
 				toast.success(
 					initialData ? 'Producto actualizado' : 'Producto creado',
 				)
@@ -282,6 +328,11 @@ export function ProductForm({
 								</p>
 							)}
 						</div>
+
+						{/* P-04: Hint about product/variant structure */}
+						<p className="text-xs text-muted-foreground rounded-md border border-dashed px-3 py-2">
+							<strong>Tip:</strong> Un producto agrupa variantes (tallas, colores). No crees un producto por talla — agrégalas como variantes abajo.
+						</p>
 
 						<div className="space-y-2">
 							<Label>Descripción</Label>
@@ -356,12 +407,23 @@ export function ProductForm({
 								/>
 							</div>
 							<div className="space-y-2">
-								<Label>Precio Original (Opcional)</Label>
+								{/* P-07: compare_at_price validation feedback */}
+								<Label>
+									Precio Original (Opcional){' '}
+									<span className="text-xs text-muted-foreground font-normal">
+										debe ser ≥ precio actual
+									</span>
+								</Label>
 								<Input
 									type="number"
 									step="0.01"
 									{...form.register('compare_at_price')}
 								/>
+								{form.formState.errors.compare_at_price && (
+									<p className="text-red-500 text-sm">
+										{form.formState.errors.compare_at_price.message}
+									</p>
+								)}
 							</div>
 						</div>
 
@@ -389,6 +451,15 @@ export function ProductForm({
 										</SelectItem>
 									</SelectContent>
 								</Select>
+								{/* P-05: Stock warning in form */}
+								{allVariantsOutOfStock && (
+									<div className="flex items-center gap-1.5 text-amber-600 text-xs mt-1">
+										<AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+										<span>
+											Todas las variantes tienen stock 0. El producto aparecerá agotado.
+										</span>
+									</div>
+								)}
 							</div>
 
 							<div className="flex items-center justify-between rounded-lg border p-3.5">
@@ -432,6 +503,12 @@ export function ProductForm({
 										shouldDirty: true,
 									})
 								}
+								onUploaded={(url) =>
+									uploadedThisSession.current.add(url)
+								}
+								onBeforeRemove={(url) =>
+									pendingRemovals.current.add(url)
+								}
 							/>
 						</div>
 						{form.formState.errors.images && (
@@ -459,11 +536,10 @@ export function ProductForm({
 									size: '',
 									price: null,
 									stock_quantity: 0,
-									reserved_stock: 0,
 									low_stock_threshold: 5,
 									sku: '',
 									weight: null,
-									image_url: '',
+									image_url: null,
 									track_inventory: true,
 								})
 							}
@@ -497,7 +573,9 @@ export function ProductForm({
 									<div className="space-y-2">
 										<Label>Talle</Label>
 										<Input
-											{...form.register(`variants.${index}.size`)}
+											{...form.register(
+												`variants.${index}.size`,
+											)}
 											placeholder="S, M, L..."
 										/>
 										{form.formState.errors.variants?.[index]
@@ -511,13 +589,15 @@ export function ProductForm({
 										<Label>
 											Precio Var.{' '}
 											<span className="text-xs text-muted-foreground font-normal">
-												(vacio = usa precio base)
+												(vacío = usa precio base)
 											</span>
 										</Label>
 										<Input
 											type="number"
 											step="0.01"
-											{...form.register(`variants.${index}.price`)}
+											{...form.register(
+												`variants.${index}.price`,
+											)}
 										/>
 									</div>
 									<div className="space-y-2">
@@ -535,15 +615,27 @@ export function ProductForm({
 											</p>
 										)}
 									</div>
-									<div className="space-y-2">
-										<Label>Reservado</Label>
-										<Input
-											type="number"
-											{...form.register(
-												`variants.${index}.reserved_stock`,
-											)}
-										/>
-									</div>
+									{/* P-08: reserved_stock removed — show read-only in edit mode */}
+									{initialData && (
+										<div className="space-y-2">
+											<Label className="text-muted-foreground">
+												Reservado{' '}
+												<span className="text-xs font-normal">
+													(sist.)
+												</span>
+											</Label>
+											<Input
+												type="number"
+												value={
+													initialData.variants?.[index]
+														?.reserved_stock ?? 0
+												}
+												readOnly
+												disabled
+												className="bg-muted/40"
+											/>
+										</div>
+									)}
 									<div className="space-y-2">
 										<Label>Umbral Bajo</Label>
 										<Input
@@ -556,7 +648,9 @@ export function ProductForm({
 									<div className="space-y-2">
 										<Label>SKU</Label>
 										<Input
-											{...form.register(`variants.${index}.sku`)}
+											{...form.register(
+												`variants.${index}.sku`,
+											)}
 											placeholder="Opcional"
 										/>
 									</div>
@@ -565,18 +659,48 @@ export function ProductForm({
 										<Input
 											type="number"
 											step="0.01"
-											{...form.register(`variants.${index}.weight`)}
-										/>
-									</div>
-									<div className="space-y-2">
-										<Label>Imagen Var.</Label>
-										<Input
 											{...form.register(
-												`variants.${index}.image_url`,
+												`variants.${index}.weight`,
 											)}
-											placeholder="https://..."
 										/>
 									</div>
+								</div>
+
+								{/* P-03: Replace text input with ImageUpload for variant image */}
+								<div className="mt-4 space-y-2">
+									<Label>
+										Imagen de variante{' '}
+										<span className="text-xs text-muted-foreground font-normal">
+											(opcional — hereda imagen del producto)
+										</span>
+									</Label>
+									<ImageUpload
+										value={
+											form.watch(
+												`variants.${index}.image_url`,
+											)
+												? [
+														form.watch(
+															`variants.${index}.image_url`,
+														) as string,
+													]
+												: []
+										}
+										onChange={(urls) =>
+											form.setValue(
+												`variants.${index}.image_url`,
+												urls[0] ?? null,
+												{ shouldDirty: true },
+											)
+										}
+										onUploaded={(url) =>
+											uploadedThisSession.current.add(url)
+										}
+										onBeforeRemove={(url) =>
+											pendingRemovals.current.add(url)
+										}
+										maxImages={1}
+									/>
 								</div>
 
 								<div className="mt-4 flex items-center gap-2 rounded-md border bg-background p-3">
