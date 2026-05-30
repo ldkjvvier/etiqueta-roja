@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import { ReactNode } from 'react'
 import { HeroStudioState, HeroLayoutPreset } from '@/types/heroStudio.types'
+import { isSplitPreset } from '@/lib/hero/presets'
 
 export type { HeroLayoutPreset }
 
@@ -16,16 +17,6 @@ interface HeroBannerLayoutProps {
 	containerClassName?: string
 	showBottomBorder?: boolean
 	renderEmbeddableVideo?: boolean
-	canvasRef?: React.Ref<HTMLDivElement>
-	onCanvasPointerMove?: (
-		event: React.PointerEvent<HTMLDivElement>,
-	) => void
-	onCanvasPointerUp?: (
-		event: React.PointerEvent<HTMLDivElement>,
-	) => void
-	onCanvasPointerLeave?: (
-		event: React.PointerEvent<HTMLDivElement>,
-	) => void
 	children: ReactNode
 }
 
@@ -63,18 +54,11 @@ export function HeroBannerLayout({
 	containerClassName,
 	showBottomBorder = false,
 	renderEmbeddableVideo = false,
-	canvasRef,
-	onCanvasPointerMove,
-	onCanvasPointerUp,
-	onCanvasPointerLeave,
 	children,
 }: HeroBannerLayoutProps) {
 	const heightClass = HEIGHT_CLASS_BY_SETTING[bannerHeight]
-	const isSplitPreset =
-		preset === 'editorial-left' || preset === 'product-right'
-
 	// --- SPLIT LAYOUT (editorial-left, product-right) ---
-	if (isSplitPreset) {
+	if (isSplitPreset(preset)) {
 		const gridCols =
 			preset === 'product-right'
 				? 'md:grid-cols-[40%_60%]'
@@ -96,14 +80,10 @@ export function HeroBannerLayout({
 						)}
 					>
 						<div
-							ref={canvasRef}
 							className={cx(
 								'relative h-full flex flex-col justify-center px-8 md:px-12 lg:px-16 py-14',
 								canvasClassName,
 							)}
-							onPointerMove={onCanvasPointerMove}
-							onPointerUp={onCanvasPointerUp}
-							onPointerLeave={onCanvasPointerLeave}
 						>
 							{children}
 						</div>
@@ -248,15 +228,11 @@ export function HeroBannerLayout({
 				)}
 			>
 				<div
-					ref={canvasRef}
 					className={cx(
 						`relative ${heightClass}`,
 						canvasPresetClass,
 						canvasClassName,
 					)}
-					onPointerMove={onCanvasPointerMove}
-					onPointerUp={onCanvasPointerUp}
-					onPointerLeave={onCanvasPointerLeave}
 				>
 					{children}
 				</div>
