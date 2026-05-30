@@ -426,6 +426,7 @@ export async function Hero() {
 		>
 			<HeroPresetContent
 				preset={preset}
+				contentAlignment={value.content_alignment}
 				badge={value.badge}
 				badgeColor={value.badge_color}
 				title={value.title}

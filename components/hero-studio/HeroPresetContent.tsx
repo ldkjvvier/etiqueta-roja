@@ -7,12 +7,15 @@ import {
 	HeroLayoutPreset,
 	isSplitPreset,
 	titleWeightClass,
+	type HeroContentAlignment,
 	type HeroTitleFontWeight,
 } from '@/lib/hero/presets'
 import type { HeroCTAConfig } from '@/lib/validation/hero-cta'
 
 export interface HeroPresetContentProps {
 	preset: HeroLayoutPreset
+	/** Alineación del copy. Ignorada en el preset `centered` (siempre centrado). */
+	contentAlignment: HeroContentAlignment
 	badge?: string
 	badgeColor: string
 	title: string
@@ -48,7 +51,11 @@ export function HeroPresetContent(props: HeroPresetContentProps) {
 	const alignmentClass =
 		props.preset === 'centered'
 			? 'items-center text-center'
-			: 'items-start text-left'
+			: props.contentAlignment === 'center'
+				? 'items-center text-center'
+				: props.contentAlignment === 'right'
+					? 'items-end text-right'
+					: 'items-start text-left'
 
 	return (
 		<div className={`flex flex-col gap-5 ${alignmentClass}`}>

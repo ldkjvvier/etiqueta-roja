@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import { ReactNode } from 'react'
 import { HeroStudioState, HeroLayoutPreset } from '@/types/heroStudio.types'
-import { isSplitPreset } from '@/lib/hero/presets'
+import { heroImageSizes, isSplitPreset } from '@/lib/hero/presets'
 
 export type { HeroLayoutPreset }
 
@@ -117,9 +117,11 @@ export function HeroBannerLayout({
 								fill
 								priority
 								fetchPriority="high"
-								sizes={
-									preset === 'product-right' ? '60vw' : '50vw'
-								}
+								sizes={heroImageSizes(
+									preset === 'product-right'
+										? 'product-right'
+										: 'editorial-left',
+								)}
 								className={cx(
 									'object-cover',
 									backgroundImageMobile &&

@@ -53,6 +53,7 @@ function HeroStudioPreviewComponent({
 				>
 					<HeroPresetContent
 						preset={preset}
+						contentAlignment={state.layout.contentAlignment}
 						badge={state.content.badge}
 						badgeColor={state.styles.badgeColor}
 						title={state.content.title}
