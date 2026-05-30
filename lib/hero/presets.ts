@@ -1,6 +1,4 @@
 // lib/hero/presets.ts
-import type { HeroCTAConfig } from '@/lib/validation/hero-cta'
-
 export type HeroLayoutPreset =
 	| 'editorial-left'
 	| 'centered'
@@ -24,7 +22,7 @@ export const HERO_LAYOUT_PRESETS: readonly HeroPresetMeta[] = [
 		description: 'Texto izquierda, foto derecha (50/50)',
 		visual: '▐▌',
 		helpText:
-			'Copy alineado a la izquierda con la foto cubriendo el 60% derecho. Ideal para el drop de un producto individual.',
+			'Copy alineado a la izquierda con la foto cubriendo la mitad derecha (50/50). Ideal para el drop de un producto individual.',
 	},
 	{
 		value: 'centered',
@@ -93,6 +91,3 @@ export function heroImageSizes(preset: HeroLayoutPreset): string {
 	if (preset === 'editorial-left') return '(min-width: 768px) 50vw, 100vw'
 	return '100vw'
 }
-
-// Tipo re-exportado por conveniencia para consumidores del módulo.
-export type { HeroCTAConfig }
