@@ -25,17 +25,17 @@ export function CropMarks({ className }: { className?: string }) {
       aria-hidden="true"
     >
       {/* Top-left */}
-      <span className={cn(base, 'top-2 left-2 h-px w-3.25',    !reduce && '-translate-x-1')} />
-      <span className={cn(base, 'top-2 left-2 h-3.25 w-px',    !reduce && '-translate-y-1')} />
+      <span className={cn(base, 'top-2 left-2 h-px w-3.25',    reduce === false && '-translate-x-1')} />
+      <span className={cn(base, 'top-2 left-2 h-3.25 w-px',    reduce === false && '-translate-y-1')} />
       {/* Top-right */}
-      <span className={cn(base, 'top-2 right-2 h-px w-3.25',   !reduce && 'translate-x-1')} />
-      <span className={cn(base, 'top-2 right-2 h-3.25 w-px',   !reduce && '-translate-y-1')} />
+      <span className={cn(base, 'top-2 right-2 h-px w-3.25',   reduce === false && 'translate-x-1')} />
+      <span className={cn(base, 'top-2 right-2 h-3.25 w-px',   reduce === false && '-translate-y-1')} />
       {/* Bottom-left */}
-      <span className={cn(base, 'bottom-2 left-2 h-px w-3.25',  !reduce && '-translate-x-1')} />
-      <span className={cn(base, 'bottom-2 left-2 h-3.25 w-px',  !reduce && 'translate-y-1')} />
+      <span className={cn(base, 'bottom-2 left-2 h-px w-3.25',  reduce === false && '-translate-x-1')} />
+      <span className={cn(base, 'bottom-2 left-2 h-3.25 w-px',  reduce === false && 'translate-y-1')} />
       {/* Bottom-right */}
-      <span className={cn(base, 'bottom-2 right-2 h-px w-3.25', !reduce && 'translate-x-1')} />
-      <span className={cn(base, 'bottom-2 right-2 h-3.25 w-px', !reduce && 'translate-y-1')} />
+      <span className={cn(base, 'bottom-2 right-2 h-px w-3.25', reduce === false && 'translate-x-1')} />
+      <span className={cn(base, 'bottom-2 right-2 h-3.25 w-px', reduce === false && 'translate-y-1')} />
     </div>
   )
 }
