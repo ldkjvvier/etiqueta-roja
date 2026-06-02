@@ -1,17 +1,14 @@
 'use client'
 
 import Link from 'next/link'
-import { motion, useReducedMotion } from 'motion/react'
 import type { Product } from '@/lib/store-context'
 import { ProductCardImage } from './product-card-image'
+import { CropMarks, Stamp } from '@/components/brand'
 import { formatPrice } from '@/lib/utils'
 
 export type { Product } from '@/lib/store-context'
 
-const MotionLink = motion(Link)
-
 export function ProductCard({ product }: { product: Product }) {
-	const reduce = useReducedMotion()
 	const isSoldOut = product.stockStatus === 'sold_out'
 
 	const MAX_IMAGES = 2
@@ -29,22 +26,14 @@ export function ProductCard({ product }: { product: Product }) {
 				alt={product.name}
 				isSoldOut={isSoldOut}
 			/>
-
-			{product.stockStatus === 'low' && (
-				<span className="absolute top-3 left-3 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-1 uppercase tracking-wider z-20">
-					Poco Stock
-				</span>
-			)}
-			{isSoldOut && (
-				<span className="absolute top-3 left-3 bg-foreground text-background text-[10px] font-bold px-2 py-1 uppercase tracking-wider z-20">
-					Agotado
-				</span>
-			)}
+			{product.stockStatus === 'low' && <Stamp label="ÚLTIMO" />}
+			{isSoldOut && <Stamp label="AGOTADO" />}
 			{product.originalPrice && !isSoldOut && (
 				<span className="absolute top-3 right-3 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-1 z-20">
 					OFERTA
 				</span>
 			)}
+			{!isSoldOut && <CropMarks />}
 		</div>
 	)
 
@@ -68,7 +57,7 @@ export function ProductCard({ product }: { product: Product }) {
 
 	if (isSoldOut) {
 		return (
-			<div className="group/card border border-border bg-card opacity-70">
+			<div className="group/card border border-border bg-card">
 				{imageSection}
 				{infoSection}
 			</div>
@@ -76,23 +65,13 @@ export function ProductCard({ product }: { product: Product }) {
 	}
 
 	return (
-		<MotionLink
-			href={
-				product.slug
-					? `/producto/${product.slug}`
-					: `/producto/${product.id}`
-			}
+		<Link
+			href={product.slug ? `/producto/${product.slug}` : `/producto/${product.id}`}
 			className="group/card relative block border border-border bg-card cursor-pointer hover:z-10"
 			aria-label={`Ver ${product.name}`}
-			whileHover={reduce ? undefined : { scale: 1.02 }}
-			transition={
-				reduce
-					? undefined
-					: { type: 'spring', stiffness: 300, damping: 25 }
-			}
 		>
 			{imageSection}
 			{infoSection}
-		</MotionLink>
+		</Link>
 	)
 }
