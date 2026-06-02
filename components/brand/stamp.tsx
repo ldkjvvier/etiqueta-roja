@@ -12,7 +12,7 @@ export function Stamp({
   label,
   className,
 }: {
-  label: StampLabel | string
+  label: StampLabel | (string & {})
   className?: string
 }) {
   return (
