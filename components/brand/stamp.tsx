@@ -4,9 +4,9 @@ type StampLabel = 'AGOTADO' | 'DROP' | 'ÚLTIMO'
 
 /**
  * Sello diagonal sobre la imagen del producto.
- * Variante aprobada: doble borde (border-2 + outline-1) + mix-blend-multiply.
+ * Variante aprobada: doble borde (border-2 + outline-1), sin blend mode.
  * El padre debe tener `position: relative`.
- * La imagen de fondo debe aplicar grayscale desde el componente que usa Stamp (no responsabilidad de Stamp).
+ * La imagen de fondo aplica grayscale + brightness-75 para garantizar contraste con el sello.
  */
 export function Stamp({
   label,
@@ -26,8 +26,8 @@ export function Stamp({
           // Nota: usar propiedad arbitraria para outline evita ambigüedad en Tailwind v4
           'border-2 border-brand-red',
           '[outline:1px_solid_var(--color-brand-red)] [outline-offset:3px]',
-          // Rotación e integración visual con la imagen
-          'rotate-[-8deg] mix-blend-multiply',
+          // Rotación — sin blend mode: el sello debe ser opaco sobre cualquier fotografía
+          'rotate-[-8deg]',
           // Tipografía
           'font-mono font-bold text-sm uppercase tracking-[0.2em]',
           'text-brand-red-strong',

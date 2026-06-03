@@ -34,7 +34,7 @@ export function ProductCardImage({
 						hasSwap
 							? 'transition-opacity duration-500 group-hover/card:opacity-0'
 							: '',
-						isSoldOut ? 'grayscale' : '',
+						isSoldOut ? 'grayscale brightness-75' : '',
 					]
 						.filter(Boolean)
 						.join(' ')}
