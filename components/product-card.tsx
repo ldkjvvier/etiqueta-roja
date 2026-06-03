@@ -4,7 +4,7 @@ import Link from 'next/link'
 import type { Product } from '@/lib/store-context'
 import { ProductCardImage } from './product-card-image'
 import { CropMarks, Stamp } from '@/components/brand'
-import { formatPrice } from '@/lib/utils'
+import { formatPrice, cn } from '@/lib/utils'
 
 export type { Product } from '@/lib/store-context'
 
@@ -27,7 +27,25 @@ export function ProductCard({ product }: { product: Product }) {
 				isSoldOut={isSoldOut}
 			/>
 			{product.stockStatus === 'low' && <Stamp label="ÚLTIMO" />}
-			{isSoldOut && <Stamp label="AGOTADO" />}
+			{isSoldOut && (
+				<div
+					className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
+					aria-hidden="true"
+				>
+					<span
+						className={cn(
+							'rotate-[-10deg]',
+							'border border-white/70',
+							'[outline:1px_solid_rgba(255,255,255,0.28)] [outline-offset:4px]',
+							'font-mono font-bold text-[11px] uppercase tracking-[0.25em]',
+							'text-white px-3 py-1.5 whitespace-nowrap select-none',
+							'[text-shadow:0_1px_18px_rgba(0,0,0,0.9),_0_0_6px_rgba(0,0,0,0.6)]',
+						)}
+					>
+						AGOTADO
+					</span>
+				</div>
+			)}
 			{product.originalPrice && !isSoldOut && (
 				<span className="absolute top-3 right-3 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-1 z-20">
 					OFERTA
