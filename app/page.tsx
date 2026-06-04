@@ -10,7 +10,7 @@ import { Footer } from '@/components/footer'
 export default function Home({
 	searchParams,
 }: {
-	searchParams: Promise<{ page?: string; q?: string }>
+	searchParams: Promise<{ page?: string }>
 }) {
 	return (
 		<div className="min-h-screen flex flex-col">

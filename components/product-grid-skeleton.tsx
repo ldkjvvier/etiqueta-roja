@@ -16,7 +16,7 @@ export function ProductGridSkeleton() {
 			aria-label="Cargando productos"
 			aria-busy="true"
 		>
-			<div className="container mx-auto px-4">
+			<div className="container mx-auto px-2 md:px-4">
 				{/* Placeholder del header — mismo alto que el real para evitar CLS */}
 				<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
 					<div className="h-10 w-20 bg-secondary" />
@@ -31,7 +31,7 @@ export function ProductGridSkeleton() {
 				</div>
 
 				{/* Grid — mismo layout que ProductGrid para CLS < 0.1 */}
-				<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
+				<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3">
 					{Array.from({ length: 8 }, (_, i) => (
 						<SkeletonCell key={i} />
 					))}
