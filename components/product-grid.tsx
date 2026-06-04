@@ -21,10 +21,19 @@ function paginationRange(
 	current: number,
 	total: number,
 ): (number | '...')[] {
-	if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+	if (total <= 7)
+		return Array.from({ length: total }, (_, i) => i + 1)
 	if (current <= 4) return [1, 2, 3, 4, 5, '...', total]
 	if (current >= total - 3)
-		return [1, '...', total - 4, total - 3, total - 2, total - 1, total]
+		return [
+			1,
+			'...',
+			total - 4,
+			total - 3,
+			total - 2,
+			total - 1,
+			total,
+		]
 	return [1, '...', current - 1, current, current + 1, '...', total]
 }
 
@@ -34,8 +43,11 @@ export function ProductGrid({
 	totalPages,
 }: ProductGridProps) {
 	return (
-		<section id="productos" className="py-16 border-b border-border">
-			<div className="container mx-auto px-2 md:px-4">
+		<section
+			id="productos"
+			className="pt-4 md:pt-8 lg:pt-12 pb-8 md:pb-12 lg:pb-16 border-b border-border"
+		>
+			<div className="px-4 md:px-8 lg:px-12">
 				{products.length === 0 ? (
 					<div className="border border-border p-12 text-center">
 						<p className="font-bold uppercase tracking-wide">
@@ -43,7 +55,7 @@ export function ProductGrid({
 						</p>
 					</div>
 				) : (
-					<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3">
+					<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-1 md:gap-x-1.5 gap-y-3 md:gap-y-4 lg:gap-y-5">
 						{products.map((product) => (
 							<ProductCard key={product.id} product={product} />
 						))}
@@ -85,7 +97,9 @@ export function ProductGrid({
 							</span>
 
 							<Link
-								href={buildPageUrl(Math.min(totalPages, currentPage + 1))}
+								href={buildPageUrl(
+									Math.min(totalPages, currentPage + 1),
+								)}
 								aria-label="Página siguiente"
 								aria-disabled={currentPage === totalPages}
 								tabIndex={currentPage === totalPages ? -1 : 0}
@@ -98,7 +112,10 @@ export function ProductGrid({
 										: 'hover:bg-foreground hover:text-background active:scale-[0.97]',
 								].join(' ')}
 							>
-								<ChevronRight className="w-5 h-5" aria-hidden="true" />
+								<ChevronRight
+									className="w-5 h-5"
+									aria-hidden="true"
+								/>
 							</Link>
 						</div>
 
@@ -154,7 +171,9 @@ export function ProductGrid({
 							)}
 
 							<Link
-								href={buildPageUrl(Math.min(totalPages, currentPage + 1))}
+								href={buildPageUrl(
+									Math.min(totalPages, currentPage + 1),
+								)}
 								aria-label="Página siguiente"
 								aria-disabled={currentPage === totalPages}
 								tabIndex={currentPage === totalPages ? -1 : 0}
@@ -167,7 +186,10 @@ export function ProductGrid({
 										: 'hover:bg-primary hover:border-primary hover:text-primary-foreground',
 								].join(' ')}
 							>
-								<ChevronRight className="w-4 h-4" aria-hidden="true" />
+								<ChevronRight
+									className="w-4 h-4"
+									aria-hidden="true"
+								/>
 							</Link>
 						</div>
 

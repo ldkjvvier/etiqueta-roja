@@ -12,11 +12,11 @@ function SkeletonCell() {
 export function ProductGridSkeleton() {
 	return (
 		<section
-			className="py-24 border-b border-border"
+			className="pt-4 md:pt-8 lg:pt-12 pb-12 md:pb-16 lg:pb-24 border-b border-border"
 			aria-label="Cargando productos"
 			aria-busy="true"
 		>
-			<div className="container mx-auto px-2 md:px-4">
+			<div className="px-4 md:px-8 lg:px-12">
 				{/* Placeholder del header — mismo alto que el real para evitar CLS */}
 				<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
 					<div className="h-10 w-20 bg-secondary" />
@@ -31,7 +31,7 @@ export function ProductGridSkeleton() {
 				</div>
 
 				{/* Grid — mismo layout que ProductGrid para CLS < 0.1 */}
-				<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3">
+				<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-1 md:gap-x-1.5 gap-y-3 md:gap-y-4 lg:gap-y-5">
 					{Array.from({ length: 8 }, (_, i) => (
 						<SkeletonCell key={i} />
 					))}
