@@ -50,11 +50,11 @@
 
 @keyframes skeleton-scan {
   from { transform: translateX(-100%); }
-  to   { transform: translateX(700%); }
+  to   { transform: translateX(200%); }
 }
 
 @theme inline {
-  --animate-skeleton-scan: skeleton-scan 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-skeleton-scan: skeleton-scan 1.8s linear infinite;
 
   /* Easing para crossfade de imágenes en product card */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);

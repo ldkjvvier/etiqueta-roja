@@ -1,16 +1,9 @@
 function SkeletonCell() {
 	return (
 		<div className="aspect-4/5 bg-product-surface relative overflow-hidden">
-			{/*
-			 * Hairline roja de registro que barre una sola vez.
-			 * w-[15%] → translateX(-100%) parte en -15% (fuera del borde izq)
-			 *            translateX(700%) termina en 105% (fuera del borde der).
-			 * motion-safe: solo anima si el usuario no pidió reduce-motion.
-			 * motion-reduce: hidden → bloque estático bg-secondary, sin barrido.
-			 */}
 			<div
 				aria-hidden="true"
-				className="absolute inset-y-0 left-0 w-[15%] bg-gradient-to-r from-transparent via-primary/25 to-transparent motion-safe:animate-skeleton-scan motion-reduce:hidden"
+				className="absolute inset-y-0 left-0 w-1/2 bg-linear-to-r from-transparent via-white/40 to-transparent motion-safe:animate-skeleton-scan motion-reduce:hidden"
 			/>
 		</div>
 	)
