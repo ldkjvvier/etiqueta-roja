@@ -25,8 +25,10 @@ function Logo({ compact }: { compact?: boolean }) {
 	return (
 		<span
 			className={cn(
-				'font-black tracking-tighter text-foreground transition-all duration-300',
-				compact ? 'text-lg md:text-xl' : 'text-xl md:text-2xl',
+				'font-black tracking-tighter text-foreground transition-all duration-300 whitespace-nowrap',
+				compact
+					? 'text-base sm:text-lg md:text-xl'
+					: 'text-base sm:text-xl md:text-2xl',
 			)}
 		>
 			ETIQUETA{' '}
@@ -36,8 +38,8 @@ function Logo({ compact }: { compact?: boolean }) {
 					className={cn(
 						'inline-block fill-primary text-primary ml-[0.1rem] -mt-1 transition-all duration-300',
 						compact
-							? 'w-3.5 h-3.5 md:w-4 md:h-4'
-							: 'w-4 h-4 md:w-5 md:h-5',
+							? 'w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4'
+							: 'w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5',
 					)}
 				/>
 				JA
@@ -73,11 +75,19 @@ export function Header() {
 					: 'bg-background border-b border-border/20',
 			)}
 		>
-			<div className="container mx-auto px-4">
+			{/* safe-area-inset-* vía inline style — responsive px se gestiona aquí
+			    para no ser sobreescrito por las clases Tailwind */}
+			<div
+				className="container mx-auto"
+				style={{
+					paddingLeft: 'max(1rem, env(safe-area-inset-left))',
+					paddingRight: 'max(1rem, env(safe-area-inset-right))',
+				}}
+			>
 				<div
 					className={cn(
 						'grid grid-cols-3 items-center transition-all duration-300',
-						scrolled ? 'h-14' : 'h-16 md:h-20',
+						scrolled ? 'h-14' : 'h-14 sm:h-16 md:h-20',
 					)}
 				>
 					{/* LEFT — Mobile: hamburger | Desktop: nav links */}
@@ -93,7 +103,7 @@ export function Header() {
 										variant="ghost"
 										size="icon"
 										type="button"
-										className="-ml-2 hover:bg-transparent hover:text-primary active:scale-[0.97]"
+										className="-ml-2 min-w-11 min-h-11 hover:bg-transparent hover:text-primary active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
 										aria-label="Abrir menú"
 									>
 										<Menu className="h-6 w-6" />
@@ -127,7 +137,7 @@ export function Header() {
 												type="button"
 												aria-label="Cerrar menú"
 												onClick={() => setIsMobileMenuOpen(false)}
-												className="-mr-2 hover:bg-transparent hover:text-primary active:scale-[0.97]"
+												className="-mr-2 min-w-11 min-h-11 hover:bg-transparent hover:text-primary active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
 											>
 												<X className="h-6 w-6" />
 												<span className="sr-only">Cerrar menú</span>
@@ -144,9 +154,9 @@ export function Header() {
 													key={link.label}
 													href={link.href}
 													onClick={() => setIsMobileMenuOpen(false)}
-													className="group flex items-center justify-between py-5 border-b border-border hover:text-primary transition-colors duration-150"
+													className="group flex items-center justify-between py-5 border-b border-border hover:text-primary transition-colors duration-150 focus-visible:outline-none focus-visible:text-primary"
 												>
-													<span className="text-[2.75rem] font-black tracking-tight leading-none">
+													<span className="text-[2.25rem] sm:text-[2.75rem] font-black tracking-tight leading-none">
 														{link.label}
 													</span>
 													<ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all duration-150" />
@@ -154,12 +164,18 @@ export function Header() {
 											))}
 										</nav>
 
-										{/* Bottom CTA — cart shortcut */}
-										<div className="mt-auto px-6 pb-10 pt-6">
+										{/* Bottom CTA — cart shortcut, respeta safe-area-inset-bottom */}
+										<div
+											className="mt-auto px-6 pt-6"
+											style={{
+												paddingBottom:
+													'max(2.5rem, env(safe-area-inset-bottom))',
+											}}
+										>
 											<Button
 												type="button"
 												variant="outline"
-												className="w-full h-12 font-bold text-sm tracking-widest uppercase border-2 border-foreground hover:bg-foreground hover:text-background transition-colors duration-150"
+												className="w-full h-12 font-bold text-sm tracking-widest uppercase border-2 border-foreground hover:bg-foreground hover:text-background transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
 												onClick={() => {
 													setIsMobileMenuOpen(false)
 													setIsCartOpen(true)
@@ -184,7 +200,7 @@ export function Header() {
 
 						{/* Desktop nav */}
 						<nav
-							className="hidden md:flex items-center gap-8"
+							className="hidden md:flex items-center gap-6 lg:gap-8"
 							aria-label="Navegación principal"
 						>
 							{navLinks.map((link) => (
@@ -192,12 +208,12 @@ export function Header() {
 									key={link.label}
 									href={link.href}
 									title={link.label}
-									className="relative text-sm font-bold tracking-widest py-1 group"
+									className="relative text-sm font-bold tracking-widest py-1 group focus-visible:outline-none focus-visible:text-primary"
 								>
 									{link.label}
 									<span
 										aria-hidden="true"
-										className="absolute bottom-0 left-0 h-[2px] w-0 bg-primary transition-all duration-200 ease-out group-hover:w-full"
+										className="absolute bottom-0 left-0 h-[2px] w-0 bg-primary transition-all duration-200 ease-out group-hover:w-full group-focus-visible:w-full"
 									/>
 								</Link>
 							))}
@@ -205,7 +221,7 @@ export function Header() {
 					</div>
 
 					{/* CENTER — Logo (both mobile and desktop) */}
-					<div className="flex justify-center">
+					<div className="flex justify-center min-w-0">
 						<Link
 							href="/"
 							aria-label="Ir al inicio — ETIQUETA ROJA"
@@ -222,7 +238,7 @@ export function Header() {
 							variant="ghost"
 							size="icon"
 							type="button"
-							className="relative md:hidden hover:bg-transparent hover:text-primary active:scale-[0.97]"
+							className="relative md:hidden min-w-11 min-h-11 hover:bg-transparent hover:text-primary active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
 							onClick={() => setIsCartOpen(true)}
 							aria-label={
 								cartCount > 0
@@ -253,7 +269,7 @@ export function Header() {
 							variant="ghost"
 							size="sm"
 							type="button"
-							className="hidden md:inline-flex items-center gap-2 font-bold text-sm tracking-widest hover:bg-transparent hover:text-primary active:scale-[0.97] transition-colors"
+							className="hidden md:inline-flex items-center gap-2 min-h-11 font-bold text-sm tracking-widest hover:bg-transparent hover:text-primary active:scale-[0.97] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
 							onClick={() => setIsCartOpen(true)}
 							aria-label={
 								cartCount > 0
