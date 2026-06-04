@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
+import { unstable_cache } from 'next/cache'
+import { createClient, createPublicClient } from '@/lib/supabase/server'
 import type { Product } from '@/lib/store-context'
 import { getPublicStoreContext } from '@/lib/data/admin-context'
 
@@ -26,6 +27,14 @@ type ProductRow = {
 	variants: VariantRow[]
 	gallery?: Array<{ image_url: string; display_order: number }>
 }
+
+// Lean SELECT for the product listing grid — only fields needed by ProductCard.
+// Detail pages use getPublicProductsBaseQuery which fetches the full payload.
+const PRODUCT_LISTING_SELECT =
+	'id,slug,name,base_price,compare_at_price,main_image,' +
+	'category:categories(name),' +
+	'variants:product_variants(id,combination_key,stock_quantity,reserved_stock,low_stock_threshold,track_inventory),' +
+	'gallery:product_images(image_url,display_order)'
 
 function parseSizeFromCombinationKey(combinationKey: string) {
 	const [, rawValue] = (combinationKey || '').split(':')
@@ -109,32 +118,59 @@ function getPublicProductsBaseQuery(db: any, storeId: string) {
 		.is('deleted_at', null)
 }
 
-function getPublicProductsListQuery(db: any, storeId: string) {
-	return db
-		.from('products')
-		.select(
-			'id,slug,name,description,base_price,compare_at_price,main_image,category:categories(name),variants:product_variants(id,combination_key,stock_quantity,reserved_stock,low_stock_threshold,track_inventory,price)',
-		)
-		.eq('store_id', storeId)
-		.eq('status', 'active')
-		.is('deleted_at', null)
+export type ProductListResult = {
+	products: Product[]
+	totalCount: number
+	totalPages: number
 }
 
-export async function getProducts(): Promise<Product[]> {
-	const supabase = await createClient()
-	const db = supabase as any
-	const { storeId } = await getPublicStoreContext()
-	const query = getPublicProductsListQuery(db, storeId)
-	const { data, error } = await query.order('created_at', {
-		ascending: false,
-	})
+export async function getProducts(params?: {
+	page?: number
+	pageSize?: number
+	q?: string
+}): Promise<ProductListResult> {
+	const page = Math.max(1, params?.page ?? 1)
+	const pageSize = params?.pageSize ?? 8
+	const q = params?.q ?? ''
 
-	if (error || !data) {
-		console.error('Error fetching public products:', error)
-		return []
-	}
+	const fetcher = unstable_cache(
+		async () => {
+			const db = createPublicClient() as any
+			const { storeId } = await getPublicStoreContext()
+			const from = (page - 1) * pageSize
+			const to = from + pageSize - 1
 
-	return (data as ProductRow[]).map(mapRowToProduct)
+			let query = db
+				.from('products')
+				.select(PRODUCT_LISTING_SELECT, { count: 'exact' })
+				.eq('store_id', storeId)
+				.eq('status', 'active')
+				.is('deleted_at', null)
+				.range(from, to)
+				.order('created_at', { ascending: false })
+
+			if (q) query = query.ilike('name', `%${q}%`)
+
+			const { data, error, count } = await query
+
+			if (error || !data) {
+				console.error('[getProducts]', error)
+				return { products: [], totalCount: 0, totalPages: 0 }
+			}
+
+			const totalCount = count ?? 0
+			const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
+			return {
+				products: (data as ProductRow[]).map(mapRowToProduct),
+				totalCount,
+				totalPages,
+			}
+		},
+		['products-listing', String(page), String(pageSize), q],
+		{ tags: ['products'], revalidate: 60 },
+	)
+
+	return fetcher()
 }
 
 export async function getProduct(

@@ -7,17 +7,21 @@ import { ProductGridSection } from '@/components/product-grid-section'
 import { ProductGridSkeleton } from '@/components/product-grid-skeleton'
 import { Footer } from '@/components/footer'
 
-export default function Home() {
+export default function Home({
+	searchParams,
+}: {
+	searchParams: Promise<{ page?: string; q?: string }>
+}) {
 	return (
 		<div className="min-h-screen flex flex-col">
-			<AnnouncementBar />
 			<PromoBanner />
 			<Header />
+			<AnnouncementBar />
 			<main id="main-content" tabIndex={-1} className="flex-1">
 				<Hero />
 				{/* Hero y header pintan de inmediato; solo el grid espera el fetch */}
 				<Suspense fallback={<ProductGridSkeleton />}>
-					<ProductGridSection />
+					<ProductGridSection searchParams={searchParams} />
 				</Suspense>
 			</main>
 			<Footer />

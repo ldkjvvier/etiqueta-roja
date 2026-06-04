@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { getAdminStoreContext } from '@/lib/data/admin-context'
 
 type ProductVariantInput = {
@@ -408,6 +408,7 @@ export async function createProductV3(
 
 		revalidatePath('/admin')
 		revalidatePath('/admin/products')
+		revalidateTag('products', {})
 		return {
 			error: false,
 			message: 'Producto creado',
@@ -480,6 +481,7 @@ export async function updateProductV3(
 		revalidatePath('/admin')
 		revalidatePath('/admin/products')
 		revalidatePath(`/admin/products/${id}`)
+		revalidateTag('products', {})
 		return { error: false, message: 'Producto actualizado' }
 	} catch (error: any) {
 		return {
@@ -516,6 +518,7 @@ export async function archiveProductV3(id: string) {
 
 	revalidatePath('/admin')
 	revalidatePath('/admin/products')
+	revalidateTag('products', {})
 	return { error: false, message: 'Producto archivado' }
 }
 
@@ -636,6 +639,7 @@ export async function hardDeleteProductV3(id: string) {
 
 		revalidatePath('/admin')
 		revalidatePath('/admin/products')
+		revalidateTag('products', {})
 		return {
 			error: false,
 			message:
@@ -678,6 +682,7 @@ export async function toggleProductStatusV3(
 	}
 
 	revalidatePath('/admin/products')
+	revalidateTag('products', {})
 	return { error: false, message: 'Estado actualizado' }
 }
 
@@ -720,5 +725,6 @@ export async function bulkUpdateInventoryV3(
 	}
 
 	revalidatePath('/admin/products')
+	revalidateTag('products', {})
 	return { error: false, message: 'Inventario actualizado' }
 }

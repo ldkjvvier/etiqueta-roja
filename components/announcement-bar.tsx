@@ -66,8 +66,8 @@ export async function AnnouncementBar() {
 	const speed = Math.min(
 		80,
 		Math.max(
-			12,
-			Number.isFinite(config.speed) ? Number(config.speed) : 20,
+			5,
+			Number.isFinite(config.speed) ? Number(config.speed) : 28,
 		),
 	)
 
@@ -81,20 +81,24 @@ export async function AnnouncementBar() {
 				color: config.textColor || '#FFFFFF',
 			}}
 		>
-			<div className="mx-auto flex w-full items-center gap-4 px-4 py-2.5 sm:px-6">
+			<div className="mx-auto flex max-w-full items-center gap-4 px-4 py-1.5 sm:px-6">
 				<div className="group relative min-w-0 flex-1 overflow-hidden">
 					<div
-						className="flex w-max items-center whitespace-nowrap text-xs font-semibold tracking-[0.14em] uppercase sm:text-sm animate-announcement-marquee group-hover:[animation-play-state:paused] motion-reduce:animate-none"
+						className="flex w-max items-center whitespace-nowrap text-xs font-bold tracking-[0.16em] uppercase animate-announcement-marquee group-hover:paused motion-reduce:animate-none"
 						style={{
 							animationDuration: `${speed}s`,
 						}}
 					>
+						{/* One readable copy for screen readers */}
 						<div className="shrink-0 pr-8">
 							<MarqueeItems messages={messages} />
 						</div>
-						<div className="shrink-0 pr-8" aria-hidden="true">
-							<MarqueeItems messages={messages} />
-						</div>
+						{/* 11 visual-fill copies — aria-hidden */}
+						{Array.from({ length: 11 }, (_, i) => (
+							<div key={i} className="shrink-0 pr-8" aria-hidden="true">
+								<MarqueeItems messages={messages} />
+							</div>
+						))}
 					</div>
 				</div>
 

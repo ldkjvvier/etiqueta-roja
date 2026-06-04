@@ -30,8 +30,7 @@ export function ProductCardImage({
 					fill
 					sizes="(max-width: 1280px) 33vw, 25vw"
 					className={cn(
-						'object-cover transition-opacity duration-300 ease-out motion-reduce:transition-none',
-						hasSecondary && 'group-hover/card:opacity-0',
+						'object-cover',
 						isSoldOut && 'grayscale brightness-95',
 					)}
 				/>

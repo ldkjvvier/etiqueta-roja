@@ -110,7 +110,7 @@
   }
 
   .animate-announcement-marquee {
-    animation: announcement-marquee 20s linear infinite;
+    animation: announcement-marquee 28s linear infinite;
     will-change: transform;
   }
 }

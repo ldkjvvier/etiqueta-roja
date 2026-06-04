@@ -1,68 +1,48 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
+import Link from 'next/link'
 import { ProductCard } from './product-card'
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react'
-import { useStore, type Product } from '@/lib/store-context'
-
-const PRODUCTS_PER_PAGE = 8
 
 interface ProductGridProps {
-	products: Product[]
+	products: import('@/lib/store-context').Product[]
+	currentPage: number
+	totalPages: number
+	totalCount: number
+	searchQuery: string
+	allCategories: string[]
 }
 
-export function ProductGrid({ products }: ProductGridProps) {
-	const { searchQuery, setSearchQuery } = useStore()
-	const [currentPage, setCurrentPage] = useState(1)
+function buildPageUrl(page: number, q: string) {
+	const params = new URLSearchParams()
+	if (q) params.set('q', q)
+	params.set('page', String(page))
+	return `/?${params.toString()}`
+}
+
+export function ProductGrid({
+	products,
+	currentPage,
+	totalPages,
+	totalCount,
+	searchQuery,
+	allCategories,
+}: ProductGridProps) {
 	const [activeCategory, setActiveCategory] = useState('TODOS')
 	const reduce = useReducedMotion()
 
-	const categories = useMemo(() => {
-		const cats = new Set<string>()
-		for (const p of products) {
-			if (p.category) cats.add(p.category.toUpperCase())
-		}
-		const sorted = Array.from(cats).sort()
-		return sorted.length > 0 ? ['TODOS', ...sorted] : []
-	}, [products])
+	const categories =
+		allCategories.length > 0 ? ['TODOS', ...allCategories] : []
 
+	// Category filter runs client-side on the server-delivered page batch.
 	const filteredProducts = useMemo(() => {
-		let filtered = products
-		if (activeCategory !== 'TODOS') {
-			filtered = filtered.filter(
-				(p) => p.category?.toUpperCase() === activeCategory,
-			)
-		}
-		const q = searchQuery.trim().toLowerCase()
-		if (q) {
-			filtered = filtered.filter((p) =>
-				p.name.toLowerCase().includes(q),
-			)
-		}
-		return filtered
-	}, [searchQuery, products, activeCategory])
-
-	useEffect(() => {
-		setCurrentPage(1)
-	}, [searchQuery, activeCategory])
-
-	const totalPages = Math.max(
-		1,
-		Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE),
-	)
-
-	const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE
-	const currentProducts = filteredProducts.slice(
-		startIndex,
-		startIndex + PRODUCTS_PER_PAGE,
-	)
-
-	const handleLoadMore = () => {
-		if (currentPage < totalPages) {
-			setCurrentPage(currentPage + 1)
-		}
-	}
+		if (activeCategory === 'TODOS') return products
+		return products.filter(
+			(p) => p.category?.toUpperCase() === activeCategory,
+		)
+	}, [products, activeCategory])
 
 	return (
 		<section id="stock" className="py-24 border-b border-border">
@@ -73,35 +53,35 @@ export function ProductGrid({ products }: ProductGridProps) {
 						STOCK
 					</h2>
 					<div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-6">
-						<form
-							role="search"
-							className="border border-border bg-background flex items-center gap-2 px-3 py-2"
-						>
-							<label htmlFor="product-search" className="sr-only">
-								Buscar productos
-							</label>
-							<Search
-								className="h-4 w-4 text-muted-foreground"
-								aria-hidden="true"
-							/>
-							<input
-								id="product-search"
-								type="search"
-								value={searchQuery}
-								onChange={(e) => setSearchQuery(e.target.value)}
-								placeholder="Buscar en stock…"
-								className="w-full md:w-64 bg-transparent text-sm font-mono placeholder:text-muted-foreground focus:outline-none"
-								autoComplete="off"
-								enterKeyHint="search"
-							/>
+						<form role="search" action="/" method="GET">
+							<input type="hidden" name="page" value="1" />
+							<div className="border border-border bg-background flex items-center gap-2 px-3 py-2">
+								<label htmlFor="product-search" className="sr-only">
+									Buscar productos
+								</label>
+								<Search
+									className="h-4 w-4 text-muted-foreground"
+									aria-hidden="true"
+								/>
+								<input
+									id="product-search"
+									name="q"
+									type="search"
+									defaultValue={searchQuery}
+									placeholder="Buscar en stock…"
+									className="w-full md:w-64 bg-transparent text-sm font-mono placeholder:text-muted-foreground focus:outline-none"
+									autoComplete="off"
+									enterKeyHint="search"
+								/>
+							</div>
 						</form>
 						<span className="text-sm font-bold text-muted-foreground font-mono tabular-nums">
-							{filteredProducts.length} PRODUCTOS
+							{totalCount} PRODUCTOS
 						</span>
 					</div>
 				</div>
 
-				{/* Category tabs — T4 */}
+				{/* Category tabs */}
 				{categories.length > 1 && (
 					<div
 						role="tablist"
@@ -130,7 +110,7 @@ export function ProductGrid({ products }: ProductGridProps) {
 								{activeCategory === cat && (
 									<motion.span
 										layoutId="cat-rule"
-										className="absolute inset-x-0 -bottom-px h-[3px] bg-primary"
+										className="absolute inset-x-0 -bottom-px h-0.75 bg-primary"
 										transition={
 											reduce
 												? { duration: 0 }
@@ -138,7 +118,7 @@ export function ProductGrid({ products }: ProductGridProps) {
 														type: 'spring',
 														stiffness: 600,
 														damping: 45,
-												  }
+													}
 										}
 									/>
 								)}
@@ -158,45 +138,57 @@ export function ProductGrid({ products }: ProductGridProps) {
 						</p>
 						{searchQuery.trim() && (
 							<p className="mt-2 text-sm text-muted-foreground">
-								Probá con otro término.
+								Pruébalo con otro término de búsqueda o quita los
+								filtros.
 							</p>
 						)}
 					</div>
 				) : (
 					<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
-						{currentProducts.map((product) => (
+						{filteredProducts.map((product) => (
 							<ProductCard key={product.id} product={product} />
 						))}
 					</div>
 				)}
 
-				{filteredProducts.length > 0 && (
+				{totalPages > 1 && (
 					<div className="mt-12 flex flex-col items-center gap-6">
-						{/* Desktop pagination — T5 */}
+						{/* Desktop pagination */}
 						<nav
 							aria-label="Paginación de productos"
 							className="hidden md:flex items-center gap-2"
 						>
-							<button
-								onClick={() =>
-									setCurrentPage(Math.max(1, currentPage - 1))
-								}
-								disabled={currentPage === 1}
+							<Link
+								href={buildPageUrl(
+									Math.max(1, currentPage - 1),
+									searchQuery,
+								)}
 								aria-label="Página anterior"
-								className="w-10 h-10 border border-foreground flex items-center justify-center hover:bg-primary hover:border-primary hover:text-primary-foreground transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:border-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+								aria-disabled={currentPage === 1}
+								tabIndex={currentPage === 1 ? -1 : 0}
+								className={[
+									'w-10 h-10 border border-foreground flex items-center justify-center',
+									'hover:bg-primary hover:border-primary hover:text-primary-foreground transition-colors',
+									'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+									currentPage === 1
+										? 'opacity-30 pointer-events-none'
+										: '',
+								].join(' ')}
 							>
 								<ChevronLeft className="w-4 h-4" aria-hidden="true" />
-							</button>
+							</Link>
 
 							{Array.from(
 								{ length: totalPages },
 								(_, i) => i + 1,
 							).map((page) => (
-								<button
+								<Link
 									key={page}
-									onClick={() => setCurrentPage(page)}
+									href={buildPageUrl(page, searchQuery)}
 									aria-label={`Ir a la página ${page}`}
-									aria-current={currentPage === page ? 'page' : undefined}
+									aria-current={
+										currentPage === page ? 'page' : undefined
+									}
 									className={[
 										'w-10 h-10 border font-mono font-bold text-sm tabular-nums transition-colors',
 										'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
@@ -206,34 +198,47 @@ export function ProductGrid({ products }: ProductGridProps) {
 									].join(' ')}
 								>
 									{page.toString().padStart(2, '0')}
-								</button>
+								</Link>
 							))}
 
-							<button
-								onClick={() =>
-									setCurrentPage(
-										Math.min(totalPages, currentPage + 1),
-									)
-								}
-								disabled={currentPage === totalPages}
+							<Link
+								href={buildPageUrl(
+									Math.min(totalPages, currentPage + 1),
+									searchQuery,
+								)}
 								aria-label="Página siguiente"
-								className="w-10 h-10 border border-foreground flex items-center justify-center hover:bg-primary hover:border-primary hover:text-primary-foreground transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:border-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+								aria-disabled={currentPage === totalPages}
+								tabIndex={currentPage === totalPages ? -1 : 0}
+								className={[
+									'w-10 h-10 border border-foreground flex items-center justify-center',
+									'hover:bg-primary hover:border-primary hover:text-primary-foreground transition-colors',
+									'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+									currentPage === totalPages
+										? 'opacity-30 pointer-events-none'
+										: '',
+								].join(' ')}
 							>
-								<ChevronRight className="w-4 h-4" aria-hidden="true" />
-							</button>
+								<ChevronRight
+									className="w-4 h-4"
+									aria-hidden="true"
+								/>
+							</Link>
 						</nav>
 
 						{/* Mobile: Load More */}
 						{currentPage < totalPages && (
-							<button
-								onClick={handleLoadMore}
-								className="w-full md:hidden border-2 border-foreground py-4 font-black text-sm uppercase tracking-wider hover:bg-primary hover:border-primary hover:text-primary-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+							<Link
+								href={buildPageUrl(currentPage + 1, searchQuery)}
+								className="w-full md:hidden border-2 border-foreground py-4 font-black text-sm uppercase tracking-wider hover:bg-primary hover:border-primary hover:text-primary-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-center block"
 							>
 								CARGAR MÁS STOCK (+)
-							</button>
+							</Link>
 						)}
 
-						<span className="text-xs font-mono text-muted-foreground tabular-nums" aria-live="polite">
+						<span
+							className="text-xs font-mono text-muted-foreground tabular-nums"
+							aria-live="polite"
+						>
 							PÁGINA {currentPage.toString().padStart(2, '0')} /{' '}
 							{totalPages.toString().padStart(2, '0')}
 						</span>
