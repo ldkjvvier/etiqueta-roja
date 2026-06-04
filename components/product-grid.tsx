@@ -55,6 +55,11 @@ export function ProductGrid({
 		)
 	}, [products, activeCategory])
 
+	// When a category is active the pagination is meaningless (filter is local),
+	// so clamp to 1/1 to disable all nav controls.
+	const effectiveTotalPages = activeCategory !== 'TODOS' ? 1 : totalPages
+	const effectiveCurrentPage = activeCategory !== 'TODOS' ? 1 : currentPage
+
 	return (
 		<section id="stock" className="py-24 border-b border-border">
 			<div className="container mx-auto px-4">
@@ -171,17 +176,17 @@ export function ProductGrid({
 						<div className="flex items-center justify-center gap-4 w-full md:hidden">
 							<Link
 								href={buildPageUrl(
-									Math.max(1, currentPage - 1),
+									Math.max(1, effectiveCurrentPage - 1),
 									searchQuery,
 								)}
 								aria-label="Página anterior"
-								aria-disabled={currentPage === 1}
-								tabIndex={currentPage === 1 ? -1 : 0}
+								aria-disabled={effectiveCurrentPage === 1}
+								tabIndex={effectiveCurrentPage === 1 ? -1 : 0}
 								className={[
 									'w-11 h-11 border border-foreground',
 									'flex items-center justify-center transition-colors',
 									'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-									currentPage === 1
+									effectiveCurrentPage === 1
 										? 'opacity-25 pointer-events-none'
 										: 'hover:bg-foreground hover:text-background active:scale-[0.97]',
 								].join(' ')}
@@ -194,24 +199,24 @@ export function ProductGrid({
 								aria-live="polite"
 								aria-atomic="true"
 							>
-								{currentPage.toString().padStart(2, '0')}
+								{effectiveCurrentPage.toString().padStart(2, '0')}
 								<span className="mx-2 text-muted-foreground">·</span>
-								{totalPages.toString().padStart(2, '0')}
+								{effectiveTotalPages.toString().padStart(2, '0')}
 							</span>
 
 							<Link
 								href={buildPageUrl(
-									Math.min(totalPages, currentPage + 1),
+									Math.min(effectiveTotalPages, effectiveCurrentPage + 1),
 									searchQuery,
 								)}
 								aria-label="Página siguiente"
-								aria-disabled={currentPage === totalPages}
-								tabIndex={currentPage === totalPages ? -1 : 0}
+								aria-disabled={effectiveCurrentPage === effectiveTotalPages}
+								tabIndex={effectiveCurrentPage === effectiveTotalPages ? -1 : 0}
 								className={[
 									'w-11 h-11 border border-foreground',
 									'flex items-center justify-center transition-colors',
 									'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-									currentPage === totalPages
+									effectiveCurrentPage === effectiveTotalPages
 										? 'opacity-25 pointer-events-none'
 										: 'hover:bg-foreground hover:text-background active:scale-[0.97]',
 								].join(' ')}
@@ -224,17 +229,17 @@ export function ProductGrid({
 						<div className="hidden md:flex items-center gap-1.5">
 							<Link
 								href={buildPageUrl(
-									Math.max(1, currentPage - 1),
+									Math.max(1, effectiveCurrentPage - 1),
 									searchQuery,
 								)}
 								aria-label="Página anterior"
-								aria-disabled={currentPage === 1}
-								tabIndex={currentPage === 1 ? -1 : 0}
+								aria-disabled={effectiveCurrentPage === 1}
+								tabIndex={effectiveCurrentPage === 1 ? -1 : 0}
 								className={[
 									'w-11 h-11 border border-foreground',
 									'flex items-center justify-center transition-colors',
 									'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-									currentPage === 1
+									effectiveCurrentPage === 1
 										? 'opacity-25 pointer-events-none'
 										: 'hover:bg-primary hover:border-primary hover:text-primary-foreground',
 								].join(' ')}
@@ -242,7 +247,7 @@ export function ProductGrid({
 								<ChevronLeft className="w-4 h-4" aria-hidden="true" />
 							</Link>
 
-							{paginationRange(currentPage, totalPages).map(
+							{paginationRange(effectiveCurrentPage, effectiveTotalPages).map(
 								(item, idx) =>
 									item === '...' ? (
 										<span
@@ -261,7 +266,7 @@ export function ProductGrid({
 											)}
 											aria-label={`Página ${item}`}
 											aria-current={
-												currentPage === item
+												effectiveCurrentPage === item
 													? 'page'
 													: undefined
 											}
@@ -269,7 +274,7 @@ export function ProductGrid({
 												'w-11 h-11 border font-mono font-bold text-sm tabular-nums',
 												'flex items-center justify-center transition-colors',
 												'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-												currentPage === item
+												effectiveCurrentPage === item
 													? 'bg-foreground text-background border-foreground'
 													: 'border-foreground hover:bg-primary hover:border-primary hover:text-primary-foreground',
 											].join(' ')}
@@ -283,17 +288,17 @@ export function ProductGrid({
 
 							<Link
 								href={buildPageUrl(
-									Math.min(totalPages, currentPage + 1),
+									Math.min(effectiveTotalPages, effectiveCurrentPage + 1),
 									searchQuery,
 								)}
 								aria-label="Página siguiente"
-								aria-disabled={currentPage === totalPages}
-								tabIndex={currentPage === totalPages ? -1 : 0}
+								aria-disabled={effectiveCurrentPage === effectiveTotalPages}
+								tabIndex={effectiveCurrentPage === effectiveTotalPages ? -1 : 0}
 								className={[
 									'w-11 h-11 border border-foreground',
 									'flex items-center justify-center transition-colors',
 									'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-									currentPage === totalPages
+									effectiveCurrentPage === effectiveTotalPages
 										? 'opacity-25 pointer-events-none'
 										: 'hover:bg-primary hover:border-primary hover:text-primary-foreground',
 								].join(' ')}
@@ -306,8 +311,8 @@ export function ProductGrid({
 							className="hidden md:block text-xs font-mono text-muted-foreground tabular-nums"
 							aria-live="polite"
 						>
-							PÁGINA {currentPage.toString().padStart(2, '0')} /{' '}
-							{totalPages.toString().padStart(2, '0')}
+							PÁGINA {effectiveCurrentPage.toString().padStart(2, '0')} /{' '}
+							{effectiveTotalPages.toString().padStart(2, '0')}
 						</span>
 					</nav>
 				)}
