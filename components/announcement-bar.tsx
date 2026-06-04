@@ -1,11 +1,8 @@
-import Link from 'next/link'
 import { getSiteConfig } from '@/lib/data/site-config'
 
 type AnnouncementBarConfig = {
 	messages?: unknown
 	message?: string
-	ctaText?: string
-	ctaLink?: string
 	backgroundColor?: string
 	textColor?: string
 	speed?: number
@@ -61,8 +58,6 @@ export async function AnnouncementBar() {
 		return null
 	}
 
-	const ctaText = config.ctaText?.trim() || ''
-	const ctaLink = config.ctaLink?.trim() || ''
 	const speed = Math.min(
 		80,
 		Math.max(
@@ -90,26 +85,17 @@ export async function AnnouncementBar() {
 						}}
 					>
 						{/* One readable copy for screen readers */}
-						<div className="shrink-0 pr-8">
+						<div className="shrink-0">
 							<MarqueeItems messages={messages} />
 						</div>
 						{/* 11 visual-fill copies — aria-hidden */}
 						{Array.from({ length: 11 }, (_, i) => (
-							<div key={i} className="shrink-0 pr-8" aria-hidden="true">
+							<div key={i} className="shrink-0" aria-hidden="true">
 								<MarqueeItems messages={messages} />
 							</div>
 						))}
 					</div>
 				</div>
-
-				{ctaText && ctaLink ? (
-					<Link
-						href={ctaLink}
-						className="shrink-0 rounded border border-current/40 px-3 py-1 text-[10px] font-bold tracking-[0.14em] uppercase transition-colors hover:bg-white/10 sm:text-xs"
-					>
-						{ctaText}
-					</Link>
-				) : null}
 			</div>
 		</section>
 	)

@@ -61,8 +61,6 @@ const socialLinksSchema = z.object({
 
 const announcementBarSchema = z.object({
 	message: z.string().trim().min(1).max(140),
-	ctaText: z.string().trim().max(40),
-	ctaLink: z.string().trim().max(2048),
 	backgroundColor: hexColorSchema,
 	textColor: hexColorSchema,
 })
@@ -156,8 +154,6 @@ export async function updateAnnouncementBarConfig(
 ) {
 	const parsed = announcementBarSchema.safeParse({
 		message: String(formData.get('message') || ''),
-		ctaText: String(formData.get('cta_text') || ''),
-		ctaLink: String(formData.get('cta_link') || ''),
 		backgroundColor:
 			String(formData.get('background_color') || '#111111') ||
 			'#111111',
@@ -167,8 +163,7 @@ export async function updateAnnouncementBarConfig(
 
 	if (!parsed.success) {
 		return {
-			message:
-				'Revisa el mensaje, CTA y colores del announcement bar',
+			message: 'Revisa el mensaje y los colores del announcement bar',
 			error: true,
 		}
 	}

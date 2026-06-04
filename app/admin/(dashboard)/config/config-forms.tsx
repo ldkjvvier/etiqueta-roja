@@ -279,8 +279,6 @@ const announcementBarFormSchema = z.object({
 	isActive: z.boolean(),
 	description: z.string().max(160).optional(),
 	message: z.string().trim().min(1).max(140),
-	ctaText: z.string().trim().max(40),
-	ctaLink: z.string().trim().max(2048),
 	backgroundColor: z
 		.string()
 		.regex(/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/, 'Color inválido'),
@@ -442,8 +440,6 @@ export function AnnouncementBarConfigForm({
 			isActive: isActive ?? true,
 			description: initialDescription ?? '',
 			message: String(initialData?.message || ''),
-			ctaText: String(initialData?.ctaText || ''),
-			ctaLink: String(initialData?.ctaLink || ''),
 			backgroundColor: String(
 				initialData?.backgroundColor || '#111111',
 			),
@@ -458,8 +454,6 @@ export function AnnouncementBarConfigForm({
 		fd.set('is_active', data.isActive ? 'true' : 'false')
 		fd.set('description', data.description || '')
 		fd.set('message', data.message)
-		fd.set('cta_text', data.ctaText)
-		fd.set('cta_link', data.ctaLink)
 		fd.set('background_color', data.backgroundColor)
 		fd.set('text_color', data.textColor)
 		submit(updateAnnouncementBarConfig, fd)
@@ -493,27 +487,6 @@ export function AnnouncementBarConfigForm({
 				</ConfigInputField>
 
 				<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-					<ConfigInputField
-						id="announcement_cta_text"
-						label="Texto CTA"
-					>
-						<Input
-							id="announcement_cta_text"
-							{...form.register('ctaText')}
-						/>
-					</ConfigInputField>
-					<ConfigInputField
-						id="announcement_cta_link"
-						label="Enlace CTA"
-					>
-						<Input
-							id="announcement_cta_link"
-							{...form.register('ctaLink')}
-						/>
-					</ConfigInputField>
-				</div>
-
-				<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 					<ConfigColorPicker
 						id="announcement_bg_color"
 						label="Color de fondo"
@@ -542,14 +515,13 @@ export function AnnouncementBarConfigForm({
 
 				<ConfigPreview title="Vista previa de barra">
 					<div
-						className="flex items-center justify-between rounded px-3 py-2 text-sm"
+						className="flex items-center rounded px-3 py-2 text-sm"
 						style={{
 							backgroundColor: values.backgroundColor,
 							color: values.textColor,
 						}}
 					>
 						<span>{values.message || 'Tu mensaje aquí'}</span>
-						{values.ctaText ? <span>{values.ctaText}</span> : null}
 					</div>
 				</ConfigPreview>
 			</ConfigSectionCard>
