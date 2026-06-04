@@ -337,6 +337,18 @@ ON public.customers FOR UPDATE
 USING     (auth_user_id = auth.uid())
 WITH CHECK (auth_user_id = auth.uid());
 
+-- Guest checkout: permite crear perfiles mínimos sin exponer lectura pública.
+CREATE POLICY "guest_insert_customer"
+ON public.customers FOR INSERT
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM public.stores s
+    WHERE s.id = customers.store_id
+      AND s.is_active = true
+  )
+);
+
 -- Admin: gestión completa
 CREATE POLICY "admin_manage_customers"
 ON public.customers FOR ALL

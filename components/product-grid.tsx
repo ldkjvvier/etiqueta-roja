@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { motion, useReducedMotion } from 'motion/react'
 import { ProductCard } from './product-card'
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import { useStore, type Product } from '@/lib/store-context'
@@ -15,6 +16,7 @@ export function ProductGrid({ products }: ProductGridProps) {
 	const { searchQuery, setSearchQuery } = useStore()
 	const [currentPage, setCurrentPage] = useState(1)
 	const [activeCategory, setActiveCategory] = useState('TODOS')
+	const reduce = useReducedMotion()
 
 	const categories = useMemo(() => {
 		const cats = new Set<string>()
@@ -67,7 +69,7 @@ export function ProductGrid({ products }: ProductGridProps) {
 			<div className="container mx-auto px-4">
 				{/* Header */}
 				<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
-					<h2 className="text-3xl md:text-4xl font-black tracking-tight">
+					<h2 className="text-3xl md:text-4xl font-black tracking-tight text-balance">
 						STOCK
 					</h2>
 					<div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-6">
@@ -84,6 +86,7 @@ export function ProductGrid({ products }: ProductGridProps) {
 							/>
 							<input
 								id="product-search"
+								type="search"
 								value={searchQuery}
 								onChange={(e) => setSearchQuery(e.target.value)}
 								placeholder="Buscar en stock…"
@@ -92,27 +95,53 @@ export function ProductGrid({ products }: ProductGridProps) {
 								enterKeyHint="search"
 							/>
 						</form>
-						<span className="text-sm font-bold text-muted-foreground font-mono">
+						<span className="text-sm font-bold text-muted-foreground font-mono tabular-nums">
 							{filteredProducts.length} PRODUCTOS
 						</span>
 					</div>
 				</div>
 
-				{/* Category tabs */}
+				{/* Category tabs — T4 */}
 				{categories.length > 1 && (
-					<div className="flex border-b border-border mb-8 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+					<div
+						role="tablist"
+						aria-label="Categorías"
+						className="flex border-b border-border mb-8 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+					>
 						{categories.map((cat) => (
 							<button
 								key={cat}
 								type="button"
+								role="tab"
+								aria-selected={activeCategory === cat}
+								tabIndex={0}
 								onClick={() => setActiveCategory(cat)}
-								className={`px-5 py-3 text-xs font-bold tracking-widest whitespace-nowrap border-b-2 -mb-px transition-colors ${
+								className={[
+									'relative px-5 py-3 -mb-px',
+									'text-xs font-bold tracking-widest whitespace-nowrap',
+									'transition-colors duration-150',
+									'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
 									activeCategory === cat
-										? 'border-primary text-foreground'
-										: 'border-transparent text-muted-foreground hover:text-foreground'
-								}`}
+										? 'text-foreground'
+										: 'text-muted-foreground hover:text-foreground',
+								].join(' ')}
 							>
 								{cat}
+								{activeCategory === cat && (
+									<motion.span
+										layoutId="cat-rule"
+										className="absolute inset-x-0 -bottom-px h-[3px] bg-primary"
+										transition={
+											reduce
+												? { duration: 0 }
+												: {
+														type: 'spring',
+														stiffness: 600,
+														damping: 45,
+												  }
+										}
+									/>
+								)}
 							</button>
 						))}
 					</div>
@@ -143,16 +172,20 @@ export function ProductGrid({ products }: ProductGridProps) {
 
 				{filteredProducts.length > 0 && (
 					<div className="mt-12 flex flex-col items-center gap-6">
-						{/* Desktop pagination */}
-						<div className="hidden md:flex items-center gap-2">
+						{/* Desktop pagination — T5 */}
+						<nav
+							aria-label="Paginación de productos"
+							className="hidden md:flex items-center gap-2"
+						>
 							<button
 								onClick={() =>
 									setCurrentPage(Math.max(1, currentPage - 1))
 								}
 								disabled={currentPage === 1}
-								className="w-10 h-10 border border-foreground flex items-center justify-center hover:bg-primary hover:border-primary hover:text-primary-foreground transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:border-foreground"
+								aria-label="Página anterior"
+								className="w-10 h-10 border border-foreground flex items-center justify-center hover:bg-primary hover:border-primary hover:text-primary-foreground transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:border-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 							>
-								<ChevronLeft className="w-4 h-4" />
+								<ChevronLeft className="w-4 h-4" aria-hidden="true" />
 							</button>
 
 							{Array.from(
@@ -162,11 +195,15 @@ export function ProductGrid({ products }: ProductGridProps) {
 								<button
 									key={page}
 									onClick={() => setCurrentPage(page)}
-									className={`w-10 h-10 border font-mono font-bold text-sm transition-colors ${
+									aria-label={`Ir a la página ${page}`}
+									aria-current={currentPage === page ? 'page' : undefined}
+									className={[
+										'w-10 h-10 border font-mono font-bold text-sm tabular-nums transition-colors',
+										'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
 										currentPage === page
 											? 'bg-foreground text-background border-foreground'
-											: 'border-foreground hover:bg-primary hover:border-primary hover:text-primary-foreground'
-									}`}
+											: 'border-foreground hover:bg-primary hover:border-primary hover:text-primary-foreground',
+									].join(' ')}
 								>
 									{page.toString().padStart(2, '0')}
 								</button>
@@ -179,23 +216,24 @@ export function ProductGrid({ products }: ProductGridProps) {
 									)
 								}
 								disabled={currentPage === totalPages}
-								className="w-10 h-10 border border-foreground flex items-center justify-center hover:bg-primary hover:border-primary hover:text-primary-foreground transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:border-foreground"
+								aria-label="Página siguiente"
+								className="w-10 h-10 border border-foreground flex items-center justify-center hover:bg-primary hover:border-primary hover:text-primary-foreground transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:border-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 							>
-								<ChevronRight className="w-4 h-4" />
+								<ChevronRight className="w-4 h-4" aria-hidden="true" />
 							</button>
-						</div>
+						</nav>
 
 						{/* Mobile: Load More */}
 						{currentPage < totalPages && (
 							<button
 								onClick={handleLoadMore}
-								className="w-full md:hidden border-2 border-foreground py-4 font-black text-sm uppercase tracking-wider hover:bg-primary hover:border-primary hover:text-primary-foreground transition-colors"
+								className="w-full md:hidden border-2 border-foreground py-4 font-black text-sm uppercase tracking-wider hover:bg-primary hover:border-primary hover:text-primary-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 							>
 								CARGAR MÁS STOCK (+)
 							</button>
 						)}
 
-						<span className="text-xs font-mono text-muted-foreground">
+						<span className="text-xs font-mono text-muted-foreground tabular-nums" aria-live="polite">
 							PÁGINA {currentPage.toString().padStart(2, '0')} /{' '}
 							{totalPages.toString().padStart(2, '0')}
 						</span>

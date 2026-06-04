@@ -1,14 +1,13 @@
+import { Suspense } from 'react'
 import { Header } from '@/components/header'
 import { AnnouncementBar } from '@/components/announcement-bar'
 import { PromoBanner } from '@/components/promo-banner'
 import { Hero } from '@/components/hero'
-import { ProductGrid } from '@/components/product-grid'
+import { ProductGridSection } from '@/components/product-grid-section'
+import { ProductGridSkeleton } from '@/components/product-grid-skeleton'
 import { Footer } from '@/components/footer'
-import { getProducts } from '@/lib/services/products-server'
 
-export default async function Home() {
-	const products = await getProducts()
-
+export default function Home() {
 	return (
 		<div className="min-h-screen flex flex-col">
 			<AnnouncementBar />
@@ -16,7 +15,10 @@ export default async function Home() {
 			<Header />
 			<main id="main-content" tabIndex={-1} className="flex-1">
 				<Hero />
-				<ProductGrid products={products} />
+				{/* Hero y header pintan de inmediato; solo el grid espera el fetch */}
+				<Suspense fallback={<ProductGridSkeleton />}>
+					<ProductGridSection />
+				</Suspense>
 			</main>
 			<Footer />
 		</div>
