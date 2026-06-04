@@ -55,6 +55,9 @@
 
 @theme inline {
   --animate-skeleton-scan: skeleton-scan 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+  /* Easing para crossfade de imágenes en product card */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   /* next/font expone las familias vía variables propias en <body>;
      se referencian con var() para que se resuelvan en el elemento. */
   --font-sans: var(--font-geist-sans);

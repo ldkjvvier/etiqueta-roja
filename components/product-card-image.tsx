@@ -40,7 +40,7 @@ export function ProductCardImage({
 						alt={`${alt} — vista alternativa`}
 						fill
 						sizes="(max-width: 1280px) 33vw, 25vw"
-						className="object-cover opacity-0 transition-opacity duration-300 ease-out group-hover/card:opacity-100 motion-reduce:transition-none"
+						className="object-cover opacity-0 will-change-[opacity] transition-opacity duration-300 ease-out-expo group-hover/card:opacity-100 motion-reduce:transition-none"
 					/>
 				)}
 			</div>
