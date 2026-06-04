@@ -41,9 +41,20 @@
   /* Brand identity */
   --brand-red: #E62727;
   --brand-red-strong: #c81e1e;
+
+  /* Superficie del set fotográfico — fondo del tile de producto.
+     Coincide con el gris sobre el que se fotografían los productos para que
+     la costura foto↔tile sea invisible (loading, letterbox, gutters). */
+  --product-surface: #eaeaea;
+}
+
+@keyframes skeleton-scan {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(700%); }
 }
 
 @theme inline {
+  --animate-skeleton-scan: skeleton-scan 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   /* next/font expone las familias vía variables propias en <body>;
      se referencian con var() para que se resuelvan en el elemento. */
   --font-sans: var(--font-geist-sans);
@@ -81,6 +92,7 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --color-brand-red: var(--brand-red);
   --color-brand-red-strong: var(--brand-red-strong);
+  --color-product-surface: var(--product-surface); /* habilita bg-product-surface */
 }
 
 @layer base {

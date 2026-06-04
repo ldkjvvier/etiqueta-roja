@@ -3,13 +3,22 @@
 import Link from 'next/link'
 import type { Product } from '@/lib/store-context'
 import { ProductCardImage } from './product-card-image'
-import { CropMarks, Stamp } from '@/components/brand'
+import { ProductBadge, type BadgeKind } from './product-badge'
 import { formatPrice, cn } from '@/lib/utils'
 
 export type { Product } from '@/lib/store-context'
 
+function getBadgeKind(product: Product): BadgeKind | null {
+	if (product.stockStatus === 'sold_out') return null
+	if (product.stockStatus === 'low') return 'low_stock'
+	if (product.originalPrice) return 'offer'
+	return null
+}
+
 export function ProductCard({ product }: { product: Product }) {
 	const isSoldOut = product.stockStatus === 'sold_out'
+	const badgeKind = getBadgeKind(product)
+	const hasOffer = Boolean(product.originalPrice)
 
 	const MAX_IMAGES = 2
 	const allImages = [product.image, ...(product.images || [])]
@@ -20,48 +29,40 @@ export function ProductCard({ product }: { product: Product }) {
 			: ['/placeholder.svg']
 
 	const imageSection = (
-		<div className="relative aspect-[4/5] bg-secondary overflow-hidden">
+		// Tile sin borde. bg-product-surface = gris del set fotográfico (#eaeaea):
+		// la foto (sobre gris) y el tile (mismo gris) se funden sin costura.
+		<div className="relative aspect-4/5 bg-product-surface overflow-hidden">
 			<ProductCardImage
 				images={cardImages}
 				alt={product.name}
 				isSoldOut={isSoldOut}
 			/>
-			{product.stockStatus === 'low' && <Stamp label="ÚLTIMO" />}
+			{/* Una sola etiqueta por prioridad: low_stock → offer */}
+			{badgeKind && <ProductBadge kind={badgeKind} />}
+			{/* AGOTADO limpio: overlay tenue + label horizontal (sin sello diagonal) */}
 			{isSoldOut && (
-				<div
-					className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
-					aria-hidden="true"
-				>
-					<span
-						className={cn(
-							'rotate-[-10deg]',
-							'border border-white/70',
-							'[outline:1px_solid_rgba(255,255,255,0.28)] [outline-offset:4px]',
-							'font-mono font-bold text-[11px] uppercase tracking-[0.25em]',
-							'text-white px-3 py-1.5 whitespace-nowrap select-none',
-							'[text-shadow:0_1px_18px_rgba(0,0,0,0.9),_0_0_6px_rgba(0,0,0,0.6)]',
-						)}
-					>
-						AGOTADO
+				<div className="absolute inset-0 flex items-end justify-center bg-product-surface/30 pointer-events-none">
+					<span className="mb-4 bg-background/90 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-foreground">
+						Agotado
 					</span>
 				</div>
 			)}
-			{product.originalPrice && !isSoldOut && (
-				<span className="absolute top-3 right-3 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-1 z-20">
-					OFERTA
-				</span>
-			)}
-			{!isSoldOut && <CropMarks />}
 		</div>
 	)
 
 	const infoSection = (
-		<div className="p-3 md:p-4 space-y-1.5">
-			<h3 className="font-bold text-xs md:text-sm uppercase tracking-wide line-clamp-2 leading-snug">
+		// Sin padding lateral: el texto se alinea al borde del tile (estilo limpio).
+		<div className="pt-3 space-y-1">
+			<h3 className="font-medium text-xs md:text-sm uppercase tracking-wide line-clamp-2 leading-snug">
 				{product.name}
 			</h3>
-			<div className="flex items-baseline gap-2">
-				<span className="font-mono font-bold text-sm md:text-base">
+			<div className="flex items-baseline gap-2 tabular-nums">
+				<span
+					className={cn(
+						'font-mono font-semibold text-sm md:text-base',
+						hasOffer && 'text-primary-strong', // precio de oferta en rojo (AA)
+					)}
+				>
 					{formatPrice(product.price)}
 				</span>
 				{product.originalPrice && (
@@ -75,7 +76,7 @@ export function ProductCard({ product }: { product: Product }) {
 
 	if (isSoldOut) {
 		return (
-			<div className="group/card border border-border bg-card">
+			<div className="group/card block">
 				{imageSection}
 				{infoSection}
 			</div>
@@ -85,7 +86,11 @@ export function ProductCard({ product }: { product: Product }) {
 	return (
 		<Link
 			href={product.slug ? `/producto/${product.slug}` : `/producto/${product.id}`}
-			className="group/card relative block border border-border bg-card cursor-pointer hover:z-10"
+			className={cn(
+				'group/card block cursor-pointer',
+				// Sin borde → el foco visible reemplaza la señal de interactividad del borde.
+				'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+			)}
 			aria-label={`Ver ${product.name}`}
 		>
 			{imageSection}

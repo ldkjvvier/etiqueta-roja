@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { useReducedMotion } from 'motion/react'
+import { cn } from '@/lib/utils'
 import { ProductCardCarousel } from './product-card-carousel'
 
 interface ProductCardImageProps {
@@ -15,42 +15,38 @@ export function ProductCardImage({
 	alt,
 	isSoldOut,
 }: ProductCardImageProps) {
-	const reduce = useReducedMotion()
 	const primary = images[0] || '/placeholder.svg'
 	const secondary = images.length > 1 ? images[1] : null
-	const hasSwap = Boolean(secondary) && !reduce && !isSoldOut
+	const hasSecondary = Boolean(secondary) && !isSoldOut
 
 	return (
 		<>
-			{/* Desktop (md+): static first image, hover fades in second */}
+			{/* Desktop (md+): crossfade entre imagen 1 y 2 al hover.
+			    Solo se anima opacity (compositor-friendly). motion-reduce desactiva la transición. */}
 			<div className="relative w-full h-full hidden md:block">
 				<Image
 					src={primary}
 					alt={alt}
 					fill
 					sizes="(max-width: 1280px) 33vw, 25vw"
-					className={[
-						'object-cover',
-						hasSwap
-							? 'transition-opacity duration-500 group-hover/card:opacity-0'
-							: '',
-						isSoldOut ? 'grayscale brightness-75' : '',
-					]
-						.filter(Boolean)
-						.join(' ')}
+					className={cn(
+						'object-cover transition-opacity duration-300 ease-out motion-reduce:transition-none',
+						hasSecondary && 'group-hover/card:opacity-0',
+						isSoldOut && 'grayscale brightness-95',
+					)}
 				/>
-				{hasSwap && (
+				{hasSecondary && (
 					<Image
 						src={secondary!}
-						alt={`${alt} - vista alternativa`}
+						alt={`${alt} — vista alternativa`}
 						fill
 						sizes="(max-width: 1280px) 33vw, 25vw"
-						className={`object-cover opacity-0 transition-opacity duration-500 group-hover/card:opacity-100`}
+						className="object-cover opacity-0 transition-opacity duration-300 ease-out group-hover/card:opacity-100 motion-reduce:transition-none"
 					/>
 				)}
 			</div>
 
-			{/* Mobile (<md): swipeable carousel */}
+			{/* Mobile (<md): carrusel deslizable */}
 			<div className="relative w-full h-full md:hidden">
 				<ProductCardCarousel
 					images={images}
