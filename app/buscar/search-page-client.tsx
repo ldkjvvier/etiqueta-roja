@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useTransition, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { Search, X } from 'lucide-react'
 import Link from 'next/link'
 import { useDebounce } from '@/hooks/use-debounce'
@@ -15,9 +14,9 @@ interface Props {
 }
 
 export function SearchPageClient({ initialQuery, initialResults }: Props) {
-	const router = useRouter()
 	const inputRef = useRef<HTMLInputElement>(null)
 	const isFirstRender = useRef(true)
+	const reqId = useRef(0)
 
 	const [query, setQuery] = useState(initialQuery)
 	const [results, setResults] = useState(initialResults)
@@ -30,16 +29,13 @@ export function SearchPageClient({ initialQuery, initialResults }: Props) {
 			isFirstRender.current = false
 			return
 		}
+		const id = ++reqId.current
 		startTransition(async () => {
 			const trimmed = debouncedQuery.trim()
-			const params = new URLSearchParams()
-			if (trimmed) params.set('q', trimmed)
-			router.replace(
-				`/buscar${trimmed ? `?${params.toString()}` : ''}`,
-				{ scroll: false },
-			)
+			const url = `/buscar${trimmed ? `?q=${encodeURIComponent(trimmed)}` : ''}`
+			window.history.replaceState(null, '', url)
 			const data = await searchProductsAction(debouncedQuery)
-			setResults(data)
+			if (id === reqId.current) setResults(data)
 		})
 	}, [debouncedQuery])
 

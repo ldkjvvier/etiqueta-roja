@@ -128,10 +128,12 @@ export async function getProducts(params?: {
 	page?: number
 	pageSize?: number
 	q?: string
+	countMode?: 'exact' | 'planned'
 }): Promise<ProductListResult> {
 	const page = Math.max(1, params?.page ?? 1)
 	const pageSize = params?.pageSize ?? 8
 	const q = params?.q ?? ''
+	const countMode = params?.countMode ?? 'exact'
 
 	const fetcher = unstable_cache(
 		async () => {
@@ -142,7 +144,7 @@ export async function getProducts(params?: {
 
 			let query = db
 				.from('products')
-				.select(PRODUCT_LISTING_SELECT, { count: 'exact' })
+				.select(PRODUCT_LISTING_SELECT, { count: countMode })
 				.eq('store_id', storeId)
 				.eq('status', 'active')
 				.is('deleted_at', null)
@@ -166,7 +168,7 @@ export async function getProducts(params?: {
 				totalPages,
 			}
 		},
-		['products-listing', String(page), String(pageSize), q],
+		['products-listing', String(page), String(pageSize), q, countMode],
 		{ tags: ['products'], revalidate: 60 },
 	)
 
