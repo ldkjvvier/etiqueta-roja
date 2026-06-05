@@ -39,8 +39,7 @@ export function HeaderSearch() {
 				!panelRef.current?.contains(target) &&
 				!triggerRef.current?.contains(target)
 			) {
-				setIsOpen(false)
-				setQuery('')
+				closePanel()
 			}
 		}
 
