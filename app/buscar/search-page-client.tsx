@@ -14,7 +14,10 @@ interface Props {
 	initialResults: ProductListResult
 }
 
-export function SearchPageClient({ initialQuery, initialResults }: Props) {
+export function SearchPageClient({
+	initialQuery,
+	initialResults,
+}: Props) {
 	const router = useRouter()
 	const inputRef = useRef<HTMLInputElement>(null)
 	const isFirstRender = useRef(true)
@@ -65,10 +68,7 @@ export function SearchPageClient({ initialQuery, initialResults }: Props) {
 						<li aria-hidden="true" className="select-none">
 							/
 						</li>
-						<li
-							className="text-foreground"
-							aria-current="page"
-						>
+						<li className="text-foreground" aria-current="page">
 							Buscar
 						</li>
 					</ol>
@@ -93,7 +93,7 @@ export function SearchPageClient({ initialQuery, initialResults }: Props) {
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}
 						placeholder="Buscar productos..."
-						className="w-full h-14 pl-12 pr-12 bg-secondary border border-border font-mono text-sm uppercase tracking-widest placeholder:text-muted-foreground placeholder:normal-case placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background transition-colors"
+						className="w-full h-14 pl-12 pr-12 bg-secondary border border-border font-mono text-sm uppercase tracking-widest placeholder:text-muted-foreground placeholder:normal-case placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background transition-colors [&::-webkit-search-cancel-button]:hidden"
 						aria-label="Buscar productos"
 						aria-busy={isPending}
 						autoComplete="off"
@@ -157,10 +157,7 @@ export function SearchPageClient({ initialQuery, initialResults }: Props) {
 					) : (
 						<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-1 md:gap-x-1.5 gap-y-3 md:gap-y-4 lg:gap-y-5">
 							{products.map((product) => (
-								<ProductCard
-									key={product.id}
-									product={product}
-								/>
+								<ProductCard key={product.id} product={product} />
 							))}
 						</div>
 					)}
