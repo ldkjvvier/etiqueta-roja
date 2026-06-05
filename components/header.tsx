@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/sheet'
 import { useStore } from '@/lib/store-context'
 import { CartSheet } from './cart-sheet'
+import { HeaderSearch } from './header-search'
 import { cn } from '@/lib/utils'
 
 const navLinks = [
@@ -231,8 +232,9 @@ export function Header() {
 						</Link>
 					</div>
 
-					{/* RIGHT — Cart */}
-					<div className="flex items-center justify-end">
+					{/* RIGHT — Search + Cart */}
+					<div className="flex items-center justify-end gap-1">
+						<HeaderSearch />
 						{/* Mobile: icon-only */}
 						<Button
 							variant="ghost"
