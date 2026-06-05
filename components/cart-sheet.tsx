@@ -1,10 +1,6 @@
 'use client'
 
-import Image from 'next/image'
 import { useState } from 'react'
-import { Minus, Plus, X, MessageCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import {
 	Sheet,
 	SheetContent,
@@ -13,8 +9,13 @@ import {
 	SheetTitle,
 } from '@/components/ui/sheet'
 import { useStore } from '@/lib/store-context'
-import { formatPrice } from '@/lib/utils'
 import { createPendingOrderFromCart } from '@/lib/actions/checkout'
+import { CartLineItem } from '@/components/cart/cart-line-item'
+import { CartEmptyState } from '@/components/cart/cart-empty-state'
+import {
+	CartCheckoutFooter,
+	type CheckoutNotice,
+} from '@/components/cart/cart-checkout-footer'
 
 export function CartSheet() {
 	const {
@@ -29,15 +30,22 @@ export function CartSheet() {
 		generateWhatsAppMessage,
 	} = useStore()
 	const [checkoutLoading, setCheckoutLoading] = useState(false)
-	const [checkoutNotice, setCheckoutNotice] = useState<{
-		type: 'error' | 'success'
-		message: string
-	} | null>(null)
+	const [checkoutNotice, setCheckoutNotice] = useState<CheckoutNotice | null>(
+		null,
+	)
 	const [customerEmail, setCustomerEmail] = useState('')
 	const [emailError, setEmailError] = useState('')
 
+	const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0)
+	const hasSoldOut = cartItems.some((item) => item.maxStock === 0)
+
 	const isValidEmail = (email: string) =>
 		/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+
+	const handleEmailChange = (value: string) => {
+		setCustomerEmail(value)
+		if (emailError) setEmailError('')
+	}
 
 	const handleWhatsAppCheckout = () => {
 		setCheckoutNotice(null)
@@ -106,206 +114,87 @@ export function CartSheet() {
 			})
 	}
 
+	const isEmpty = cartItems.length === 0
+
 	return (
 		<Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
 			<SheetContent
 				id="cart-sheet"
-				className="flex w-full flex-col border-l border-border bg-background overscroll-contain sm:max-w-md"
+				className="flex w-full flex-col gap-0 overscroll-contain border-l border-border bg-background p-0 sm:max-w-md"
 			>
-				<SheetHeader className="border-b border-border pb-4">
-					<SheetTitle className="text-xl font-black tracking-tight">
-						TU CARRITO ({cartItems.length})
-					</SheetTitle>
+				<SheetHeader className="gap-0 border-b border-border-strong px-4 pb-4 pt-5">
+					<div className="flex items-baseline gap-2 pr-8">
+						<SheetTitle className="text-xl font-black uppercase tracking-tight">
+							Tu carrito
+						</SheetTitle>
+						<span
+							aria-hidden="true"
+							className="font-mono text-sm font-bold tabular-nums text-primary"
+						>
+							({itemCount})
+						</span>
+					</div>
 					<SheetDescription className="sr-only">
-						Revisa los productos agregados al carrito, ajusta
-						cantidades y completa tu pedido por WhatsApp.
+						Revisa los productos agregados al carrito, ajusta cantidades y
+						completa tu pedido por WhatsApp.
 					</SheetDescription>
 				</SheetHeader>
 
-				{checkoutNotice ? (
-					<p
-						role={
-							checkoutNotice.type === 'error' ? 'alert' : 'status'
-						}
-						aria-live="polite"
-						className={`mt-4 border px-4 py-3 text-sm ${
-							checkoutNotice.type === 'error'
-								? 'border-destructive/30 text-destructive'
-								: 'border-primary/30 text-foreground'
-						}`}
-					>
-						{checkoutNotice.message}
-					</p>
-				) : null}
-
-				{cartItems.length === 0 ? (
-					<div className="flex-1 flex flex-col items-center justify-center gap-4">
-						<p className="text-muted-foreground font-medium">
-							Tu carrito está vacío
-						</p>
-						<Button
-							onClick={() => setIsCartOpen(false)}
-							className="bg-primary text-primary-foreground hover:bg-foreground font-bold px-8"
-						>
-							SEGUIR COMPRANDO
-						</Button>
+				{isEmpty ? (
+					<div className="flex flex-1 flex-col">
+						{checkoutNotice ? (
+							<p
+								role={checkoutNotice.type === 'error' ? 'alert' : 'status'}
+								aria-live="polite"
+								className={`mx-4 mt-4 border-l-2 px-3 py-2 text-xs ${
+									checkoutNotice.type === 'error'
+										? 'border-primary text-primary-strong'
+										: 'border-foreground text-foreground'
+								}`}
+							>
+								{checkoutNotice.message}
+							</p>
+						) : null}
+						<CartEmptyState onContinue={() => setIsCartOpen(false)} />
 					</div>
 				) : (
 					<>
-						<div className="flex-1 overflow-y-auto py-4 space-y-4">
-							{cartItems.map((item) => (
-								<div
-									key={`${item.id}-${item.size}`}
-									className="flex gap-4 p-4 border border-border"
-								>
-									<div className="w-20 h-20 bg-secondary shrink-0">
-										<Image
-											src={item.image || '/placeholder.svg'}
-											alt={item.name}
-											width={80}
-											height={80}
-											sizes="80px"
-											className="h-full w-full object-cover"
-										/>
-									</div>
-									<div className="flex-1 flex flex-col">
-										<div className="flex justify-between items-start">
-											<div>
-												<h3 className="font-bold text-sm uppercase">
-													{item.name}
-												</h3>
-												<p className="text-muted-foreground text-xs mt-1">
-													Talla: {item.size}
-												</p>
-												{item.maxStock === 0 && (
-													<p className="text-destructive text-xs font-black mt-1 uppercase tracking-wider">
-														¡Agotado!
-													</p>
-												)}
-												{item.maxStock > 0 &&
-													item.quantity >= item.maxStock && (
-														<p className="text-destructive text-[10px] font-bold mt-1 uppercase">
-															Stock Máximo Alcanzado ({item.maxStock})
-														</p>
-													)}
-											</div>
-											<Button
-												variant="ghost"
-												size="icon"
-												className="h-6 w-6 hover:bg-transparent hover:text-primary"
-												aria-label={`Eliminar ${item.name} talla ${item.size}`}
-												onClick={() =>
-													removeFromCart(item.id, item.size)
-												}
-											>
-												<X className="h-4 w-4" />
-											</Button>
-										</div>
-										<div className="flex items-center justify-between mt-auto">
-											<div className="flex items-center border border-border">
-												<Button
-													variant="ghost"
-													size="icon"
-													className="h-8 w-8 hover:bg-secondary"
-													aria-label={`Restar una unidad de ${item.name} talla ${item.size}`}
-													onClick={() =>
-														updateQuantity(
-															item.id,
-															item.size,
-															item.quantity - 1,
-														)
-													}
-												>
-													<Minus className="h-3 w-3" />
-												</Button>
-												<span className="w-8 text-center text-sm font-bold">
-													{item.quantity}
-												</span>
-												<Button
-													variant="ghost"
-													size="icon"
-													className="h-8 w-8 hover:bg-secondary"
-													aria-label={`Sumar una unidad de ${item.name} talla ${item.size}`}
-													disabled={item.quantity >= item.maxStock}
-													onClick={() =>
-														updateQuantity(
-															item.id,
-															item.size,
-															item.quantity + 1,
-														)
-													}
-												>
-													<Plus className="h-3 w-3" />
-												</Button>
-											</div>
-											<span className="font-bold">
-												{formatPrice(item.price * item.quantity)}
-											</span>
-										</div>
-									</div>
-								</div>
-							))}
+						<div className="flex items-center justify-between border-b border-border px-4 py-2">
+							<span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+								{itemCount} {itemCount === 1 ? 'artículo' : 'artículos'}
+							</span>
+							<button
+								type="button"
+								onClick={() => clearCart()}
+								className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+							>
+								Vaciar
+							</button>
 						</div>
 
-						<div className="border-t border-border pt-4 space-y-4">
-							<div className="flex justify-between items-center">
-								<span className="font-bold uppercase">Subtotal</span>
-								<span className="text-xl font-black">
-									{formatPrice(cartTotal)}
-								</span>
-							</div>
-							<div className="space-y-2">
-								<label
-									htmlFor="checkout-email"
-									className="text-sm font-bold uppercase tracking-wide"
-								>
-									Tu email
-								</label>
-								<Input
-									id="checkout-email"
-									type="email"
-									autoComplete="email"
-									inputMode="email"
-									placeholder="nombre@ejemplo.com"
-									value={customerEmail}
-									onChange={(event) => {
-										setCustomerEmail(event.target.value)
-										if (emailError) {
-											setEmailError('')
-										}
-									}}
+						<ul className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
+							{cartItems.map((item) => (
+								<CartLineItem
+									key={`${item.id}-${item.size}`}
+									item={item}
+									onRemove={removeFromCart}
+									onUpdateQuantity={updateQuantity}
 								/>
-								<p className="text-xs text-muted-foreground">
-									Lo usamos para identificar y dar seguimiento a tu
-									pedido.
-								</p>
-								{emailError ? (
-									<p className="text-xs text-destructive">
-										{emailError}
-									</p>
-								) : null}
-							</div>
-							<Button
-								onClick={handleWhatsAppCheckout}
-								disabled={
-									checkoutLoading ||
-									!whatsappNumber ||
-									cartItems.some((item) => item.maxStock === 0)
-								}
-								className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-lg py-6 gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-							>
-								<MessageCircle className="h-5 w-5" />
-								{checkoutLoading
-									? 'PROCESANDO…'
-									: !whatsappNumber
-										? 'WHATSAPP NO DISPONIBLE'
-										: cartItems.some((item) => item.maxStock === 0)
-											? 'ELIMINA PRODUCTOS AGOTADOS'
-											: 'ENVIAR PEDIDO A WHATSAPP'}
-							</Button>
-							<p className="text-center text-xs text-muted-foreground">
-								Se abrirá WhatsApp con el resumen de tu pedido
-							</p>
+							))}
+						</ul>
+
+						<div className="px-4">
+							<CartCheckoutFooter
+								cartTotal={cartTotal}
+								email={customerEmail}
+								emailError={emailError}
+								onEmailChange={handleEmailChange}
+								notice={checkoutNotice}
+								isLoading={checkoutLoading}
+								whatsappAvailable={Boolean(whatsappNumber)}
+								hasSoldOut={hasSoldOut}
+								onCheckout={handleWhatsAppCheckout}
+							/>
 						</div>
 					</>
 				)}
