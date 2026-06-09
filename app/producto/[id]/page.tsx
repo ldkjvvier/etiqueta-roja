@@ -29,11 +29,27 @@ export async function generateMetadata({
 	const product = await resolveProduct(id)
 	if (!product) return { title: 'Producto | ETIQUETA ROJA' }
 
+	const description =
+		product.description ||
+		`Comprá ${product.name} en ETIQUETA ROJA. Stock limitado.`
+
 	return {
 		title: `${product.name} | ETIQUETA ROJA`,
-		description:
-			product.description ||
-			`Comprá ${product.name} en ETIQUETA ROJA. Stock limitado.`,
+		description,
+		openGraph: {
+			title: `${product.name} | ETIQUETA ROJA`,
+			description,
+			images: product.image
+				? [{ url: product.image, width: 1200, height: 1200, alt: product.name }]
+				: [],
+			type: 'website',
+		},
+		twitter: {
+			card: 'summary_large_image',
+			title: `${product.name} | ETIQUETA ROJA`,
+			description,
+			images: product.image ? [product.image] : [],
+		},
 	}
 }
 

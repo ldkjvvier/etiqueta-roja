@@ -1,12 +1,15 @@
 'use client'
 import { formatPrice } from '@/lib/utils'
 import { validateCartStock } from '@/lib/actions/products'
+import { toast } from 'sonner'
 
 import {
 	createContext,
+	useCallback,
 	useContext,
-	useState,
 	useEffect,
+	useRef,
+	useState,
 	type ReactNode,
 } from 'react'
 
@@ -110,7 +113,16 @@ export function StoreProvider({
 		return left.size === right.size
 	}
 
-	const validateCart = async (items: CartItem[]) => {
+	// Ref para obtener siempre el snapshot más reciente de cartItems
+	// sin convertirlo en dependencia del efecto de isCartOpen.
+	const cartItemsRef = useRef(cartItems)
+	useEffect(() => {
+		cartItemsRef.current = cartItems
+	}, [cartItems])
+
+	// C-02: validateCart como useCallback con deps vacías — setCartItems y
+	// validateCartStock son referencias estables; el estado se lee via ref.
+	const validateCart = useCallback(async (items: CartItem[]) => {
 		if (items.length === 0) return
 		const normalize = (value: string) =>
 			(value || '').trim().toLowerCase().replace(/\s+/g, '-')
@@ -131,7 +143,6 @@ export function StoreProvider({
 						: `${item.id}-${normalize(item.size)}`
 					const realStock = stockMap[key]
 
-					// If we got a valid stock number back, update the item
 					if (typeof realStock === 'number') {
 						return { ...item, maxStock: realStock }
 					}
@@ -141,7 +152,7 @@ export function StoreProvider({
 		} catch (error) {
 			console.error('Error verifying stock:', error)
 		}
-	}
+	}, [])
 
 	// Load cart from localStorage on mount
 	useEffect(() => {
@@ -156,14 +167,14 @@ export function StoreProvider({
 			}
 		}
 		setIsLoaded(true)
-	}, [])
+	}, [validateCart])
 
-	// Re-validate when opening cart
+	// Re-validate cuando se abre el carrito — usa ref para evitar stale closure
 	useEffect(() => {
-		if (isCartOpen && cartItems.length > 0) {
-			validateCart(cartItems)
+		if (isCartOpen && cartItemsRef.current.length > 0) {
+			validateCart(cartItemsRef.current)
 		}
-	}, [isCartOpen])
+	}, [isCartOpen, validateCart])
 
 	// Save cart to localStorage whenever it changes
 	useEffect(() => {
@@ -175,14 +186,22 @@ export function StoreProvider({
 		}
 	}, [cartItems, isLoaded])
 
+	// C-04: verificar max stock antes de actualizar para poder mostrar toast
 	const addToCart = (item: Omit<CartItem, 'quantity'>) => {
+		const current = cartItemsRef.current
+		const existing = current.find((i) => sameCartLine(i, item))
+
+		if (existing && existing.quantity >= existing.maxStock) {
+			toast.error('Stock máximo alcanzado', {
+				description: 'Ya tenés el máximo disponible en tu carrito.',
+			})
+			return
+		}
+
 		setCartItems((prev) => {
-			const existing = prev.find((i) => sameCartLine(i, item))
-			if (existing) {
-				// Prevent adding more than maxStock
-				if (existing.quantity >= existing.maxStock) {
-					return prev
-				}
+			const ex = prev.find((i) => sameCartLine(i, item))
+			if (ex) {
+				if (ex.quantity >= ex.maxStock) return prev
 				return prev.map((i) =>
 					sameCartLine(i, item)
 						? { ...i, quantity: i.quantity + 1 }

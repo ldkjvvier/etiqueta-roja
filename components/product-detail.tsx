@@ -15,6 +15,7 @@ import { useStore, type Product } from '@/lib/store-context'
 import { ProductCard } from './product-card'
 import { formatPrice } from '@/lib/utils'
 import { ViewTracker } from '@/components/view-tracker'
+import { toast } from 'sonner'
 
 export function ProductDetail({
 	product,
@@ -155,12 +156,40 @@ export function ProductDetail({
 		}
 	}, [emblaApi])
 
+	// A-03: auto-seleccionar si hay exactamente 1 talla disponible
+	useEffect(() => {
+		const availableSizes = product.sizes.filter((size) => {
+			const variant = product.variants?.find((v) => v.size === size)
+			return (
+				!variant ||
+				variant.trackInventory === false ||
+				variant.stock > 0
+			)
+		})
+		if (availableSizes.length === 1) {
+			setSelectedSize(availableSizes[0])
+		}
+		// Solo al montar o cambiar de producto — product.sizes y variants son inmutables en SSR
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [product.id])
+
 	const handleWhatsAppOrder = () => {
 		if (!selectedSize || !whatsappNumber) return
-		window.open(
-			generateWhatsAppMessage(product, selectedSize),
-			'_blank',
-		)
+		const url = generateWhatsAppMessage(product, selectedSize)
+		const opened = window.open(url, '_blank')
+		if (!opened) {
+			toast('Abrí WhatsApp manualmente', {
+				description:
+					'Tu navegador bloqueó la ventana emergente.',
+				action: {
+					label: 'Abrir',
+					onClick: () => {
+						window.location.href = url
+					},
+				},
+				duration: 8000,
+			})
+		}
 	}
 
 	const handleAddToCart = () => {
@@ -280,21 +309,21 @@ export function ProductDetail({
 								</>
 							)}
 
-							{/* Stock Badge */}
-							{product.stockStatus === 'low' && (
-								<span className="absolute top-4 left-4 bg-primary text-primary-foreground text-sm font-bold px-4 py-2 uppercase tracking-wider z-10">
-									Poco Stock
+							{/* Stock Badge — mismo lenguaje visual que product-badge.tsx */}
+							{product.stockStatus === 'low' && !isSoldOut && (
+								<span className="absolute left-4 top-4 z-10 bg-background/90 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.15em] text-primary-strong">
+									ÚLTIMO
 								</span>
 							)}
 							{isSoldOut && (
-								<span className="absolute top-4 left-4 bg-foreground text-background text-sm font-bold px-4 py-2 uppercase tracking-wider z-10">
-									Agotado
+								<span className="absolute left-4 top-4 z-10 bg-foreground px-3 py-1 font-mono text-[10px] uppercase tracking-[0.15em] text-background">
+									AGOTADO
 								</span>
 							)}
 
 							{/* Sale Badge */}
 							{product.originalPrice && !isSoldOut && (
-								<span className="absolute top-4 right-4 bg-primary text-primary-foreground text-sm font-bold px-4 py-2 z-10">
+								<span className="absolute right-4 top-4 z-10 bg-background/90 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.15em] text-primary-strong">
 									OFERTA
 								</span>
 							)}
@@ -409,6 +438,22 @@ export function ProductDetail({
 										})}
 									</div>
 								</div>
+							)}
+
+							{/* A-05: Copy de escasez — visible al seleccionar una talla con poco stock */}
+							{selectedVariant &&
+								selectedVariant.trackInventory !== false &&
+								selectedVariant.stock > 0 &&
+								selectedVariant.stock <=
+									(selectedVariant.lowStockThreshold ?? 5) && (
+								<p
+									role="status"
+									className="mb-4 font-mono text-xs uppercase tracking-widest text-primary"
+								>
+									{selectedVariant.stock === 1
+										? 'Solo queda 1 unidad'
+										: `Solo quedan ${selectedVariant.stock} unidades`}
+								</p>
 							)}
 
 							{/* Actions */}
