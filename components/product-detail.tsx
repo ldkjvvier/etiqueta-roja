@@ -184,7 +184,6 @@ export function ProductDetail({
 			image: selectedVariant?.imageUrl || product.image,
 			maxStock,
 		})
-		setSelectedSize(null)
 	}
 
 	useEffect(() => {
@@ -250,6 +249,15 @@ export function ProductDetail({
 								</div>
 							</div>
 
+							{/* Aria live para screen readers al navegar el carousel */}
+							<div
+								aria-live="polite"
+								aria-atomic="true"
+								className="sr-only"
+							>
+								{`Imagen ${selectedImageIndex + 1} de ${productImages.length}`}
+							</div>
+
 							{/* Navigation Arrows */}
 							{productImages.length > 1 && (
 								<>
@@ -313,7 +321,7 @@ export function ProductDetail({
 									>
 										<Image
 											src={img || '/placeholder.svg'}
-											alt={`${product.name} thumbnail ${index + 1}`}
+											alt={`${product.name} — vista ${index + 1} de ${productImages.length}`}
 											fill
 											sizes="96px"
 											className="object-cover"
@@ -375,7 +383,8 @@ export function ProductDetail({
 												(v) => v.size === size,
 											)
 											const isSizeSoldOut = variant
-												? variant.stock <= 0
+												? variant.trackInventory !== false &&
+												  variant.stock <= 0
 												: false
 
 											return (
@@ -427,7 +436,9 @@ export function ProductDetail({
 											variant="outline"
 											className="w-full border-2 border-foreground text-foreground hover:bg-foreground hover:text-background font-bold py-4 disabled:opacity-50 disabled:cursor-not-allowed bg-transparent"
 										>
-											AGREGAR AL CARRITO
+											{selectedSize
+												? 'AGREGAR AL CARRITO'
+												: 'ELIGE TU TALLA PRIMERO'}
 										</Button>
 									</>
 								) : (
@@ -454,23 +465,25 @@ export function ProductDetail({
 			</div>
 
 			{/* Recommended Products Section */}
-			<section className="container mx-auto px-4 py-16 border-t border-border">
-				<h2 className="text-2xl md:text-3xl font-black tracking-tight uppercase mb-8">
-					BAJO EL RADAR // STOCK RELACIONADO
-				</h2>
+			{recommendedProducts.length > 0 && (
+				<section className="container mx-auto px-4 py-16 border-t border-border">
+					<h2 className="text-2xl md:text-3xl font-black tracking-tight uppercase mb-8">
+						BAJO EL RADAR // STOCK RELACIONADO
+					</h2>
 
-				{/* Horizontal scroll on mobile, 4 columns on desktop */}
-				<div className="flex gap-4 overflow-x-auto pb-4 md:grid md:grid-cols-4 md:overflow-visible scrollbar-hide">
-					{recommendedProducts.map((recProduct) => (
-						<div
-							key={recProduct.id}
-							className="flex-none w-65 md:w-auto"
-						>
-							<ProductCard product={recProduct} />
-						</div>
-					))}
-				</div>
-			</section>
+					{/* Horizontal scroll on mobile, 4 columns on desktop */}
+					<div className="flex gap-4 overflow-x-auto pb-4 md:grid md:grid-cols-4 md:overflow-visible scrollbar-hide">
+						{recommendedProducts.map((recProduct) => (
+							<div
+								key={recProduct.id}
+								className="flex-none w-[260px] md:w-auto"
+							>
+								<ProductCard product={recProduct} />
+							</div>
+						))}
+					</div>
+				</section>
+			)}
 		</div>
 	)
 }
