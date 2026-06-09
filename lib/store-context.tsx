@@ -255,8 +255,8 @@ export function StoreProvider({
 		}
 
 		if (product && size) {
-			// Single product order
-			const message = `Hola Etiqueta Roja, me interesa el ${product.name} en talla ${size}.`
+			// Single product order — bold en WhatsApp con asteriscos
+			const message = `Hola Etiqueta Roja 👋 quiero reservar el *${product.name}* en talla *${size}* antes de que se agote. ¿Está disponible?`
 			return `https://wa.me/${cleanNumber}?text=${encodeURIComponent(
 				message,
 			)}`

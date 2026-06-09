@@ -9,6 +9,7 @@ import {
 	MessageCircle,
 	ChevronLeft,
 	ChevronRight,
+	Share2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useStore, type Product } from '@/lib/store-context'
@@ -16,6 +17,8 @@ import { ProductCard } from './product-card'
 import { formatPrice } from '@/lib/utils'
 import { ViewTracker } from '@/components/view-tracker'
 import { toast } from 'sonner'
+import { ProductStickyCtaMobile } from '@/components/product-detail-sticky-cta'
+import { CollapsibleDescription } from '@/components/collapsible-description'
 
 export function ProductDetail({
 	product,
@@ -222,7 +225,7 @@ export function ProductDetail({
 	}, [selectedImageIndex, productImages.length, emblaApi])
 
 	return (
-		<div className="min-h-screen bg-background">
+		<div className="min-h-screen bg-background pb-20 lg:pb-0">
 			<ViewTracker productId={product.id} />
 			{/* Breadcrumbs */}
 			<div className="container mx-auto px-4 py-4">
@@ -363,9 +366,33 @@ export function ProductDetail({
 
 					{/* Product Info */}
 					<div className="flex flex-col pt-2 w-full">
-						<h1 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight uppercase mb-3">
-							{product.name}
-						</h1>
+						<div className="flex items-start justify-between gap-3 mb-3">
+							<h1 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight uppercase">
+								{product.name}
+							</h1>
+							{typeof navigator !== 'undefined' &&
+								'share' in navigator && (
+								<button
+									type="button"
+									onClick={() => {
+										navigator
+											.share({
+												title: product.name,
+												text: `Mirá este ${product.name} en Etiqueta Roja`,
+												url: window.location.href,
+											})
+											.catch(() => {})
+									}}
+									className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center border border-border transition-colors hover:border-foreground"
+									aria-label="Compartir producto"
+								>
+									<Share2
+										className="h-4 w-4"
+										aria-hidden="true"
+									/>
+								</button>
+							)}
+						</div>
 
 						<div className="flex items-center gap-3 mb-4">
 							<span className="text-2xl md:text-3xl lg:text-4xl font-black">
@@ -384,9 +411,9 @@ export function ProductDetail({
 								<h3 className="font-bold text-xs uppercase tracking-wide mb-2 text-muted-foreground">
 									Descripción
 								</h3>
-								<p className="text-foreground leading-relaxed">
-									{product.description}
-								</p>
+								<CollapsibleDescription
+									text={product.description}
+								/>
 							</div>
 						) : null}
 
@@ -529,6 +556,15 @@ export function ProductDetail({
 					</div>
 				</section>
 			)}
+
+			{/* A-01: Sticky CTA — solo visible en mobile (lg:hidden en el componente) */}
+			<ProductStickyCtaMobile
+				price={displayedPrice}
+				selectedSize={selectedSize}
+				disabled={!selectedSize || !whatsappNumber}
+				isSoldOut={isSoldOut}
+				onWhatsApp={handleWhatsAppOrder}
+			/>
 		</div>
 	)
 }
