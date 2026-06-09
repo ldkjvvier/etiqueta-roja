@@ -27,14 +27,12 @@ const initialActionState = { message: '', error: false }
 interface HeroStudioProps {
 	initialData?: HomeHeroBannerConfig
 	isActive?: boolean
-	initialDescription?: string | null
 	dropOptions?: HeroDropOption[]
 }
 
 export function HeroStudio({
 	initialData,
 	isActive,
-	initialDescription,
 	dropOptions,
 }: HeroStudioProps) {
 	const [actionState, formAction, isPending] = useActionState(
@@ -50,7 +48,6 @@ export function HeroStudio({
 		useHeroStudioState({
 			initialData,
 			isActive,
-			initialDescription,
 			dropOptions,
 		})
 

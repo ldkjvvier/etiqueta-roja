@@ -39,7 +39,6 @@ export interface HeroDropConfig {
 
 export interface HeroStudioState {
 	isActive: boolean
-	internalDescription: string
 	content: {
 		badge: string
 		title: string
@@ -97,7 +96,6 @@ export type HeroBannerConfig = HomeHeroBannerConfig
 
 export interface HeroSubmitPayload {
 	is_active: boolean
-	internal_description: string | null
 	value: HeroBannerConfig
 }
 

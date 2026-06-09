@@ -164,7 +164,6 @@ export function ConfigDashboard({
 						<HomeHeroBannerForm
 							initialData={heroBannerConfig?.value}
 							isActive={heroBannerConfig?.is_active}
-							initialDescription={heroBannerConfig?.description}
 							dropOptions={dropOptions}
 						/>
 					)}
@@ -173,9 +172,6 @@ export function ConfigDashboard({
 						<AnnouncementBarConfigForm
 							initialData={announcementBarConfig?.value || null}
 							isActive={announcementBarConfig?.is_active}
-							initialDescription={
-								announcementBarConfig?.description || ''
-							}
 						/>
 					)}
 
@@ -183,7 +179,6 @@ export function ConfigDashboard({
 						<PromoBannerForm
 							initialData={promoConfig?.value}
 							isActive={promoConfig?.is_active}
-							initialDescription={promoConfig?.description}
 						/>
 					)}
 				</section>

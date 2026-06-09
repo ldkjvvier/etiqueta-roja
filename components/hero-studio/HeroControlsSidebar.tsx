@@ -20,7 +20,6 @@ import { HeroSectionMedia } from './sidebar/HeroSectionMedia'
 import { HeroSectionLayout } from './sidebar/HeroSectionLayout'
 import { HeroSectionStyles } from './sidebar/HeroSectionStyles'
 import { HeroSectionDropCampaign } from './sidebar/HeroSectionDropCampaign'
-import { HeroSectionAdvanced } from './sidebar/HeroSectionAdvanced'
 
 export type HeroControlsDispatch = React.Dispatch<
 	| {
@@ -37,7 +36,7 @@ export type HeroControlsDispatch = React.Dispatch<
 	  }
 	| {
 			type: 'setTopLevel'
-			key: 'isActive' | 'internalDescription'
+			key: 'isActive'
 			value: string | boolean
 	  }
 >
@@ -93,7 +92,7 @@ export function HeroControlsSidebar({
 	}
 
 	const setTopLevel = (
-		key: 'isActive' | 'internalDescription',
+		key: 'isActive',
 		value: string | boolean,
 	) => {
 		dispatch({ type: 'setTopLevel', key, value })
@@ -108,9 +107,6 @@ export function HeroControlsSidebar({
 		switch (key) {
 			case 'isActive':
 				setTopLevel('isActive', value as boolean)
-				return
-			case 'internalDescription':
-				setTopLevel('internalDescription', value as string)
 				return
 			case 'badge':
 			case 'title':
@@ -268,11 +264,6 @@ export function HeroControlsSidebar({
 					dropOptions={dropOptions}
 				/>
 				<HeroSectionStyles
-					form={form}
-					setField={setField}
-					setTopLevel={setTopLevel}
-				/>
-				<HeroSectionAdvanced
 					form={form}
 					setField={setField}
 					setTopLevel={setTopLevel}

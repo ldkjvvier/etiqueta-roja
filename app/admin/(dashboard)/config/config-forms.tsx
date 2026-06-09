@@ -49,19 +49,16 @@ const initialState = { message: '', error: false }
 export function HomeHeroBannerForm({
 	initialData,
 	isActive,
-	initialDescription,
 	dropOptions,
 }: {
 	initialData?: HomeHeroBannerConfig
 	isActive?: boolean
-	initialDescription?: string | null
 	dropOptions?: HeroDropOption[]
 }) {
 	return (
 		<HeroStudio
 			initialData={initialData}
 			isActive={isActive}
-			initialDescription={initialDescription}
 			dropOptions={dropOptions}
 		/>
 	)
@@ -70,11 +67,9 @@ export function HomeHeroBannerForm({
 export function PromoBannerForm({
 	initialData,
 	isActive,
-	initialDescription,
 }: {
 	initialData?: PromoBannerConfig
 	isActive?: boolean
-	initialDescription?: string | null
 }) {
 	const [state, formAction, isPending] = useActionState(
 		updatePromoBanner,
@@ -118,16 +113,6 @@ export function PromoBannerForm({
 							name="link"
 							defaultValue={initialData?.link ?? ''}
 							placeholder="Ej: /producto/oferta"
-						/>
-					</div>
-
-					<div className="space-y-2">
-						<Label htmlFor="description">Descripción interna</Label>
-						<Input
-							id="description"
-							name="description"
-							defaultValue={initialDescription ?? ''}
-							placeholder="Ayuda interna para admins"
 						/>
 					</div>
 				</CardContent>
@@ -193,7 +178,6 @@ const socialContactFormSchema = z.object({
 
 const announcementBarFormSchema = z.object({
 	isActive: z.boolean(),
-	description: z.string().max(160).optional(),
 	message: z.string().trim().min(1).max(140),
 	backgroundColor: z
 		.string()
@@ -495,18 +479,15 @@ export function StoreInfoForm({ storeInfo }: { storeInfo: StoreInfo }) {
 export function AnnouncementBarConfigForm({
 	initialData,
 	isActive,
-	initialDescription,
 }: {
 	initialData?: Record<string, unknown> | null
 	isActive?: boolean
-	initialDescription?: string | null
 }) {
 	const { isPending, submit } = useConfigSubmit()
 	const form = useForm<z.infer<typeof announcementBarFormSchema>>({
 		resolver: zodResolver(announcementBarFormSchema),
 		defaultValues: {
 			isActive: isActive ?? true,
-			description: initialDescription ?? '',
 			message: String(initialData?.message || ''),
 			backgroundColor: String(
 				initialData?.backgroundColor || '#111111',
@@ -520,7 +501,6 @@ export function AnnouncementBarConfigForm({
 	const onSubmit = form.handleSubmit((data) => {
 		const fd = new FormData()
 		fd.set('is_active', data.isActive ? 'true' : 'false')
-		fd.set('description', data.description || '')
 		fd.set('message', data.message)
 		fd.set('background_color', data.backgroundColor)
 		fd.set('text_color', data.textColor)
@@ -570,16 +550,6 @@ export function AnnouncementBarConfigForm({
 						onChange={(next) => form.setValue('textColor', next)}
 					/>
 				</div>
-
-				<ConfigInputField
-					id="announcement_description"
-					label="Descripción interna"
-				>
-					<Input
-						id="announcement_description"
-						{...form.register('description')}
-					/>
-				</ConfigInputField>
 
 				<ConfigPreview title="Vista previa de barra">
 					<div

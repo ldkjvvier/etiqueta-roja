@@ -3,7 +3,6 @@ import { HeroStudioState } from '@/types/heroStudio.types'
 
 export const heroSidebarSchema = z.object({
 	isActive: z.boolean(),
-	internalDescription: z.string().max(240),
 	badge: z.string().max(80),
 	title: z.string().min(1).max(120),
 	description: z.string().max(260),
@@ -76,7 +75,6 @@ export function getSidebarDefaults(
 ): HeroSidebarFormValues {
 	return {
 		isActive: state.isActive,
-		internalDescription: state.internalDescription,
 		badge: state.content.badge,
 		title: state.content.title,
 		description: state.content.description,

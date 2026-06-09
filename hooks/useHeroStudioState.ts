@@ -9,7 +9,6 @@ import {
 interface UseHeroStudioStateArgs {
 	initialData?: HomeHeroBannerConfig
 	isActive?: boolean
-	initialDescription?: string | null
 	dropOptions?: HeroDropOption[]
 }
 
@@ -28,20 +27,18 @@ type HeroStudioAction =
 	  }
 	| {
 			type: 'setTopLevel'
-			key: 'isActive' | 'internalDescription'
+			key: 'isActive'
 			value: string | boolean
 	  }
 
 function buildInitialState(
 	initialData?: HomeHeroBannerConfig,
 	isActive?: boolean,
-	initialDescription?: string | null,
 ): HeroStudioState {
 	const normalizedCTA = getHeroCTAConfig(initialData)
 
 	return {
 		isActive: isActive ?? true,
-		internalDescription: initialDescription ?? '',
 		content: {
 			badge: initialData?.badge ?? '',
 			title: initialData?.title ?? '',
@@ -151,12 +148,11 @@ function heroStudioReducer(
 export function useHeroStudioState({
 	initialData,
 	isActive,
-	initialDescription,
 	dropOptions,
 }: UseHeroStudioStateArgs) {
 	const [state, dispatch] = useReducer(
 		heroStudioReducer,
-		buildInitialState(initialData, isActive, initialDescription),
+		buildInitialState(initialData, isActive),
 	)
 
 	const selectedDrop = useMemo(() => {
@@ -168,7 +164,6 @@ export function useHeroStudioState({
 	const submitPayload = useMemo(() => {
 		return {
 			is_active: state.isActive,
-			internal_description: state.internalDescription || null,
 			value: {
 				badge: state.content.badge,
 				title: state.content.title,

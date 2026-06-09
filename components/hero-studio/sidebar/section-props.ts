@@ -18,7 +18,7 @@ export interface HeroSectionProps {
 	form: UseFormReturn<HeroSidebarFormValues>
 	setField: HeroSetField
 	setTopLevel: (
-		key: 'isActive' | 'internalDescription',
+		key: 'isActive',
 		value: string | boolean,
 	) => void
 	dropOptions?: HeroDropOption[]

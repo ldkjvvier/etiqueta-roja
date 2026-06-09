@@ -114,8 +114,7 @@ export async function updateAnnouncementBarConfig(
 	return upsertSiteConfigValue({
 		key: 'announcement_bar',
 		value: parsed.data as unknown as SiteConfigJson,
-		description:
-			String(formData.get('description') || '').trim() || null,
+		description: null,
 		isActive:
 			formData.get('is_active') === 'on' ||
 			formData.get('is_active') === 'true',
@@ -281,7 +280,6 @@ export async function updatePromoBanner(
 	const message = formData.get('message') as string
 	const link = formData.get('link') as string
 	const isActive = formData.get('is_active') === 'on'
-	const description = (formData.get('description') as string) || null
 
 	const value: PromoBannerConfig = {
 		message,
@@ -292,7 +290,7 @@ export async function updatePromoBanner(
 		store_id: store.storeId,
 		key: 'promo_banner',
 		value: value as unknown as SiteConfigJson,
-		description,
+		description: null,
 		is_active: isActive,
 		visibility: 'public',
 		updated_by: user.id,
@@ -334,7 +332,6 @@ export async function updateHomeHeroBanner(
 		try {
 			const parsedPayload = JSON.parse(heroPayloadRaw) as {
 				is_active?: boolean
-				internal_description?: string | null
 				value?: HomeHeroBannerConfig
 			}
 
@@ -416,7 +413,7 @@ export async function updateHomeHeroBanner(
 					store_id: store.storeId,
 					key: 'home_hero_banner',
 					value: value as unknown as SiteConfigJson,
-					description: parsedPayload.internal_description || null,
+					description: null,
 					is_active: Boolean(parsedPayload.is_active ?? true),
 					visibility: 'public',
 					updated_by: user.id,
@@ -567,8 +564,6 @@ export async function updateHomeHeroBanner(
 			? layoutPresetRaw
 			: 'fullbleed-bottom'
 	const isActive = formData.get('is_active') === 'on'
-	const internalDescription =
-		(formData.get('internal_description') as string) || null
 
 	const isValidExternalVideoUrl = (url: string) => {
 		if (!url.trim()) {
@@ -670,7 +665,7 @@ export async function updateHomeHeroBanner(
 		store_id: store.storeId,
 		key: 'home_hero_banner',
 		value: value as unknown as SiteConfigJson,
-		description: internalDescription,
+		description: null,
 		is_active: isActive,
 		visibility: 'public',
 		updated_by: user.id,
