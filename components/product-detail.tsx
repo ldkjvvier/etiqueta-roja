@@ -173,7 +173,6 @@ export function ProductDetail({
 			setSelectedSize(availableSizes[0])
 		}
 		// Solo al montar o cambiar de producto — product.sizes y variants son inmutables en SSR
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [product.id])
 
 	const handleWhatsAppOrder = () => {
