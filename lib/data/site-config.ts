@@ -139,13 +139,6 @@ export interface PromoBannerConfig {
 	link?: string | null
 }
 
-export interface ContactInfoConfig {
-	whatsapp: string
-	instagram: string
-	tiktok: string
-	email: string
-}
-
 export type { HeroCTAConfig } from '@/lib/validation/hero-cta'
 
 export type { HeroLayoutPreset } from '@/lib/hero/presets'

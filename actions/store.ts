@@ -16,8 +16,6 @@ const CONFIG_KEY_WHITELIST = [
 	'home_hero_banner',
 	'promo_banner',
 	'announcement_bar',
-	'social_links',
-	'contact_info',
 	'store_settings',
 ] as const
 

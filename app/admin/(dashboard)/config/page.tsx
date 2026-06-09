@@ -1,22 +1,19 @@
 import {
 	getSiteConfig,
 	PromoBannerConfig,
-	ContactInfoConfig,
 	HomeHeroBannerConfig,
 } from '@/lib/data/site-config'
+import { getAdminSocialLinks } from '@/lib/data/social-links'
 import { getAdminDrops } from '@/lib/data/drops'
 import { ConfigDashboard } from './config-dashboard'
 
 export default async function ConfigPage() {
 	const promoConfig =
 		await getSiteConfig<PromoBannerConfig>('promo_banner')
-	const contactConfig =
-		await getSiteConfig<ContactInfoConfig>('contact_info')
+	const socialLinks = await getAdminSocialLinks()
 	const heroBannerConfig = await getSiteConfig<HomeHeroBannerConfig>(
 		'home_hero_banner',
 	)
-	const socialLinksConfig =
-		await getSiteConfig<Record<string, unknown>>('social_links')
 	const announcementBarConfig = await getSiteConfig<
 		Record<string, unknown>
 	>('announcement_bar')
@@ -34,9 +31,8 @@ export default async function ConfigPage() {
 	return (
 		<ConfigDashboard
 			promoConfig={promoConfig}
-			contactConfig={contactConfig}
 			heroBannerConfig={heroBannerConfig}
-			socialLinksConfig={socialLinksConfig}
+			socialLinks={socialLinks}
 			announcementBarConfig={announcementBarConfig}
 			storeSettingsConfig={storeSettingsConfig}
 			dropOptions={dropOptions}

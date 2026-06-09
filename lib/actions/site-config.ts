@@ -5,7 +5,6 @@ import { revalidatePath } from 'next/cache'
 import { getAdminStoreContext } from '@/lib/data/admin-context'
 import {
 	PromoBannerConfig,
-	ContactInfoConfig,
 	HomeHeroBannerConfig,
 } from '@/lib/data/site-config'
 import { parseHeroCTAConfig } from '@/lib/validation/hero-cta'
@@ -24,40 +23,14 @@ type SiteConfigJson =
 	Database['public']['Tables']['site_config']['Row']['value']
 
 const ALLOWED_GENERIC_SITE_CONFIG_KEYS = new Set([
-	'social_links',
 	'announcement_bar',
 	'store_settings',
 ])
-
-const optionalUrlSchema = z
-	.string()
-	.trim()
-	.refine(
-		(value) => {
-			if (!value) return true
-			try {
-				const parsed = new URL(value)
-				return (
-					parsed.protocol === 'https:' || parsed.protocol === 'http:'
-				)
-			} catch {
-				return false
-			}
-		},
-		{ message: 'URL inválida' },
-	)
 
 const hexColorSchema = z
 	.string()
 	.trim()
 	.regex(/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/, 'Color inválido')
-
-const socialLinksSchema = z.object({
-	instagram: optionalUrlSchema,
-	tiktok: optionalUrlSchema,
-	twitter: optionalUrlSchema,
-	facebook: optionalUrlSchema,
-})
 
 const announcementBarSchema = z.object({
 	message: z.string().trim().min(1).max(140),
@@ -116,36 +89,6 @@ async function upsertSiteConfigValue(params: {
 		message: 'Configuración guardada correctamente',
 		error: false,
 	}
-}
-
-export async function updateSocialLinksConfig(
-	_prevState: unknown,
-	formData: FormData,
-) {
-	const parsed = socialLinksSchema.safeParse({
-		instagram: String(formData.get('instagram') || ''),
-		tiktok: String(formData.get('tiktok') || ''),
-		twitter: String(formData.get('twitter') || ''),
-		facebook: String(formData.get('facebook') || ''),
-	})
-
-	if (!parsed.success) {
-		return {
-			message: 'Revisa las URLs de redes sociales',
-			error: true,
-		}
-	}
-
-	return upsertSiteConfigValue({
-		key: 'social_links',
-		value: parsed.data as unknown as SiteConfigJson,
-		description:
-			String(formData.get('description') || '').trim() || null,
-		isActive:
-			formData.get('is_active') === 'on' ||
-			formData.get('is_active') === 'true',
-		visibility: 'public',
-	})
 }
 
 export async function updateAnnouncementBarConfig(
@@ -355,61 +298,6 @@ export async function updatePromoBanner(
 	revalidatePath('/', 'layout') // Revalidate everything
 	return {
 		message: 'Promo banner updated successfully',
-		error: false,
-	}
-}
-
-export async function updateContactInfo(
-	_prevState: unknown,
-	formData: FormData,
-) {
-	const supabase = await createClient()
-	const store = await getAdminStoreContext()
-
-	// Check auth
-	const {
-		data: { user },
-	} = await supabase.auth.getUser()
-	if (!user) {
-		return { message: 'Unauthorized', error: true }
-	}
-
-	const whatsapp = formData.get('whatsapp') as string
-	const instagram = formData.get('instagram') as string
-	const tiktok = formData.get('tiktok') as string
-	const email = formData.get('email') as string
-	const description = (formData.get('description') as string) || null
-
-	const value: ContactInfoConfig = {
-		whatsapp,
-		instagram,
-		tiktok,
-		email,
-	}
-
-	const payload: SiteConfigInsert = {
-		store_id: store.storeId,
-		key: 'contact_info',
-		value: value as unknown as SiteConfigJson,
-		description,
-		is_active: true,
-		visibility: 'public',
-		updated_by: user.id,
-		updated_at: new Date().toISOString(),
-	}
-
-	const { error } = await supabase
-		.from('site_config')
-		.upsert(payload as never, { onConflict: 'store_id,key' })
-
-	if (error) {
-		console.error('Error updating contact info:', error)
-		return { message: 'Error updating contact info', error: true }
-	}
-
-	revalidatePath('/', 'layout')
-	return {
-		message: 'Contact info updated successfully',
 		error: false,
 	}
 }

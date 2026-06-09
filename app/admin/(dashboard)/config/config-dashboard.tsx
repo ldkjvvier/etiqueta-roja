@@ -2,16 +2,15 @@
 
 import { useMemo, useState } from 'react'
 import type {
-	ContactInfoConfig,
 	HomeHeroBannerConfig,
 	PromoBannerConfig,
 } from '@/lib/data/site-config'
+import type { AdminSocialLink } from '@/lib/data/social-links'
 import type { HeroDropOption } from '@/types/heroStudio.types'
 import {
-	ContactInfoForm,
 	HomeHeroBannerForm,
 	PromoBannerForm,
-	SocialLinksConfigForm,
+	SocialContactForm,
 	AnnouncementBarConfigForm,
 	StoreSettingsConfigForm,
 } from './config-forms'
@@ -19,11 +18,10 @@ import { cn } from '@/lib/utils'
 
 type ConfigItemId =
 	| 'store_settings'
-	| 'contact_info'
+	| 'social_links'
 	| 'home_hero_banner'
 	| 'announcement_bar'
 	| 'promo_banner'
-	| 'social_links'
 
 const NAV_SECTIONS: Array<{
 	category: 'GENERAL' | 'INICIO' | 'PROMOCIÓN'
@@ -33,7 +31,7 @@ const NAV_SECTIONS: Array<{
 		category: 'GENERAL',
 		items: [
 			{ id: 'store_settings', label: 'Ajustes de tienda' },
-			{ id: 'contact_info', label: 'Contacto' },
+			{ id: 'social_links', label: 'Redes y contacto' },
 		],
 	},
 	{
@@ -43,10 +41,6 @@ const NAV_SECTIONS: Array<{
 			{ id: 'announcement_bar', label: 'Barra de anuncios' },
 			{ id: 'promo_banner', label: 'Banner promocional' },
 		],
-	},
-	{
-		category: 'PROMOCIÓN',
-		items: [{ id: 'social_links', label: 'Redes sociales' }],
 	},
 ]
 
@@ -58,9 +52,8 @@ type SiteConfigRecord = {
 
 export function ConfigDashboard({
 	promoConfig,
-	contactConfig,
 	heroBannerConfig,
-	socialLinksConfig,
+	socialLinks,
 	announcementBarConfig,
 	storeSettingsConfig,
 	dropOptions,
@@ -70,16 +63,12 @@ export function ConfigDashboard({
 		is_active?: boolean
 		description?: string | null
 	} | null
-	contactConfig: {
-		value?: ContactInfoConfig
-		description?: string | null
-	} | null
 	heroBannerConfig: {
 		value?: HomeHeroBannerConfig
 		is_active?: boolean
 		description?: string | null
 	} | null
-	socialLinksConfig: SiteConfigRecord | null
+	socialLinks: AdminSocialLink[]
 	announcementBarConfig: SiteConfigRecord | null
 	storeSettingsConfig: SiteConfigRecord | null
 	dropOptions: HeroDropOption[]
@@ -161,11 +150,8 @@ export function ConfigDashboard({
 						/>
 					)}
 
-					{activeItem === 'contact_info' && (
-						<ContactInfoForm
-							initialData={contactConfig?.value}
-							initialDescription={contactConfig?.description}
-						/>
+					{activeItem === 'social_links' && (
+						<SocialContactForm socialLinks={socialLinks} />
 					)}
 
 					{activeItem === 'home_hero_banner' && (
@@ -192,16 +178,6 @@ export function ConfigDashboard({
 							initialData={promoConfig?.value}
 							isActive={promoConfig?.is_active}
 							initialDescription={promoConfig?.description}
-						/>
-					)}
-
-					{activeItem === 'social_links' && (
-						<SocialLinksConfigForm
-							initialData={socialLinksConfig?.value || null}
-							isActive={socialLinksConfig?.is_active}
-							initialDescription={
-								socialLinksConfig?.description || ''
-							}
 						/>
 					)}
 				</section>

@@ -1,30 +1,37 @@
 import { Star } from 'lucide-react'
-import {
-	getSiteConfig,
-	ContactInfoConfig,
-} from '@/lib/data/site-config'
+import { getStoreSocialLinks } from '@/lib/data/social-links'
 
 export async function Footer() {
-	const config =
-		await getSiteConfig<ContactInfoConfig>('contact_info')
-	const info = config?.value
-	const supportLinks = info?.email
+	const info = await getStoreSocialLinks()
+	const supportLinks = info.email
 		? [{ label: 'CONTACTO', href: `mailto:${info.email}` }]
 		: []
 	const socialLinks = [
-		info?.instagram?.trim()
+		info.instagram?.trim()
 			? {
 					label: 'INSTAGRAM',
 					href: info.instagram,
 				}
 			: null,
-		info?.tiktok?.trim()
+		info.twitter?.trim()
+			? {
+					label: 'TWITTER',
+					href: info.twitter,
+				}
+			: null,
+		info.facebook?.trim()
+			? {
+					label: 'FACEBOOK',
+					href: info.facebook,
+				}
+			: null,
+		info.tiktok?.trim()
 			? {
 					label: 'TIKTOK',
 					href: info.tiktok,
 				}
 			: null,
-		info?.whatsapp?.trim()
+		info.whatsapp?.trim()
 			? {
 					label: 'WHATSAPP',
 					href: `https://wa.me/${info.whatsapp.replace(/[^0-9]/g, '')}`,

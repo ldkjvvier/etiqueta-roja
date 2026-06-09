@@ -595,6 +595,47 @@ export type Database = {
 					},
 				]
 			}
+			store_social_links: {
+				Row: {
+					created_at: string
+					id: string
+					is_active: boolean
+					platform: string
+					sort_order: number
+					store_id: string
+					updated_at: string
+					value: string
+				}
+				Insert: {
+					created_at?: string
+					id?: string
+					is_active?: boolean
+					platform: string
+					sort_order?: number
+					store_id: string
+					updated_at?: string
+					value: string
+				}
+				Update: {
+					created_at?: string
+					id?: string
+					is_active?: boolean
+					platform?: string
+					sort_order?: number
+					store_id?: string
+					updated_at?: string
+					value?: string
+				}
+				Relationships: [
+					{
+						foreignKeyName: 'store_social_links_store_id_fkey'
+						columns: ['store_id']
+						isOneToOne: false
+						referencedRelation: 'stores'
+						referencedColumns: ['id']
+					},
+				]
+			}
 			stores: {
 				Row: {
 					created_at: string

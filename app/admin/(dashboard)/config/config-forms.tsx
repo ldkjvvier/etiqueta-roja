@@ -1,21 +1,16 @@
 'use client'
 
-import {
-	useActionState,
-	useMemo,
-	useState,
-	useTransition,
-} from 'react'
+import { useActionState, useMemo, useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
 	updatePromoBanner,
-	updateContactInfo,
-	updateSocialLinksConfig,
 	updateAnnouncementBarConfig,
 	updateStoreSettingsConfig,
 } from '@/lib/actions/site-config'
+import { updateStoreSocialLinks } from '@/lib/actions/social-links'
+import type { AdminSocialLink } from '@/lib/data/social-links'
 import { Button } from '@/components/ui/button'
 import {
 	Card,
@@ -32,7 +27,6 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import {
 	PromoBannerConfig,
-	ContactInfoConfig,
 	HomeHeroBannerConfig,
 } from '@/lib/data/site-config'
 import { HeroStudio } from '@/components/hero-studio/HeroStudio'
@@ -158,96 +152,6 @@ export function PromoBannerForm({
 	)
 }
 
-export function ContactInfoForm({
-	initialData,
-	initialDescription,
-}: {
-	initialData?: ContactInfoConfig
-	initialDescription?: string | null
-}) {
-	const [state, formAction, isPending] = useActionState(
-		updateContactInfo,
-		initialState,
-	)
-
-	return (
-		<Card>
-			<CardHeader>
-				<CardTitle>Información de Contacto</CardTitle>
-				<CardDescription>
-					Actualiza los enlaces a redes sociales y contacto.
-				</CardDescription>
-			</CardHeader>
-			<form action={formAction}>
-				<CardContent className="space-y-4">
-					<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-						<div className="space-y-2">
-							<Label htmlFor="whatsapp">WhatsApp</Label>
-							<Input
-								id="whatsapp"
-								name="whatsapp"
-								defaultValue={initialData?.whatsapp ?? ''}
-								placeholder="Numero completo"
-							/>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="instagram">Instagram</Label>
-							<Input
-								id="instagram"
-								name="instagram"
-								defaultValue={initialData?.instagram ?? ''}
-								placeholder="@usuario"
-							/>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="tiktok">TikTok</Label>
-							<Input
-								id="tiktok"
-								name="tiktok"
-								defaultValue={initialData?.tiktok ?? ''}
-								placeholder="@usuario"
-							/>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="email">Email</Label>
-							<Input
-								id="email"
-								name="email"
-								type="email"
-								defaultValue={initialData?.email ?? ''}
-								placeholder="contacto@ejemplo.com"
-							/>
-						</div>
-						<div className="space-y-2 md:col-span-2">
-							<Label htmlFor="description">Descripción interna</Label>
-							<Input
-								id="description"
-								name="description"
-								defaultValue={initialDescription ?? ''}
-								placeholder="Contexto interno del bloque"
-							/>
-						</div>
-					</div>
-				</CardContent>
-				<CardFooter>
-					<Button type="submit" disabled={isPending}>
-						{isPending ? 'Guardando...' : 'Guardar Cambios'}
-					</Button>
-					{state.message && (
-						<p
-							className={`ml-4 text-sm ${
-								state.error ? 'text-destructive' : 'text-green-600'
-							}`}
-						>
-							{state.message}
-						</p>
-					)}
-				</CardFooter>
-			</form>
-		</Card>
-	)
-}
-
 const optionalUrlSchema = z
 	.string()
 	.trim()
@@ -266,13 +170,27 @@ const optionalUrlSchema = z
 		{ message: 'Ingresa una URL válida' },
 	)
 
-const socialLinksFormSchema = z.object({
-	isActive: z.boolean(),
-	description: z.string().max(160).optional(),
+const optionalEmailSchema = z
+	.string()
+	.trim()
+	.refine((value) => !value || z.string().email().safeParse(value).success, {
+		message: 'Ingresa un email válido',
+	})
+
+const optionalPhoneSchema = z
+	.string()
+	.trim()
+	.refine((value) => !value || /^\+?[0-9\s-]{6,20}$/.test(value), {
+		message: 'Ingresa un teléfono válido',
+	})
+
+const socialContactFormSchema = z.object({
 	instagram: optionalUrlSchema,
-	tiktok: optionalUrlSchema,
 	twitter: optionalUrlSchema,
 	facebook: optionalUrlSchema,
+	tiktok: optionalUrlSchema,
+	whatsapp: optionalPhoneSchema,
+	email: optionalEmailSchema,
 })
 
 const announcementBarFormSchema = z.object({
@@ -319,25 +237,29 @@ function useConfigSubmit() {
 	return { isPending, submit }
 }
 
-export function SocialLinksConfigForm({
-	initialData,
-	isActive,
-	initialDescription,
+export function SocialContactForm({
+	socialLinks,
 }: {
-	initialData?: Record<string, unknown> | null
-	isActive?: boolean
-	initialDescription?: string | null
+	socialLinks: AdminSocialLink[]
 }) {
 	const { isPending, submit } = useConfigSubmit()
-	const form = useForm<z.infer<typeof socialLinksFormSchema>>({
-		resolver: zodResolver(socialLinksFormSchema),
+	const initial = useMemo(() => {
+		const map: Record<string, string> = {}
+		for (const link of socialLinks) {
+			map[link.platform] = link.value
+		}
+		return map
+	}, [socialLinks])
+
+	const form = useForm<z.infer<typeof socialContactFormSchema>>({
+		resolver: zodResolver(socialContactFormSchema),
 		defaultValues: {
-			isActive: isActive ?? true,
-			description: initialDescription ?? '',
-			instagram: String(initialData?.instagram || ''),
-			tiktok: String(initialData?.tiktok || ''),
-			twitter: String(initialData?.twitter || ''),
-			facebook: String(initialData?.facebook || ''),
+			instagram: initial.instagram || '',
+			twitter: initial.twitter || '',
+			facebook: initial.facebook || '',
+			tiktok: initial.tiktok || '',
+			whatsapp: initial.whatsapp || '',
+			email: initial.email || '',
 		},
 	})
 
@@ -345,70 +267,83 @@ export function SocialLinksConfigForm({
 
 	const onSubmit = form.handleSubmit((data) => {
 		const fd = new FormData()
-		fd.set('is_active', data.isActive ? 'true' : 'false')
-		fd.set('description', data.description || '')
 		fd.set('instagram', data.instagram || '')
-		fd.set('tiktok', data.tiktok || '')
 		fd.set('twitter', data.twitter || '')
 		fd.set('facebook', data.facebook || '')
-		submit(updateSocialLinksConfig, fd)
+		fd.set('tiktok', data.tiktok || '')
+		fd.set('whatsapp', data.whatsapp || '')
+		fd.set('email', data.email || '')
+		submit(updateStoreSocialLinks, fd)
 	})
 
 	return (
 		<form onSubmit={onSubmit} className="space-y-4">
 			<ConfigSectionCard
-				title="Redes sociales"
-				description="Enlaces de redes sociales visibles en la tienda."
+				title="Redes y contacto"
+				description="Enlaces de redes sociales y datos de contacto visibles en la tienda."
 				footer={
 					<Button type="submit" disabled={isPending}>
-						{isPending ? 'Guardando...' : 'Guardar Redes'}
+						{isPending ? 'Guardando...' : 'Guardar cambios'}
 					</Button>
 				}
 			>
-				<ConfigToggle
-					id="social_links_active"
-					label="Sección activa"
-					help="Oculta o muestra la sección de redes sociales."
-					checked={values.isActive}
-					onCheckedChange={(checked) =>
-						form.setValue('isActive', checked)
-					}
-				/>
-
 				<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 					<ConfigInputField id="instagram" label="URL de Instagram">
-						<Input id="instagram" {...form.register('instagram')} />
-					</ConfigInputField>
-					<ConfigInputField id="tiktok" label="URL de TikTok">
-						<Input id="tiktok" {...form.register('tiktok')} />
+						<Input
+							id="instagram"
+							placeholder="https://instagram.com/tu-tienda"
+							{...form.register('instagram')}
+						/>
 					</ConfigInputField>
 					<ConfigInputField id="twitter" label="URL de Twitter/X">
-						<Input id="twitter" {...form.register('twitter')} />
+						<Input
+							id="twitter"
+							placeholder="https://x.com/tu-tienda"
+							{...form.register('twitter')}
+						/>
 					</ConfigInputField>
 					<ConfigInputField id="facebook" label="URL de Facebook">
-						<Input id="facebook" {...form.register('facebook')} />
+						<Input
+							id="facebook"
+							placeholder="https://facebook.com/tu-tienda"
+							{...form.register('facebook')}
+						/>
+					</ConfigInputField>
+					<ConfigInputField id="tiktok" label="URL de TikTok">
+						<Input
+							id="tiktok"
+							placeholder="https://tiktok.com/@tu-tienda"
+							{...form.register('tiktok')}
+						/>
+					</ConfigInputField>
+					<ConfigInputField id="whatsapp" label="WhatsApp">
+						<Input
+							id="whatsapp"
+							placeholder="+56 9 1234 5678"
+							{...form.register('whatsapp')}
+						/>
+					</ConfigInputField>
+					<ConfigInputField id="email" label="Email de contacto">
+						<Input
+							id="email"
+							type="email"
+							placeholder="contacto@ejemplo.com"
+							{...form.register('email')}
+						/>
 					</ConfigInputField>
 				</div>
-
-				<ConfigInputField
-					id="social_description"
-					label="Descripción interna"
-				>
-					<Input
-						id="social_description"
-						{...form.register('description')}
-					/>
-				</ConfigInputField>
 
 				<ConfigPreview title="Vista previa de enlaces activos">
 					<div className="flex flex-wrap gap-2 text-sm">
 						{[
 							['Instagram', values.instagram],
-							['TikTok', values.tiktok],
 							['Twitter/X', values.twitter],
 							['Facebook', values.facebook],
+							['TikTok', values.tiktok],
+							['WhatsApp', values.whatsapp],
+							['Email', values.email],
 						]
-							.filter(([, url]) => Boolean(url))
+							.filter(([, value]) => Boolean(value))
 							.map(([label]) => (
 								<span
 									key={label}

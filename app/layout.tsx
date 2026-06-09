@@ -4,10 +4,7 @@ import { Archivo, Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import { Providers } from './providers'
-import {
-	getSiteConfig,
-	ContactInfoConfig,
-} from '@/lib/data/site-config'
+import { getStoreSocialLinks } from '@/lib/data/social-links'
 
 const geist = Geist({
 	subsets: ['latin'],
@@ -60,9 +57,8 @@ export default async function RootLayout({
 }: Readonly<{
 	children: React.ReactNode
 }>) {
-	const config =
-		await getSiteConfig<ContactInfoConfig>('contact_info')
-	const whatsappNumber = config?.value?.whatsapp
+	const socialLinks = await getStoreSocialLinks()
+	const whatsappNumber = socialLinks.whatsapp
 
 	return (
 		<html lang="es">
