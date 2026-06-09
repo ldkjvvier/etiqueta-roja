@@ -127,8 +127,24 @@ export async function updateStoreSettingsConfig(
 	_prevState: unknown,
 	formData: FormData,
 ) {
+	const supabase = await createClient()
+	const store = await getAdminStoreContext()
+
+	// `storeName` es inmutable: puede afectar el funcionamiento de la app, así
+	// que se preserva el valor actual de la DB e ignora cualquier valor enviado
+	// por el formulario. Solo `supportEmail` es editable.
+	const { data: current } = await supabase
+		.from('site_config')
+		.select('value')
+		.eq('store_id', store.storeId)
+		.eq('key', 'store_settings')
+		.maybeSingle()
+	const currentStoreName =
+		(current?.value as { storeName?: string } | null)?.storeName ??
+		'etiqueta-roja'
+
 	const parsed = storeSettingsSchema.safeParse({
-		storeName: String(formData.get('store_name') || ''),
+		storeName: currentStoreName,
 		supportEmail: String(formData.get('support_email') || ''),
 		currency: STORE_SETTINGS_CURRENCY,
 		timezone: STORE_SETTINGS_TIMEZONE,
@@ -136,8 +152,7 @@ export async function updateStoreSettingsConfig(
 
 	if (!parsed.success) {
 		return {
-			message:
-				'Revisa nombre de tienda, email, moneda y zona horaria',
+			message: 'Revisa el email de soporte',
 			error: true,
 		}
 	}
@@ -145,11 +160,9 @@ export async function updateStoreSettingsConfig(
 	return upsertSiteConfigValue({
 		key: 'store_settings',
 		value: parsed.data as unknown as SiteConfigJson,
-		description:
-			String(formData.get('description') || '').trim() || null,
-		isActive:
-			formData.get('is_active') === 'on' ||
-			formData.get('is_active') === 'true',
+		// Descripción interna eliminada; los ajustes de tienda no se desactivan.
+		description: null,
+		isActive: true,
 		visibility: 'internal',
 	})
 }

@@ -1,8 +1,10 @@
 import { Star } from 'lucide-react'
 import { getStoreSocialLinks } from '@/lib/data/social-links'
+import { getStoreInfo } from '@/lib/data/store-info'
 
 export async function Footer() {
 	const info = await getStoreSocialLinks()
+	const storeInfo = await getStoreInfo()
 	const supportLinks = info.email
 		? [{ label: 'CONTACTO', href: `mailto:${info.email}` }]
 		: []
@@ -121,8 +123,11 @@ export async function Footer() {
 				<div className="border-t border-foreground/20 mt-12 pt-6">
 					<div className="font-mono text-[10px] text-foreground/50 text-center space-y-1">
 						<p>================================</p>
-						<p>© {new Date().getFullYear()} ETIQUETA ROJA</p>
-						<p>Santiago, Chile</p>
+						<p>
+							© {new Date().getFullYear()}{' '}
+							{storeInfo.name.toUpperCase()}
+						</p>
+						{storeInfo.address ? <p>{storeInfo.address}</p> : null}
 						<p>TODOS LOS DERECHOS RESERVADOS</p>
 						<p>================================</p>
 					</div>

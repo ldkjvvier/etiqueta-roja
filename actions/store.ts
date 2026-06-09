@@ -1,7 +1,6 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { getAdminStoreContext } from '@/lib/data/admin-context'
 import type { SiteConfigVisibility } from '@/types/database.types'
@@ -67,51 +66,6 @@ export async function updateConfig(
 	if (error) {
 		console.error('[updateConfig]', error)
 		return { success: false, error: 'Error al guardar configuración' }
-	}
-
-	revalidatePath('/admin/config')
-	revalidatePath('/')
-
-	return { success: true }
-}
-
-const storeInfoSchema = z.object({
-	name: z.string().min(1).max(255),
-})
-
-export async function updateStoreInfo(
-	payload: z.infer<typeof storeInfoSchema>,
-): Promise<ActionResult> {
-	const parsed = storeInfoSchema.safeParse(payload)
-	if (!parsed.success) {
-		return {
-			success: false,
-			error: parsed.error.errors[0]?.message ?? 'Datos inválidos',
-		}
-	}
-
-	let store
-	try {
-		store = await getAdminStoreContext()
-	} catch (e: unknown) {
-		if (e && typeof e === 'object' && 'digest' in e) throw e
-		return { success: false, error: 'Sin acceso de administrador' }
-	}
-
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const db = (await createClient()) as any
-
-	const { error } = await db
-		.from('stores')
-		.update({ name: parsed.data.name })
-		.eq('id', store.storeId)
-
-	if (error) {
-		console.error('[updateStoreInfo]', error)
-		return {
-			success: false,
-			error: 'Error al actualizar información de la tienda',
-		}
 	}
 
 	revalidatePath('/admin/config')

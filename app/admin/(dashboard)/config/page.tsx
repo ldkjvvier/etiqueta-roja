@@ -4,6 +4,7 @@ import {
 	HomeHeroBannerConfig,
 } from '@/lib/data/site-config'
 import { getAdminSocialLinks } from '@/lib/data/social-links'
+import { getStoreInfo } from '@/lib/data/store-info'
 import { getAdminDrops } from '@/lib/data/drops'
 import { ConfigDashboard } from './config-dashboard'
 
@@ -11,6 +12,7 @@ export default async function ConfigPage() {
 	const promoConfig =
 		await getSiteConfig<PromoBannerConfig>('promo_banner')
 	const socialLinks = await getAdminSocialLinks()
+	const storeInfo = await getStoreInfo()
 	const heroBannerConfig = await getSiteConfig<HomeHeroBannerConfig>(
 		'home_hero_banner',
 	)
@@ -33,6 +35,7 @@ export default async function ConfigPage() {
 			promoConfig={promoConfig}
 			heroBannerConfig={heroBannerConfig}
 			socialLinks={socialLinks}
+			storeInfo={storeInfo}
 			announcementBarConfig={announcementBarConfig}
 			storeSettingsConfig={storeSettingsConfig}
 			dropOptions={dropOptions}

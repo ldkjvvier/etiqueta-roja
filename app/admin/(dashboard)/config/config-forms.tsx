@@ -7,10 +7,11 @@ import { z } from 'zod'
 import {
 	updatePromoBanner,
 	updateAnnouncementBarConfig,
-	updateStoreSettingsConfig,
 } from '@/lib/actions/site-config'
 import { updateStoreSocialLinks } from '@/lib/actions/social-links'
+import { updateStoreInfo } from '@/lib/actions/store-info'
 import type { AdminSocialLink } from '@/lib/data/social-links'
+import type { StoreInfo } from '@/lib/data/store-info'
 import { Button } from '@/components/ui/button'
 import {
 	Card,
@@ -32,11 +33,8 @@ import {
 import { HeroStudio } from '@/components/hero-studio/HeroStudio'
 import { HeroDropOption } from '@/types/heroStudio.types'
 import {
-	isSupportedStoreCurrency,
-	isSupportedStoreTimezone,
 	STORE_SETTINGS_CURRENCY,
 	STORE_SETTINGS_TIMEZONE,
-	storeSettingsEditableFieldsSchema,
 } from '@/lib/validation/store-settings'
 import {
 	ConfigColorPicker,
@@ -205,13 +203,6 @@ const announcementBarFormSchema = z.object({
 		.regex(/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/, 'Color inválido'),
 })
 
-const storeSettingsFormSchema = z
-	.object({
-		isActive: z.boolean(),
-		description: z.string().max(160).optional(),
-	})
-	.extend(storeSettingsEditableFieldsSchema.shape)
-
 function useConfigSubmit() {
 	const router = useRouter()
 	const [isPending, startTransition] = useTransition()
@@ -359,6 +350,148 @@ export function SocialContactForm({
 	)
 }
 
+const MIN_FOUNDED_YEAR = 1900
+
+const storeInfoFormSchema = z.object({
+	name: z.string().trim().min(1, 'El nombre es obligatorio').max(80),
+	foundedYear: z
+		.number({ invalid_type_error: 'El año debe ser un número' })
+		.int()
+		.min(MIN_FOUNDED_YEAR, `El año debe ser ${MIN_FOUNDED_YEAR} o posterior`)
+		.refine((y) => y <= new Date().getFullYear(), {
+			message: 'El año no puede ser futuro',
+		}),
+	tagline: z.string().trim().max(120).optional(),
+	description: z.string().trim().max(300).optional(),
+	address: z.string().trim().max(200).optional(),
+	rut: z.string().trim().max(20).optional(),
+})
+
+export function StoreInfoForm({ storeInfo }: { storeInfo: StoreInfo }) {
+	const { isPending, submit } = useConfigSubmit()
+	const currentYear = new Date().getFullYear()
+	const form = useForm<z.infer<typeof storeInfoFormSchema>>({
+		resolver: zodResolver(storeInfoFormSchema),
+		defaultValues: {
+			name: storeInfo.name,
+			foundedYear: storeInfo.founded_year ?? currentYear,
+			tagline: storeInfo.tagline ?? '',
+			description: storeInfo.description ?? '',
+			address: storeInfo.address ?? '',
+			rut: storeInfo.rut ?? '',
+		},
+	})
+
+	const values = form.watch()
+
+	const onSubmit = form.handleSubmit((data) => {
+		const fd = new FormData()
+		fd.set('name', data.name)
+		fd.set('founded_year', String(data.foundedYear))
+		fd.set('tagline', data.tagline || '')
+		fd.set('description', data.description || '')
+		fd.set('address', data.address || '')
+		fd.set('rut', data.rut || '')
+		submit(updateStoreInfo, fd)
+	})
+
+	return (
+		<form onSubmit={onSubmit} className="space-y-4">
+			<ConfigSectionCard
+				title="Identidad de la tienda (SEO)"
+				description="Controla cómo aparece la tienda en buscadores. El nombre solo afecta el título SEO y el copyright del footer."
+				footer={
+					<Button type="submit" disabled={isPending}>
+						{isPending ? 'Guardando...' : 'Guardar SEO'}
+					</Button>
+				}
+			>
+				<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+					<ConfigInputField
+						id="store_name"
+						label="Nombre de la tienda"
+						helper="Solo afecta SEO y el copyright del footer. No cambia el logo."
+					>
+						<Input
+							id="store_name"
+							placeholder="Etiqueta Roja"
+							{...form.register('name')}
+						/>
+						{form.formState.errors.name && (
+							<p className="text-xs text-destructive">
+								{form.formState.errors.name.message}
+							</p>
+						)}
+					</ConfigInputField>
+					<ConfigInputField
+						id="store_tagline"
+						label="Eslogan (título SEO)"
+					>
+						<Input
+							id="store_tagline"
+							placeholder="Streetwear premium"
+							{...form.register('tagline')}
+						/>
+					</ConfigInputField>
+					<ConfigInputField
+						id="store_address"
+						label="Dirección / ciudad"
+					>
+						<Input
+							id="store_address"
+							placeholder="Santiago, Chile"
+							{...form.register('address')}
+						/>
+					</ConfigInputField>
+					<ConfigInputField
+						id="store_founded_year"
+						label="Año de fundación"
+						helper={`Entre ${MIN_FOUNDED_YEAR} y ${currentYear}.`}
+					>
+						<Input
+							id="store_founded_year"
+							type="number"
+							min={MIN_FOUNDED_YEAR}
+							max={currentYear}
+							{...form.register('foundedYear', { valueAsNumber: true })}
+						/>
+						{form.formState.errors.foundedYear && (
+							<p className="text-xs text-destructive">
+								{form.formState.errors.foundedYear.message}
+							</p>
+						)}
+					</ConfigInputField>
+					<ConfigInputField id="store_rut" label="RUT (opcional)">
+						<Input
+							id="store_rut"
+							placeholder="76.123.456-7"
+							{...form.register('rut')}
+						/>
+					</ConfigInputField>
+				</div>
+
+				<ConfigInputField
+					id="store_description"
+					label="Descripción (meta description SEO)"
+				>
+					<Input
+						id="store_description"
+						placeholder="Marca de streetwear premium. Drops limitados."
+						{...form.register('description')}
+					/>
+				</ConfigInputField>
+
+				<ConfigPreview title="Vista previa del título del sitio">
+					<p className="text-sm">
+						{(values.name || storeInfo.name).toUpperCase()}
+						{values.tagline ? ` | ${values.tagline}` : ''}
+					</p>
+				</ConfigPreview>
+			</ConfigSectionCard>
+		</form>
+	)
+}
+
 export function AnnouncementBarConfigForm({
 	initialData,
 	isActive,
@@ -466,153 +599,77 @@ export function AnnouncementBarConfigForm({
 
 export function StoreSettingsConfigForm({
 	initialData,
-	isActive,
-	initialDescription,
 }: {
 	initialData?: Record<string, unknown> | null
-	isActive?: boolean
-	initialDescription?: string | null
 }) {
-	const { isPending, submit } = useConfigSubmit()
+	const storedStoreName = String(initialData?.storeName || 'etiqueta-roja')
 	const storedCurrency = String(
 		initialData?.currency || STORE_SETTINGS_CURRENCY,
 	)
 	const storedTimezone = String(
 		initialData?.timezone || STORE_SETTINGS_TIMEZONE,
 	)
-	const hasLegacyCurrency = !isSupportedStoreCurrency(storedCurrency)
-	const hasLegacyTimezone = !isSupportedStoreTimezone(storedTimezone)
-	const form = useForm<z.infer<typeof storeSettingsFormSchema>>({
-		resolver: zodResolver(storeSettingsFormSchema),
-		defaultValues: {
-			isActive: isActive ?? true,
-			description: initialDescription ?? '',
-			storeName: String(initialData?.storeName || ''),
-			supportEmail: String(initialData?.supportEmail || ''),
-		},
-	})
-
-	const values = form.watch()
-
-	const onSubmit = form.handleSubmit((data) => {
-		const fd = new FormData()
-		fd.set('is_active', data.isActive ? 'true' : 'false')
-		fd.set('description', data.description || '')
-		fd.set('store_name', data.storeName)
-		fd.set('support_email', data.supportEmail)
-		fd.set('currency', STORE_SETTINGS_CURRENCY)
-		fd.set('timezone', STORE_SETTINGS_TIMEZONE)
-		submit(updateStoreSettingsConfig, fd)
-	})
+	const storedSupportEmail = String(initialData?.supportEmail || '—')
 
 	return (
-		<form onSubmit={onSubmit} className="space-y-4">
-			<ConfigSectionCard
-				title="Ajustes de tienda"
-				description="Ajustes internos de referencia y soporte. La moneda y la zona horaria operativas están fijadas por el negocio."
-				footer={
-					<Button type="submit" disabled={isPending}>
-						{isPending ? 'Guardando...' : 'Guardar ajustes'}
-					</Button>
-				}
-			>
-				<ConfigToggle
-					id="store_settings_active"
-					label="Ajustes de tienda activos"
-					checked={values.isActive}
-					onCheckedChange={(checked) =>
-						form.setValue('isActive', checked)
-					}
-				/>
-
-				<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-					<ConfigInputField
-						id="store_name"
-						label="Nombre interno de la tienda"
-						helper="Referencia interna para admins. No cambia el nombre visible, el logo ni la identidad pública de la tienda."
-					>
-						<Input id="store_name" {...form.register('storeName')} />
-					</ConfigInputField>
-					<ConfigInputField
-						id="support_email"
-						label="Correo interno de soporte"
-						helper="El correo visible en la tienda se gestiona en Contacto. Este campo queda como referencia operativa interna."
-					>
-						<Input
-							id="support_email"
-							type="email"
-							{...form.register('supportEmail')}
-						/>
-					</ConfigInputField>
-					<ConfigInputField
-						id="currency"
-						label="Moneda"
-						helper={
-							hasLegacyCurrency
-								? `Valor legado detectado (${storedCurrency}). Al guardar se normalizará a ${STORE_SETTINGS_CURRENCY}.`
-								: 'Fijada en CLP. La tienda y el sistema de precios actual no soportan cambio de moneda desde este panel.'
-						}
-					>
-						<Input
-							id="currency"
-							value={storedCurrency}
-							readOnly
-							aria-readonly="true"
-							className="bg-muted/40 text-muted-foreground"
-						/>
-					</ConfigInputField>
-					<ConfigInputField
-						id="timezone"
-						label="Zona horaria"
-						helper={
-							hasLegacyTimezone
-								? `Valor legado detectado (${storedTimezone}). Al guardar se normalizará a ${STORE_SETTINGS_TIMEZONE}.`
-								: 'Fijada en America/Santiago. La programación vigente no admite una zona horaria editable en este panel.'
-						}
-					>
-						<Input
-							id="timezone"
-							value={storedTimezone}
-							readOnly
-							aria-readonly="true"
-							className="bg-muted/40 text-muted-foreground"
-						/>
-					</ConfigInputField>
-				</div>
-
+		<ConfigSectionCard
+			title="Ajustes de tienda"
+			description="Configuración interna fija. Estos valores los gestiona el administrador del sitio directamente."
+		>
+			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<ConfigInputField
-					id="store_settings_description"
-					label="Descripción interna"
+					id="store_name_internal"
+					label="Nombre interno"
+					helper="Identificador interno de la app. No editable desde el panel."
 				>
 					<Input
-						id="store_settings_description"
-						{...form.register('description')}
+						id="store_name_internal"
+						value={storedStoreName}
+						readOnly
+						aria-readonly="true"
+						className="bg-muted/40 text-muted-foreground"
 					/>
 				</ConfigInputField>
-
-				<ConfigPreview title="Vista previa del resumen de tienda">
-					<div className="space-y-1 text-sm">
-						<p>
-							<strong>Tienda:</strong> {values.storeName}
-						</p>
-						<p>
-							<strong>Email soporte:</strong> {values.supportEmail}
-						</p>
-						<p>
-							<strong>Moneda:</strong>{' '}
-							{hasLegacyCurrency
-								? `${storedCurrency} -> ${STORE_SETTINGS_CURRENCY} al guardar`
-								: STORE_SETTINGS_CURRENCY}
-						</p>
-						<p>
-							<strong>Zona horaria:</strong>{' '}
-							{hasLegacyTimezone
-								? `${storedTimezone} -> ${STORE_SETTINGS_TIMEZONE} al guardar`
-								: STORE_SETTINGS_TIMEZONE}
-						</p>
-					</div>
-				</ConfigPreview>
-			</ConfigSectionCard>
-		</form>
+				<ConfigInputField
+					id="support_email_info"
+					label="Correo de soporte"
+					helper="Gestionado directamente por el administrador del sitio."
+				>
+					<Input
+						id="support_email_info"
+						value={storedSupportEmail}
+						readOnly
+						aria-readonly="true"
+						className="bg-muted/40 text-muted-foreground"
+					/>
+				</ConfigInputField>
+				<ConfigInputField
+					id="currency_info"
+					label="Moneda"
+					helper="Fijada en CLP."
+				>
+					<Input
+						id="currency_info"
+						value={storedCurrency}
+						readOnly
+						aria-readonly="true"
+						className="bg-muted/40 text-muted-foreground"
+					/>
+				</ConfigInputField>
+				<ConfigInputField
+					id="timezone_info"
+					label="Zona horaria"
+					helper="Fijada en America/Santiago."
+				>
+					<Input
+						id="timezone_info"
+						value={storedTimezone}
+						readOnly
+						aria-readonly="true"
+						className="bg-muted/40 text-muted-foreground"
+					/>
+				</ConfigInputField>
+			</div>
+		</ConfigSectionCard>
 	)
 }

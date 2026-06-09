@@ -6,17 +6,20 @@ import type {
 	PromoBannerConfig,
 } from '@/lib/data/site-config'
 import type { AdminSocialLink } from '@/lib/data/social-links'
+import type { StoreInfo } from '@/lib/data/store-info'
 import type { HeroDropOption } from '@/types/heroStudio.types'
 import {
 	HomeHeroBannerForm,
 	PromoBannerForm,
 	SocialContactForm,
+	StoreInfoForm,
 	AnnouncementBarConfigForm,
 	StoreSettingsConfigForm,
 } from './config-forms'
 import { cn } from '@/lib/utils'
 
 type ConfigItemId =
+	| 'store_identity'
 	| 'store_settings'
 	| 'social_links'
 	| 'home_hero_banner'
@@ -30,6 +33,7 @@ const NAV_SECTIONS: Array<{
 	{
 		category: 'GENERAL',
 		items: [
+			{ id: 'store_identity', label: 'Identidad de la tienda' },
 			{ id: 'store_settings', label: 'Ajustes de tienda' },
 			{ id: 'social_links', label: 'Redes y contacto' },
 		],
@@ -54,6 +58,7 @@ export function ConfigDashboard({
 	promoConfig,
 	heroBannerConfig,
 	socialLinks,
+	storeInfo,
 	announcementBarConfig,
 	storeSettingsConfig,
 	dropOptions,
@@ -69,12 +74,13 @@ export function ConfigDashboard({
 		description?: string | null
 	} | null
 	socialLinks: AdminSocialLink[]
+	storeInfo: StoreInfo
 	announcementBarConfig: SiteConfigRecord | null
 	storeSettingsConfig: SiteConfigRecord | null
 	dropOptions: HeroDropOption[]
 }) {
 	const [activeItem, setActiveItem] =
-		useState<ConfigItemId>('store_settings')
+		useState<ConfigItemId>('store_identity')
 
 	const flatItems = useMemo(
 		() => NAV_SECTIONS.flatMap((section) => section.items),
@@ -140,13 +146,13 @@ export function ConfigDashboard({
 				</aside>
 
 				<section className="md:col-span-9 space-y-6">
+					{activeItem === 'store_identity' && (
+						<StoreInfoForm storeInfo={storeInfo} />
+					)}
+
 					{activeItem === 'store_settings' && (
 						<StoreSettingsConfigForm
 							initialData={storeSettingsConfig?.value || null}
-							isActive={storeSettingsConfig?.is_active}
-							initialDescription={
-								storeSettingsConfig?.description || ''
-							}
 						/>
 					)}
 

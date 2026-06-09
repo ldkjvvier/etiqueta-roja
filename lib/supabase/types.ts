@@ -638,30 +638,45 @@ export type Database = {
 			}
 			stores: {
 				Row: {
+					address: string | null
 					created_at: string
+					description: string | null
+					founded_year: number | null
 					id: string
 					is_active: boolean
 					name: string
 					owner_id: string | null
+					rut: string | null
 					slug: string
+					tagline: string | null
 					updated_at: string
 				}
 				Insert: {
+					address?: string | null
 					created_at?: string
+					description?: string | null
+					founded_year?: number | null
 					id?: string
 					is_active?: boolean
 					name: string
 					owner_id?: string | null
+					rut?: string | null
 					slug: string
+					tagline?: string | null
 					updated_at?: string
 				}
 				Update: {
+					address?: string | null
 					created_at?: string
+					description?: string | null
+					founded_year?: number | null
 					id?: string
 					is_active?: boolean
 					name?: string
 					owner_id?: string | null
+					rut?: string | null
 					slug?: string
+					tagline?: string | null
 					updated_at?: string
 				}
 				Relationships: []

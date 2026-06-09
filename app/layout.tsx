@@ -5,6 +5,7 @@ import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import { Providers } from './providers'
 import { getStoreSocialLinks } from '@/lib/data/social-links'
+import { getStoreInfo } from '@/lib/data/store-info'
 
 const geist = Geist({
 	subsets: ['latin'],
@@ -25,27 +26,37 @@ const geistMono = Geist_Mono({
 	display: 'swap',
 })
 
-export const metadata: Metadata = {
-	title: 'ETIQUETA ROJA | Streetwear premium',
-	description:
-		'Marca de streetwear premium. Drops limitados. Piezas exclusivas.',
-	icons: {
-		icon: [
-			{
-				url: '/icon-light-32x32.png',
-				media: '(prefers-color-scheme: light)',
-			},
-			{
-				url: '/icon-dark-32x32.png',
-				media: '(prefers-color-scheme: dark)',
-			},
-			{
-				url: '/icon.svg',
-				type: 'image/svg+xml',
-			},
-		],
-		apple: '/apple-icon.png',
-	},
+export async function generateMetadata(): Promise<Metadata> {
+	const storeInfo = await getStoreInfo()
+	const brand = storeInfo.name.toUpperCase()
+	const title = storeInfo.tagline
+		? `${brand} | ${storeInfo.tagline}`
+		: brand
+	const description =
+		storeInfo.description ??
+		'Marca de streetwear premium. Drops limitados. Piezas exclusivas.'
+
+	return {
+		title,
+		description,
+		icons: {
+			icon: [
+				{
+					url: '/icon-light-32x32.png',
+					media: '(prefers-color-scheme: light)',
+				},
+				{
+					url: '/icon-dark-32x32.png',
+					media: '(prefers-color-scheme: dark)',
+				},
+				{
+					url: '/icon.svg',
+					type: 'image/svg+xml',
+				},
+			],
+			apple: '/apple-icon.png',
+		},
+	}
 }
 
 export const viewport: Viewport = {
