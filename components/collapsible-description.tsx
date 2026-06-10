@@ -1,32 +1,37 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 
 interface CollapsibleDescriptionProps {
 	text: string
-	/** Caracteres a partir de los cuales se activa el colapso */
-	threshold?: number
 }
 
-export function CollapsibleDescription({
-	text,
-	threshold = 220,
-}: CollapsibleDescriptionProps) {
+export function CollapsibleDescription({ text }: CollapsibleDescriptionProps) {
 	const [expanded, setExpanded] = useState(false)
-	const isLong = text.length > threshold
+	const [isClamped, setIsClamped] = useState(false)
+	const ref = useRef<HTMLParagraphElement>(null)
+
+	useEffect(() => {
+		const el = ref.current
+		if (!el) return
+		// Medir overflow real en lugar de contar caracteres — el texto cabe
+		// en 4 líneas o no dependiendo del ancho del contenedor y la fuente.
+		setIsClamped(el.scrollHeight > el.clientHeight)
+	}, [text])
 
 	return (
 		<div>
 			<p
+				ref={ref}
 				className={cn(
 					'text-foreground leading-relaxed',
-					!expanded && isLong && 'line-clamp-4',
+					!expanded && 'line-clamp-4',
 				)}
 			>
 				{text}
 			</p>
-			{isLong && (
+			{(isClamped || expanded) && (
 				<button
 					type="button"
 					onClick={() => setExpanded((v) => !v)}

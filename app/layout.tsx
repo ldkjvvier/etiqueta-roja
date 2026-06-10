@@ -37,6 +37,12 @@ export async function generateMetadata(): Promise<Metadata> {
 		'Marca de streetwear premium. Drops limitados. Piezas exclusivas.'
 
 	return {
+		metadataBase: new URL(
+			process.env.NEXT_PUBLIC_APP_URL ??
+				(process.env.VERCEL_URL
+					? `https://${process.env.VERCEL_URL}`
+					: 'http://localhost:3000'),
+		),
 		title,
 		description,
 		icons: {

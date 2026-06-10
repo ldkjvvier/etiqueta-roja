@@ -51,12 +51,13 @@ export function ProductCardCarousel({
 		}
 	}, [emblaApi, onSelect, onScroll])
 
-	// Relleno 0–1 de cada segmento: crossfade según la distancia de arrastre
-	// al snap correspondiente. En reposo da 1 para el activo y 0 para el resto.
+	// Relleno 0–1 de cada segmento. Normaliza la distancia como arco circular
+	// para que el cálculo sea correcto en la costura del loop (progress ~1→0).
 	const segmentFill = (index: number) => {
 		if (scrollSnaps.length < 2) return index === selectedIndex ? 1 : 0
 		const step = Math.abs(scrollSnaps[1] - scrollSnaps[0]) || 1
-		const distance = Math.abs(progress - scrollSnaps[index]) / step
+		const rawDist = Math.abs(progress - scrollSnaps[index])
+		const distance = Math.min(rawDist, 1 - rawDist) / step
 		return Math.max(0, Math.min(1, 1 - distance))
 	}
 
