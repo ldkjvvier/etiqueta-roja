@@ -1,47 +1,111 @@
 'use client'
 
-import Link from 'next/link'
+import {
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from 'react'
+import type { Product } from '@/lib/store-context'
 import { ProductCard } from './product-card'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { loadMoreProducts } from './product-feed-actions'
 
 interface ProductGridProps {
-	products: import('@/lib/store-context').Product[]
-	currentPage: number
-	totalPages: number
+	initialProducts: Product[]
 	totalCount: number
+	pageSize: number
 }
 
-function buildPageUrl(page: number) {
-	const params = new URLSearchParams()
-	params.set('page', String(page))
-	return `/?${params.toString()}`
-}
+type FeedStatus = 'idle' | 'loading' | 'error'
 
-function paginationRange(
-	current: number,
-	total: number,
-): (number | '...')[] {
-	if (total <= 7)
-		return Array.from({ length: total }, (_, i) => i + 1)
-	if (current <= 4) return [1, 2, 3, 4, 5, '...', total]
-	if (current >= total - 3)
-		return [
-			1,
-			'...',
-			total - 4,
-			total - 3,
-			total - 2,
-			total - 1,
-			total,
-		]
-	return [1, '...', current - 1, current, current + 1, '...', total]
+// Distancia anticipada para empezar a cargar antes de llegar al final (prefetch).
+const PREFETCH_ROOT_MARGIN = '600px 0px'
+// Tope del stagger para que un lote completo no tarde en revelarse.
+const STAGGER_STEP_MS = 40
+const STAGGER_MAX_MS = 240
+
+/** Celda skeleton que conserva la altura exacta de ProductCard (imagen + texto)
+ *  para que al sustituirse por la tarjeta real no haya layout shift. */
+function CardSkeleton() {
+	return (
+		<div aria-hidden="true">
+			<div className="relative aspect-4/5 bg-product-surface overflow-hidden">
+				<div className="absolute inset-y-0 left-0 w-1/2 bg-linear-to-r from-transparent via-white/40 to-transparent motion-safe:animate-skeleton-scan motion-reduce:hidden" />
+			</div>
+			<div className="pt-3 space-y-1">
+				<div className="h-3.5 w-3/4 bg-secondary" />
+				<div className="h-4 w-1/3 bg-secondary" />
+			</div>
+		</div>
+	)
 }
 
 export function ProductGrid({
-	products,
-	currentPage,
-	totalPages,
+	initialProducts,
+	totalCount,
+	pageSize,
 }: ProductGridProps) {
+	const [products, setProducts] = useState<Product[]>(initialProducts)
+	const [page, setPage] = useState(1)
+	const [count, setCount] = useState(totalCount)
+	const [status, setStatus] = useState<FeedStatus>('idle')
+	// Índice a partir del cual los items son "nuevos" y deben animar su entrada.
+	// Arranca en el largo inicial → los items de SSR NO animan (evita jank/CLS inicial).
+	const [animateFrom, setAnimateFrom] = useState(initialProducts.length)
+
+	// Espejo en ref para leer el estado más reciente sin recrear callbacks.
+	const productsRef = useRef(products)
+	const isLoadingRef = useRef(false)
+	const sentinelRef = useRef<HTMLDivElement>(null)
+
+	useEffect(() => {
+		productsRef.current = products
+	}, [products])
+
+	const hasMore = products.length < count
+
+	const loadMore = useCallback(async () => {
+		// Guard anti-duplicados: ignora disparos solapados del observer.
+		if (isLoadingRef.current || !hasMore) return
+		isLoadingRef.current = true
+		setStatus('loading')
+
+		const nextPage = page + 1
+		try {
+			const res = await loadMoreProducts(nextPage)
+			const current = productsRef.current
+			const seen = new Set(current.map((p) => p.id))
+			// Dedup por id: protege contra offsets inestables (inserción/borrado
+			// entre lotes) que de otro modo repetirían productos.
+			const additions = res.products.filter((p) => !seen.has(p.id))
+
+			setAnimateFrom(current.length)
+			setProducts([...current, ...additions])
+			setPage(nextPage)
+			setCount(res.totalCount)
+			setStatus('idle')
+		} catch {
+			setStatus('error')
+		} finally {
+			isLoadingRef.current = false
+		}
+	}, [hasMore, page])
+
+	// Observer del sentinel: precarga el siguiente lote antes de llegar al final.
+	useEffect(() => {
+		const el = sentinelRef.current
+		if (!el || !hasMore) return
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				if (entries[0]?.isIntersecting) loadMore()
+			},
+			{ rootMargin: PREFETCH_ROOT_MARGIN },
+		)
+		observer.observe(el)
+		return () => observer.disconnect()
+	}, [hasMore, loadMore])
+
 	return (
 		<section
 			id="productos"
@@ -55,152 +119,86 @@ export function ProductGrid({
 						</p>
 					</div>
 				) : (
-					<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-1 md:gap-x-1.5 gap-y-3 md:gap-y-4 lg:gap-y-5">
-						{products.map((product) => (
-							<ProductCard key={product.id} product={product} />
-						))}
-					</div>
-				)}
+					<>
+						<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-1 md:gap-x-1.5 gap-y-3 md:gap-y-4 lg:gap-y-5">
+							{products.map((product, index) => {
+								const isNew = index >= animateFrom
+								return (
+									<div
+										key={product.id}
+										className={
+											isNew
+												? 'motion-safe:animate-fade-in-up'
+												: undefined
+										}
+										style={
+											isNew
+												? {
+														animationDelay: `${Math.min(
+															(index - animateFrom) *
+																STAGGER_STEP_MS,
+															STAGGER_MAX_MS,
+														)}ms`,
+													}
+												: undefined
+										}
+									>
+										<ProductCard product={product} />
+									</div>
+								)
+							})}
 
-				{totalPages > 1 && (
-					<nav
-						aria-label="Paginación de productos"
-						className="mt-12 flex flex-col items-center gap-4"
-					>
-						{/* ── Mobile: prev / counter / next ── */}
-						<div className="flex items-center justify-center gap-4 w-full md:hidden">
-							<Link
-								href={buildPageUrl(Math.max(1, currentPage - 1))}
-								aria-label="Página anterior"
-								aria-disabled={currentPage === 1}
-								tabIndex={currentPage === 1 ? -1 : 0}
-								className={[
-									'w-11 h-11 border border-foreground',
-									'flex items-center justify-center transition-colors',
-									'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-									currentPage === 1
-										? 'opacity-25 pointer-events-none'
-										: 'hover:bg-foreground hover:text-background active:scale-[0.97]',
-								].join(' ')}
-							>
-								<ChevronLeft className="w-5 h-5" aria-hidden="true" />
-							</Link>
-
-							<span
-								className="font-mono font-bold text-sm tabular-nums"
-								aria-live="polite"
-								aria-atomic="true"
-							>
-								{currentPage.toString().padStart(2, '0')}
-								<span className="mx-2 text-muted-foreground">·</span>
-								{totalPages.toString().padStart(2, '0')}
-							</span>
-
-							<Link
-								href={buildPageUrl(
-									Math.min(totalPages, currentPage + 1),
-								)}
-								aria-label="Página siguiente"
-								aria-disabled={currentPage === totalPages}
-								tabIndex={currentPage === totalPages ? -1 : 0}
-								className={[
-									'w-11 h-11 border border-foreground',
-									'flex items-center justify-center transition-colors',
-									'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-									currentPage === totalPages
-										? 'opacity-25 pointer-events-none'
-										: 'hover:bg-foreground hover:text-background active:scale-[0.97]',
-								].join(' ')}
-							>
-								<ChevronRight
-									className="w-5 h-5"
-									aria-hidden="true"
-								/>
-							</Link>
+							{/* Placeholders discretos mientras llega el lote (sin spinner).
+							    Misma altura que la tarjeta → sin layout shift. */}
+							{status === 'loading' &&
+								Array.from({ length: pageSize }, (_, i) => (
+									<CardSkeleton key={`sk-${i}`} />
+								))}
 						</div>
 
-						{/* ── Desktop: prev / page numbers / next ── */}
-						<div className="hidden md:flex items-center gap-1.5">
-							<Link
-								href={buildPageUrl(Math.max(1, currentPage - 1))}
-								aria-label="Página anterior"
-								aria-disabled={currentPage === 1}
-								tabIndex={currentPage === 1 ? -1 : 0}
-								className={[
-									'w-11 h-11 border border-foreground',
-									'flex items-center justify-center transition-colors',
-									'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-									currentPage === 1
-										? 'opacity-25 pointer-events-none'
-										: 'hover:bg-primary hover:border-primary hover:text-primary-foreground',
-								].join(' ')}
-							>
-								<ChevronLeft className="w-4 h-4" aria-hidden="true" />
-							</Link>
+						{/* Región para lectores de pantalla: anuncia el progreso del feed. */}
+						<p className="sr-only" aria-live="polite" role="status">
+							{`Mostrando ${products.length} de ${count} productos`}
+						</p>
 
-							{paginationRange(currentPage, totalPages).map(
-								(item, idx) =>
-									item === '...' ? (
-										<span
-											key={`ellipsis-${idx}`}
-											className="w-11 h-11 flex items-center justify-center text-muted-foreground font-mono text-sm select-none"
-											aria-hidden="true"
-										>
-											…
-										</span>
-									) : (
-										<Link
-											key={item}
-											href={buildPageUrl(item as number)}
-											aria-label={`Página ${item}`}
-											aria-current={
-												currentPage === item ? 'page' : undefined
-											}
-											className={[
-												'w-11 h-11 border font-mono font-bold text-sm tabular-nums',
-												'flex items-center justify-center transition-colors',
-												'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-												currentPage === item
-													? 'bg-foreground text-background border-foreground'
-													: 'border-foreground hover:bg-primary hover:border-primary hover:text-primary-foreground',
-											].join(' ')}
-										>
-											{(item as number).toString().padStart(2, '0')}
-										</Link>
-									),
-							)}
-
-							<Link
-								href={buildPageUrl(
-									Math.min(totalPages, currentPage + 1),
-								)}
-								aria-label="Página siguiente"
-								aria-disabled={currentPage === totalPages}
-								tabIndex={currentPage === totalPages ? -1 : 0}
-								className={[
-									'w-11 h-11 border border-foreground',
-									'flex items-center justify-center transition-colors',
-									'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-									currentPage === totalPages
-										? 'opacity-25 pointer-events-none'
-										: 'hover:bg-primary hover:border-primary hover:text-primary-foreground',
-								].join(' ')}
-							>
-								<ChevronRight
-									className="w-4 h-4"
+						{/* Sentinel de prefetch + control de fallback (teclado / sin JS / SR). */}
+						{hasMore && (
+							<div className="mt-12 flex flex-col items-center gap-3">
+								<div
+									ref={sentinelRef}
 									aria-hidden="true"
+									className="h-px w-full"
 								/>
-							</Link>
-						</div>
 
-						<span
-							className="hidden md:block text-xs font-mono text-muted-foreground tabular-nums"
-							aria-live="polite"
-						>
-							PÁGINA {currentPage.toString().padStart(2, '0')} /{' '}
-							{totalPages.toString().padStart(2, '0')}
-						</span>
-					</nav>
+								{status === 'error' ? (
+									<div className="flex flex-col items-center gap-2 text-center">
+										<p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
+											No se pudieron cargar más productos
+										</p>
+										<button
+											type="button"
+											onClick={loadMore}
+											className="h-11 px-6 border border-foreground font-mono text-xs font-bold uppercase tracking-widest transition-colors hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+										>
+											Reintentar
+										</button>
+									</div>
+								) : (
+									<button
+										type="button"
+										onClick={loadMore}
+										disabled={status === 'loading'}
+										aria-label="Cargar más productos"
+										className="h-11 px-6 border border-foreground font-mono text-xs font-bold uppercase tracking-widest transition-colors hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none"
+									>
+										{status === 'loading'
+											? 'Cargando…'
+											: 'Cargar más'}
+									</button>
+								)}
+							</div>
+						)}
+					</>
 				)}
 			</div>
 		</section>

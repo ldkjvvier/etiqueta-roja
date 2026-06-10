@@ -53,6 +53,13 @@
   to   { transform: translateX(200%); }
 }
 
+/* Entrada de tarjetas nuevas en el feed (infinite scroll): fade + leve subida.
+   Solo opacity/transform (compositor-friendly, sin reflow ni CLS). */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 @theme inline {
   --animate-skeleton-scan: skeleton-scan 1.8s linear infinite;
 
@@ -108,6 +115,13 @@
 }
 
 @layer utilities {
+  /* `both`: mantiene el estado inicial (opacity 0) durante el animation-delay
+     del stagger y conserva el final tras animar. Se aplica con el variant
+     motion-safe → con prefers-reduced-motion el item aparece sin animación. */
+  .animate-fade-in-up {
+    animation: fade-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
   .animate-marquee-infinite {
     animation: marquee-scroll 40s linear infinite;
   }

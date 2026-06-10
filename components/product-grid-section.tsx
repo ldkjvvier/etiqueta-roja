@@ -1,22 +1,22 @@
-import { getProducts } from '@/lib/services/products-server'
+import {
+	getProducts,
+	PRODUCTS_PAGE_SIZE,
+} from '@/lib/services/products-server'
 import { ProductGrid } from './product-grid'
 
-interface Props {
-	searchParams: Promise<{ page?: string }>
-}
-
-export async function ProductGridSection({ searchParams }: Props) {
-	const { page: pageStr } = await searchParams
-	const page = Math.max(1, Number(pageStr) || 1)
-
-	const { products, totalCount, totalPages } = await getProducts({ page })
+export async function ProductGridSection() {
+	// Primer lote renderizado en el servidor: LCP y SEO intactos.
+	// El resto se carga progresivamente en el cliente (infinite scroll).
+	const { products, totalCount } = await getProducts({
+		page: 1,
+		pageSize: PRODUCTS_PAGE_SIZE,
+	})
 
 	return (
 		<ProductGrid
-			products={products}
-			currentPage={page}
-			totalPages={totalPages}
+			initialProducts={products}
 			totalCount={totalCount}
+			pageSize={PRODUCTS_PAGE_SIZE}
 		/>
 	)
 }

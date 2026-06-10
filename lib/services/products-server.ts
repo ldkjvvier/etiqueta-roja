@@ -124,6 +124,9 @@ export type ProductListResult = {
 	totalPages: number
 }
 
+// Tamaño de lote del feed de la home (infinite scroll): 3 filas × 4 columnas.
+export const PRODUCTS_PAGE_SIZE = 12
+
 export async function getProducts(params?: {
 	page?: number
 	pageSize?: number
