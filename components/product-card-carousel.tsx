@@ -4,16 +4,24 @@ import Image from 'next/image'
 import { useState, useCallback, useEffect } from 'react'
 import useEmblaCarousel from 'embla-carousel-react'
 
+/* sizes unificado entre el crossfade desktop y el carrusel mobile: la tarjeta
+   con `priority` genera UN solo preload (misma URL en ambos layouts). */
+export const CARD_IMAGE_SIZES =
+	'(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw'
+
 interface ProductCardCarouselProps {
 	images: string[]
 	alt: string
 	isSoldOut?: boolean
+	/** true para tarjetas above-the-fold: precarga la primera imagen (LCP). */
+	priority?: boolean
 }
 
 export function ProductCardCarousel({
 	images,
 	alt,
 	isSoldOut = false,
+	priority = false,
 }: ProductCardCarouselProps) {
 	const [emblaRef, emblaApi] = useEmblaCarousel({
 		loop: true,
@@ -75,9 +83,10 @@ export function ProductCardCarousel({
 						>
 							<Image
 								src={img || '/placeholder.svg'}
-								alt={`${alt} - vista ${index + 1}`}
+								alt={index === 0 ? alt : `${alt} — vista ${index + 1}`}
 								fill
-								sizes="(max-width: 1024px) 50vw, 25vw"
+								priority={priority && index === 0}
+								sizes={CARD_IMAGE_SIZES}
 								className={`object-cover ${
 									isSoldOut ? 'grayscale brightness-95' : ''
 								}`}

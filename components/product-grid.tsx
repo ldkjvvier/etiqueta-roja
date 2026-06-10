@@ -8,6 +8,7 @@ import {
 } from 'react'
 import type { Product } from '@/lib/store-context'
 import { ProductCard } from './product-card'
+import { ProductCardSkeleton } from './product-card-skeleton'
 import { loadMoreProducts } from './product-feed-actions'
 
 interface ProductGridProps {
@@ -23,22 +24,8 @@ const PREFETCH_ROOT_MARGIN = '600px 0px'
 // Tope del stagger para que un lote completo no tarde en revelarse.
 const STAGGER_STEP_MS = 40
 const STAGGER_MAX_MS = 240
-
-/** Celda skeleton que conserva la altura exacta de ProductCard (imagen + texto)
- *  para que al sustituirse por la tarjeta real no haya layout shift. */
-function CardSkeleton() {
-	return (
-		<div aria-hidden="true">
-			<div className="relative aspect-4/5 bg-product-surface overflow-hidden">
-				<div className="absolute inset-y-0 left-0 w-1/2 bg-linear-to-r from-transparent via-white/40 to-transparent motion-safe:animate-skeleton-scan motion-reduce:hidden" />
-			</div>
-			<div className="pt-3 space-y-1">
-				<div className="h-3.5 w-3/4 bg-secondary" />
-				<div className="h-4 w-1/3 bg-secondary" />
-			</div>
-		</div>
-	)
-}
+// Primeras tarjetas above-the-fold: precargan su imagen principal (LCP).
+const PRIORITY_COUNT = 4
 
 export function ProductGrid({
 	initialProducts,
@@ -120,7 +107,7 @@ export function ProductGrid({
 					</div>
 				) : (
 					<>
-						<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-1 md:gap-x-1.5 gap-y-3 md:gap-y-4 lg:gap-y-5">
+						<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-2 md:gap-x-3 gap-y-5 md:gap-y-6">
 							{products.map((product, index) => {
 								const isNew = index >= animateFrom
 								return (
@@ -143,7 +130,10 @@ export function ProductGrid({
 												: undefined
 										}
 									>
-										<ProductCard product={product} />
+										<ProductCard
+											product={product}
+											priority={index < PRIORITY_COUNT}
+										/>
 									</div>
 								)
 							})}
@@ -152,7 +142,7 @@ export function ProductGrid({
 							    Misma altura que la tarjeta → sin layout shift. */}
 							{status === 'loading' &&
 								Array.from({ length: pageSize }, (_, i) => (
-									<CardSkeleton key={`sk-${i}`} />
+									<ProductCardSkeleton key={`sk-${i}`} />
 								))}
 						</div>
 

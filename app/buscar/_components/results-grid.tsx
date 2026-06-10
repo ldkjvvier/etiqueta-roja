@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ProductCard } from '@/components/product-card'
+import { ProductCardSkeleton } from '@/components/product-card-skeleton'
 import type { Product } from '@/lib/store-context'
 import type { ProductListResult } from '@/lib/services/products-server'
 import type { SearchFilters } from '@/lib/search/filters'
@@ -18,24 +19,11 @@ interface Props {
 const PREFETCH_ROOT_MARGIN = '600px 0px'
 const STAGGER_STEP_MS = 40
 const STAGGER_MAX_MS = 240
-
-/** Skeleton con la misma altura exacta que ProductCard → sin layout shift. */
-function CardSkeleton() {
-	return (
-		<div aria-hidden="true">
-			<div className="relative aspect-4/5 bg-product-surface overflow-hidden">
-				<div className="absolute inset-y-0 left-0 w-1/2 bg-linear-to-r from-transparent via-white/40 to-transparent motion-safe:animate-skeleton-scan motion-reduce:hidden" />
-			</div>
-			<div className="pt-3 space-y-1">
-				<div className="h-3.5 w-3/4 bg-secondary" />
-				<div className="h-4 w-1/3 bg-secondary" />
-			</div>
-		</div>
-	)
-}
+// Primeras tarjetas above-the-fold: precargan su imagen principal (LCP).
+const PRIORITY_COUNT = 4
 
 const GRID_CLASS =
-	'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-1 md:gap-x-1.5 gap-y-3 md:gap-y-4 lg:gap-y-5'
+	'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-2 md:gap-x-3 gap-y-5 md:gap-y-6'
 
 export function ResultsGrid({
 	filtersKey,
@@ -118,7 +106,7 @@ export function ResultsGrid({
 		return (
 			<div className={GRID_CLASS} aria-hidden="true">
 				{Array.from({ length: pageSize }, (_, i) => (
-					<CardSkeleton key={`sk-${i}`} />
+					<ProductCardSkeleton key={`sk-${i}`} />
 				))}
 			</div>
 		)
@@ -170,14 +158,17 @@ export function ResultsGrid({
 									: undefined
 							}
 						>
-							<ProductCard product={product} />
+							<ProductCard
+								product={product}
+								priority={index < PRIORITY_COUNT}
+							/>
 						</div>
 					)
 				})}
 
 				{status === 'loading' &&
 					Array.from({ length: pageSize }, (_, i) => (
-						<CardSkeleton key={`more-sk-${i}`} />
+						<ProductCardSkeleton key={`more-sk-${i}`} />
 					))}
 			</div>
 
