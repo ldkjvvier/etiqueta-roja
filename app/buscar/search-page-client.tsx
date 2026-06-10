@@ -1,59 +1,59 @@
 'use client'
 
-import { useState, useEffect, useTransition, useRef } from 'react'
-import { useRouter } from 'next/navigation'
-import { Search, X } from 'lucide-react'
+import { useCallback } from 'react'
 import Link from 'next/link'
-import { useDebounce } from '@/hooks/use-debounce'
-import { ProductCard } from '@/components/product-card'
-import { searchProductsAction } from './actions'
 import type { ProductListResult } from '@/lib/services/products-server'
+import type { SearchFacets } from '@/lib/services/products-server'
+import {
+	countActiveFilters,
+	hasAnyFilter,
+	type SearchSort,
+} from '@/lib/search/filters'
+import { useSearchFilters } from './use-search-filters'
+import { SearchInput } from './_components/search-input'
+import { SortSelect } from './_components/sort-select'
+import { FilterControls } from './_components/filter-controls'
+import { FilterSheet } from './_components/filter-sheet'
+import { ActiveFilterChips } from './_components/active-filter-chips'
+import { ResultsGrid } from './_components/results-grid'
 
 interface Props {
-	initialQuery: string
-	initialResults: ProductListResult
+	filtersKey: string
+	initialResult: ProductListResult
+	facets: SearchFacets
+	pageSize: number
 }
 
 export function SearchPageClient({
-	initialQuery,
-	initialResults,
+	filtersKey,
+	initialResult,
+	facets,
+	pageSize,
 }: Props) {
-	const router = useRouter()
-	const inputRef = useRef<HTMLInputElement>(null)
-	const isFirstRender = useRef(true)
+	const { filters, apply, clearAll, isPending } = useSearchFilters()
 
-	const [query, setQuery] = useState(initialQuery)
-	const [results, setResults] = useState(initialResults)
-	const [isPending, startTransition] = useTransition()
+	const setQuery = useCallback(
+		(q: string) => apply({ q }),
+		[apply],
+	)
+	const setSort = useCallback(
+		(orden: SearchSort) => apply({ orden }),
+		[apply],
+	)
 
-	const debouncedQuery = useDebounce(query, 350)
-
-	useEffect(() => {
-		if (isFirstRender.current) {
-			isFirstRender.current = false
-			return
-		}
-		startTransition(async () => {
-			const trimmed = debouncedQuery.trim()
-			const params = new URLSearchParams()
-			if (trimmed) params.set('q', trimmed)
-			router.replace(
-				`/buscar${trimmed ? `?${params.toString()}` : ''}`,
-				{ scroll: false },
-			)
-			const data = await searchProductsAction(debouncedQuery)
-			setResults(data)
-		})
-	}, [debouncedQuery])
-
-	const { products, totalCount } = results
-
+	const { totalCount } = initialResult
 	const resultLabel =
 		totalCount === 1 ? '1 resultado' : `${totalCount} resultados`
 
+	const hasFilterFacets =
+		facets.sizes.length > 0 ||
+		facets.categories.length > 0 ||
+		facets.drops.length > 0 ||
+		facets.priceRange != null
+
 	return (
 		<main id="main-content" tabIndex={-1} className="flex-1">
-			{/* Breadcrumbs */}
+			{/* Breadcrumb */}
 			<div className="px-4 md:px-8 lg:px-12 pt-6 pb-4 border-b border-border">
 				<nav aria-label="Breadcrumb">
 					<ol className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
@@ -75,94 +75,110 @@ export function SearchPageClient({
 				</nav>
 			</div>
 
-			{/* Search input */}
+			{/* Buscador */}
 			<div className="px-4 md:px-8 lg:px-12 pt-8 pb-6">
-				<h1 className="font-bold text-2xl md:text-3xl uppercase tracking-widest mb-6">
-					Buscar
-				</h1>
-				<div className="relative max-w-2xl">
-					<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-						<Search
-							className={`w-5 h-5 transition-colors ${isPending ? 'text-foreground animate-pulse' : 'text-muted-foreground'}`}
-							aria-hidden="true"
-						/>
-					</div>
-					<input
-						ref={inputRef}
-						type="search"
-						value={query}
-						onChange={(e) => setQuery(e.target.value)}
-						placeholder="Buscar productos..."
-						className="w-full h-14 pl-12 pr-12 bg-secondary border border-border font-mono text-sm uppercase tracking-widest placeholder:text-muted-foreground placeholder:normal-case placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background transition-colors [&::-webkit-search-cancel-button]:hidden"
-						aria-label="Buscar productos"
-						aria-busy={isPending}
-						autoComplete="off"
-						// biome-ignore lint/a11y/noAutofocus: intencional en página de búsqueda
-						autoFocus
+				<h1 className="sr-only">Buscar productos</h1>
+				<div className="max-w-2xl">
+					<SearchInput
+						value={filters.q}
+						onChange={setQuery}
+						isPending={isPending}
 					/>
-					{query && (
-						<button
-							type="button"
-							onClick={() => {
-								setQuery('')
-								inputRef.current?.focus()
-							}}
-							className="absolute inset-y-0 right-0 flex items-center pr-4 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-							aria-label="Limpiar búsqueda"
-						>
-							<X className="w-4 h-4" aria-hidden="true" />
-						</button>
-					)}
 				</div>
 			</div>
 
-			{/* Results */}
-			<section
-				className="px-4 md:px-8 lg:px-12 pb-16"
-				aria-label="Resultados de búsqueda"
-				aria-live="polite"
-				aria-busy={isPending}
-			>
-				{/* Result count */}
-				<p className="font-mono text-xs uppercase tracking-widest text-muted-foreground mb-6">
-					{debouncedQuery.trim() ? (
-						<>
-							{resultLabel} para{' '}
-							<span className="text-foreground">
-								&ldquo;{debouncedQuery.trim()}&rdquo;
-							</span>
-						</>
-					) : (
-						resultLabel
+			{/* Layout: sidebar (desktop) + resultados */}
+			<div className="px-4 md:px-8 lg:px-12 pb-24 lg:pb-16">
+				<div className="lg:grid lg:grid-cols-[16rem_1fr] lg:gap-10">
+					{/* Sidebar sticky (desktop) */}
+					{hasFilterFacets && (
+						<aside
+							className="hidden lg:block"
+							aria-label="Filtros"
+						>
+							<div className="sticky top-24">
+								<div className="flex items-center justify-between mb-2">
+									<h2 className="font-mono text-xs font-bold uppercase tracking-widest">
+										Filtros
+									</h2>
+									{countActiveFilters(filters) > 0 && (
+										<button
+											type="button"
+											onClick={clearAll}
+											className="font-mono text-[10px] font-bold uppercase tracking-widest text-primary-strong hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+										>
+											Limpiar
+										</button>
+									)}
+								</div>
+								<FilterControls
+									filters={filters}
+									facets={facets}
+									apply={apply}
+								/>
+							</div>
+						</aside>
 					)}
-				</p>
 
-				{/* Grid */}
-				<div
-					className={`transition-opacity duration-200 ${isPending ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}
-				>
-					{products.length === 0 ? (
-						<div className="border border-border p-12 text-center">
-							<p className="font-bold uppercase tracking-wide text-sm">
-								{debouncedQuery.trim()
-									? `Sin resultados para "${debouncedQuery.trim()}"`
-									: 'Sin productos disponibles'}
+					{/* Columna de resultados */}
+					<section
+						aria-label="Resultados de búsqueda"
+						className="min-w-0"
+					>
+						{/* Toolbar: contador + orden */}
+						<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+							<p
+								className="font-mono text-xs uppercase tracking-widest text-muted-foreground tabular-nums"
+								aria-live="polite"
+								role="status"
+							>
+								{filters.q ? (
+									<>
+										{resultLabel} para{' '}
+										<span className="text-foreground">
+											&ldquo;{filters.q}&rdquo;
+										</span>
+									</>
+								) : (
+									resultLabel
+								)}
 							</p>
-							{debouncedQuery.trim() && (
-								<p className="mt-2 text-sm text-muted-foreground">
-									Intenta con otro término de búsqueda
-								</p>
-							)}
+							<SortSelect value={filters.orden} onChange={setSort} />
 						</div>
-					) : (
-						<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-1 md:gap-x-1.5 gap-y-3 md:gap-y-4 lg:gap-y-5">
-							{products.map((product) => (
-								<ProductCard key={product.id} product={product} />
-							))}
-						</div>
-					)}
+
+						{/* Chips de filtros activos */}
+						{hasAnyFilter(filters) && (
+							<div className="mb-6">
+								<ActiveFilterChips
+									filters={filters}
+									facets={facets}
+									apply={apply}
+									onClearAll={clearAll}
+								/>
+							</div>
+						)}
+
+						<ResultsGrid
+							filtersKey={filtersKey}
+							filters={filters}
+							initialResult={initialResult}
+							pageSize={pageSize}
+							isPending={isPending}
+						/>
+					</section>
 				</div>
-			</section>
+			</div>
+
+			{/* Filtros móvil (botón flotante + bottom-sheet) */}
+			{hasFilterFacets && (
+				<FilterSheet
+					filters={filters}
+					facets={facets}
+					apply={apply}
+					onClearAll={clearAll}
+					resultLabel={resultLabel}
+				/>
+			)}
 		</main>
 	)
 }

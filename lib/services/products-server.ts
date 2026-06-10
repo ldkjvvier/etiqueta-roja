@@ -2,6 +2,12 @@ import { unstable_cache } from 'next/cache'
 import { createClient, createPublicClient } from '@/lib/supabase/server'
 import type { Product } from '@/lib/store-context'
 import { getPublicStoreContext } from '@/lib/data/admin-context'
+import {
+	type SearchFilters,
+	type SearchSort,
+	sizeLabelToKeyValue,
+	sortSizes,
+} from '@/lib/search/filters'
 
 type VariantRow = {
 	id: string
@@ -171,6 +177,217 @@ export async function getProducts(params?: {
 		},
 		['products-listing', String(page), String(pageSize), q],
 		{ tags: ['products'], revalidate: 60 },
+	)
+
+	return fetcher()
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Búsqueda con filtros (/buscar)
+// ─────────────────────────────────────────────────────────────────────────
+
+export const SEARCH_PAGE_SIZE = 24
+
+export type SearchFacets = {
+	categories: Array<{ slug: string; name: string }>
+	drops: Array<{ slug: string; name: string }>
+	sizes: string[]
+	priceRange: { min: number; max: number } | null
+}
+
+function applySort(query: any, sort: SearchSort) {
+	switch (sort) {
+		case 'precio-asc':
+			return query.order('base_price', { ascending: true })
+		case 'precio-desc':
+			return query.order('base_price', { ascending: false })
+		case 'az':
+			return query.order('name', { ascending: true })
+		case 'za':
+			return query.order('name', { ascending: false })
+		default:
+			return query.order('created_at', { ascending: false })
+	}
+}
+
+export async function searchProducts(
+	filters: SearchFilters,
+	page = 1,
+	pageSize = SEARCH_PAGE_SIZE,
+): Promise<ProductListResult> {
+	const db = createPublicClient() as any
+	const { storeId } = await getPublicStoreContext()
+
+	const safePage = Math.max(1, page)
+	const from = (safePage - 1) * pageSize
+	const to = from + pageSize - 1
+
+	// Talla y disponibilidad dependen de las variantes: cuando alguno está
+	// activo usamos un INNER join para que solo entren productos con al menos
+	// una variante que cumpla la condición (filtrado + conteo correctos).
+	const needsVariantFilter =
+		filters.tallas.length > 0 || filters.disponible
+	const variantSelect = needsVariantFilter
+		? 'variants:product_variants!inner(id,combination_key,stock_quantity,reserved_stock,low_stock_threshold,track_inventory)'
+		: 'variants:product_variants(id,combination_key,stock_quantity,reserved_stock,low_stock_threshold,track_inventory)'
+
+	// El filtro por categoría sobre un recurso embebido solo afecta a las filas
+	// padre si el join es INNER (sintaxis PostgREST `!inner`).
+	const categorySelect = filters.categoria
+		? 'category:categories!inner(name,slug)'
+		: 'category:categories(name,slug)'
+
+	const select =
+		'id,slug,name,base_price,compare_at_price,main_image,' +
+		categorySelect +
+		',' +
+		variantSelect +
+		',gallery:product_images(image_url,display_order)'
+
+	let query = db
+		.from('products')
+		.select(select, { count: 'exact' })
+		.eq('store_id', storeId)
+		.eq('status', 'active')
+		.is('deleted_at', null)
+
+	if (filters.q) query = query.ilike('name', `%${filters.q}%`)
+
+	if (filters.categoria)
+		query = query.eq('category.slug', filters.categoria)
+
+	if (filters.coleccion) {
+		const { data: drop } = await db
+			.from('drops')
+			.select('id')
+			.eq('store_id', storeId)
+			.eq('slug', filters.coleccion)
+			.maybeSingle()
+		// Slug inexistente → resultado vacío explícito en vez de ignorar el filtro.
+		query = query.eq('drop_id', drop?.id ?? '00000000-0000-0000-0000-000000000000')
+	}
+
+	if (filters.precioMin != null)
+		query = query.gte('base_price', filters.precioMin)
+	if (filters.precioMax != null)
+		query = query.lte('base_price', filters.precioMax)
+
+	if (filters.tallas.length > 0) {
+		const keys = filters.tallas.map(
+			(label) => `size:${sizeLabelToKeyValue(label)}`,
+		)
+		query = query.in('variants.combination_key', keys)
+	}
+
+	// "Solo disponibles": proxy a nivel de variante (stock > 0). reserved_stock
+	// es 0 en este catálogo, por lo que el conteo coincide; el mapeo posterior
+	// recalcula stockStatus con la fórmula completa como salvaguarda.
+	if (filters.disponible)
+		query = query.gt('variants.stock_quantity', 0)
+
+	query = applySort(query, filters.orden)
+	query = query.range(from, to)
+
+	const { data, error, count } = await query
+
+	if (error || !data) {
+		console.error('[searchProducts]', error)
+		return { products: [], totalCount: 0, totalPages: 0 }
+	}
+
+	let products = (data as ProductRow[]).map(mapRowToProduct)
+	// Salvaguarda exacta para "disponibles" ante reserved_stock > 0.
+	if (filters.disponible)
+		products = products.filter((p) => p.stockStatus !== 'sold_out')
+
+	const totalCount = count ?? products.length
+	const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
+	return { products, totalCount, totalPages }
+}
+
+// Facetas disponibles para construir la UI de filtros. Solo devuelve valores
+// que existen realmente en el catálogo activo (no se muestran filtros vacíos).
+export async function getSearchFacets(): Promise<SearchFacets> {
+	const db = createPublicClient() as any
+	const { storeId } = await getPublicStoreContext()
+
+	const fetcher = unstable_cache(
+		async () => {
+			const [catRes, dropRes, sizeRes, priceRes] = await Promise.all([
+				// Categorías que tienen al menos un producto activo.
+				db
+					.from('products')
+					.select('category:categories(name,slug)')
+					.eq('store_id', storeId)
+					.eq('status', 'active')
+					.is('deleted_at', null)
+					.not('category_id', 'is', null),
+				db
+					.from('drops')
+					.select('name,slug')
+					.eq('store_id', storeId)
+					.in('status', ['scheduled', 'live'])
+					.order('start_time', { ascending: false }),
+				db
+					.from('product_variants')
+					.select(
+						'combination_key,products!inner(store_id,status,deleted_at)',
+					)
+					.eq('products.store_id', storeId)
+					.eq('products.status', 'active')
+					.is('products.deleted_at', null),
+				db
+					.from('products')
+					.select('base_price')
+					.eq('store_id', storeId)
+					.eq('status', 'active')
+					.is('deleted_at', null),
+			])
+
+			// Categorías únicas.
+			const catMap = new Map<string, string>()
+			for (const row of catRes.data ?? []) {
+				const c = (row as any).category
+				if (c?.slug) catMap.set(c.slug, c.name)
+			}
+			const categories = Array.from(catMap, ([slug, name]) => ({
+				slug,
+				name,
+			})).sort((a, b) => a.name.localeCompare(b.name, 'es'))
+
+			const drops = (dropRes.data ?? []).map((d: any) => ({
+				slug: d.slug as string,
+				name: d.name as string,
+			}))
+
+			// Tallas únicas (etiqueta visible).
+			const sizeSet = new Set<string>()
+			for (const row of sizeRes.data ?? []) {
+				sizeSet.add(
+					parseSizeFromCombinationKey(
+						(row as any).combination_key,
+					),
+				)
+			}
+			const sizes = sortSizes(Array.from(sizeSet))
+
+			// Rango de precios.
+			const priceRows = priceRes.data as
+				| Array<{ base_price: number }>
+				| null
+			let priceRange: { min: number; max: number } | null = null
+			if (priceRows && priceRows.length) {
+				const prices = priceRows.map((p) => p.base_price)
+				priceRange = {
+					min: Math.floor(Math.min(...prices)),
+					max: Math.ceil(Math.max(...prices)),
+				}
+			}
+
+			return { categories, drops, sizes, priceRange }
+		},
+		['search-facets'],
+		{ tags: ['products'], revalidate: 120 },
 	)
 
 	return fetcher()
