@@ -1,6 +1,12 @@
 import type React from 'react'
 import type { Metadata, Viewport } from 'next'
-import { Archivo, Geist, Geist_Mono } from 'next/font/google'
+import {
+	Archivo,
+	Geist,
+	Geist_Mono,
+	Instrument_Serif,
+	Syne,
+} from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import { Providers } from './providers'
@@ -23,6 +29,22 @@ const archivo = Archivo({
 const geistMono = Geist_Mono({
 	subsets: ['latin'],
 	variable: '--font-geist-mono',
+	display: 'swap',
+})
+
+// PDP editorial: titulares de la ficha de producto (variable, 400–800)
+const syne = Syne({
+	subsets: ['latin'],
+	variable: '--font-syne',
+	display: 'swap',
+})
+
+// Acento serif itálico — palabras sueltas en headers editoriales, nunca body
+const instrumentSerif = Instrument_Serif({
+	subsets: ['latin'],
+	weight: '400',
+	style: ['normal', 'italic'],
+	variable: '--font-instrument',
 	display: 'swap',
 })
 
@@ -80,7 +102,7 @@ export default async function RootLayout({
 	return (
 		<html lang="es">
 			<body
-				className={`${geist.variable} ${archivo.variable} ${geistMono.variable} font-sans antialiased`}
+				className={`${geist.variable} ${archivo.variable} ${geistMono.variable} ${syne.variable} ${instrumentSerif.variable} font-sans antialiased`}
 			>
 				<a
 					href="#main-content"

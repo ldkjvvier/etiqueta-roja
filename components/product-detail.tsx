@@ -1,24 +1,140 @@
 'use client'
 
-import { useState, useCallback, useEffect, useMemo } from 'react'
+import {
+	useState,
+	useCallback,
+	useEffect,
+	useMemo,
+	useId,
+	type ReactNode,
+} from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
-import useEmblaCarousel from 'embla-carousel-react'
 import {
 	ArrowLeft,
-	MessageCircle,
-	ChevronLeft,
-	ChevronRight,
 	Share2,
+	Plus,
+	ShieldCheck,
+	ShoppingBag,
+	Truck,
+	Repeat2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useStore, type Product } from '@/lib/store-context'
-import { ProductCard } from './product-card'
-import { formatPrice } from '@/lib/utils'
+import { formatPrice, cn } from '@/lib/utils'
 import { ViewTracker } from '@/components/view-tracker'
-import { toast } from 'sonner'
 import { ProductStickyCtaMobile } from '@/components/product-detail-sticky-cta'
 import { CollapsibleDescription } from '@/components/collapsible-description'
+import { RelatedProducts } from '@/components/related-products'
+import {
+	ProductGallery,
+	type GalleryFocusRequest,
+} from '@/components/product-gallery'
+
+/* ────────────────────────────────────────────────────────────────────────
+   Bloques estáticos de información (envíos, cambios, cómo comprar).
+   El contenido es genérico a propósito: la coordinación real ocurre por
+   WhatsApp, por eso no se prometen plazos ni montos específicos.
+   ──────────────────────────────────────────────────────────────────────── */
+
+const INFO_SECTIONS: Array<{ title: string; content: ReactNode }> = [
+	{
+		title: 'Envío y entrega',
+		content: (
+			<p>
+				Al confirmar tu pedido por WhatsApp coordinamos el envío o el
+				retiro directamente contigo. Te confirmamos costo y tiempos
+				antes de cerrar la compra — sin sorpresas.
+			</p>
+		),
+	},
+	{
+		title: 'Cambios y devoluciones',
+		content: (
+			<p>
+				¿La talla no te quedó? Escríbenos por WhatsApp y coordinamos
+				el cambio, sujeto a disponibilidad de stock. Las piezas son
+				limitadas: si tienes dudas con la talla, pregúntanos antes de
+				pedir.
+			</p>
+		),
+	},
+	{
+		title: 'Cómo comprar',
+		content: (
+			<ol className="space-y-3">
+				{[
+					'Elige tu talla y agrega el producto al carrito.',
+					'En el carrito ingresa tu correo para registrar el pedido.',
+					'Confirma: se abre WhatsApp con tu pedido armado y coordinamos pago y entrega.',
+				].map((step, index) => (
+					<li key={index} className="flex gap-3">
+						<span className="shrink-0 font-mono text-[10px] font-bold tracking-widest text-primary-strong">
+							0{index + 1}
+						</span>
+						<span>{step}</span>
+					</li>
+				))}
+			</ol>
+		),
+	},
+]
+
+const TRUST_SIGNALS = [
+	{ icon: ShieldCheck, label: 'Stock real verificado' },
+	{ icon: Truck, label: 'Entrega coordinada contigo' },
+	{ icon: Repeat2, label: 'Cambio de talla por WhatsApp' },
+] as const
+
+/** Disclosure accesible: botón + región con apertura animada.
+    Reemplaza a <details>/<summary>, cuya expansión instantánea producía un
+    salto brusco de layout al abrir secciones como "Cómo comprar". */
+function InfoDisclosure({
+	title,
+	children,
+}: {
+	title: string
+	children: ReactNode
+}) {
+	const [open, setOpen] = useState(false)
+	const contentId = useId()
+
+	return (
+		<div className="border-b border-border">
+			<button
+				type="button"
+				aria-expanded={open}
+				aria-controls={contentId}
+				onClick={() => setOpen((value) => !value)}
+				className="flex min-h-12 w-full cursor-pointer items-center justify-between gap-4 py-4 text-left font-mono text-xs font-bold uppercase tracking-[0.18em] transition-colors hover:text-primary-strong"
+			>
+				{title}
+				<Plus
+					className={cn(
+						'h-4 w-4 shrink-0 transition-transform duration-200',
+						open && 'rotate-45',
+					)}
+					aria-hidden="true"
+				/>
+			</button>
+			{/* grid-rows 0fr→1fr: expansión suave sin animar height (sin reflow
+			    por frame). inert saca el contenido cerrado del tab order. */}
+			<div
+				id={contentId}
+				inert={!open}
+				className={cn(
+					'grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none',
+					open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+				)}
+			>
+				<div className="overflow-hidden">
+					<div className="pb-5 text-sm leading-relaxed text-muted-foreground">
+						{children}
+					</div>
+				</div>
+			</div>
+		</div>
+	)
+}
 
 export function ProductDetail({
 	product,
@@ -27,20 +143,15 @@ export function ProductDetail({
 	product: Product
 	relatedProducts?: Product[]
 }) {
-	const [selectedSize, setSelectedSize] = useState<string | null>(
-		null,
-	)
-	const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+	const [selectedSize, setSelectedSize] = useState<string | null>(null)
+	const [galleryFocus, setGalleryFocus] =
+		useState<GalleryFocusRequest | null>(null)
 	const [canShare, setCanShare] = useState(false)
 
 	useEffect(() => {
 		setCanShare(typeof navigator !== 'undefined' && 'share' in navigator)
 	}, [])
-	const { addToCart, generateWhatsAppMessage, whatsappNumber } =
-		useStore()
-
-	// Main gallery carousel
-	const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true })
+	const { addToCart } = useStore()
 
 	const isSoldOut = product.stockStatus === 'sold_out'
 
@@ -55,8 +166,8 @@ export function ProductDetail({
 		}
 	}, [])
 
-	// Get product images or fallback
-	// Combine main image + gallery + variant images so selecting size can focus its photo.
+	// Combina imagen principal + galería + imágenes de variantes para que
+	// seleccionar una talla pueda enfocar su foto.
 	const productImages = useMemo(() => {
 		const variantImages = (product.variants || [])
 			.map((variant) => variant.imageUrl)
@@ -80,20 +191,11 @@ export function ProductDetail({
 		}
 
 		const uniqueImages = Array.from(uniqueByNormalized.values())
-		return uniqueImages.length > 0
-			? uniqueImages
-			: ['/placeholder.svg']
-	}, [
-		product.image,
-		product.images,
-		product.variants,
-		normalizeImageUrl,
-	])
+		return uniqueImages.length > 0 ? uniqueImages : ['/placeholder.svg']
+	}, [product.image, product.images, product.variants, normalizeImageUrl])
 
 	const selectedVariant = selectedSize
-		? product.variants?.find(
-				(variant) => variant.size === selectedSize,
-			)
+		? product.variants?.find((variant) => variant.size === selectedSize)
 		: null
 	const displayedPrice =
 		selectedVariant?.price !== null &&
@@ -101,24 +203,27 @@ export function ProductDetail({
 			? selectedVariant.price
 			: product.price
 
-	// Get recommended products (exclude current product)
-	const recommendedProducts = relatedProducts
+	const discountPercent =
+		product.originalPrice && product.originalPrice > displayedPrice
+			? Math.round(
+					(1 - displayedPrice / product.originalPrice) * 100,
+				)
+			: null
 
-	const scrollTo = useCallback(
-		(index: number) => {
-			emblaApi?.scrollTo(index)
-			setSelectedImageIndex(index)
-		},
-		[emblaApi],
-	)
+	// Ficha técnica — datos reales disponibles del producto
+	const displayedSku =
+		selectedVariant?.sku ?? product.variants?.[0]?.sku ?? null
+	const refCode = product.id.slice(0, 8).toUpperCase()
 
-	const scrollPrev = useCallback(() => {
-		emblaApi?.scrollPrev()
-	}, [emblaApi])
-
-	const scrollNext = useCallback(() => {
-		emblaApi?.scrollNext()
-	}, [emblaApi])
+	// El mensaje de drop/escasez solo aplica si el producto pertenece a un
+	// drop que ya está abierto — no todos los productos son de drop.
+	const liveDrop =
+		product.drop && product.drop.status === 'live' ? product.drop : null
+	const availabilityLabel = isSoldOut
+		? 'Agotado'
+		: product.stockStatus === 'low'
+			? 'Últimas unidades'
+			: 'En stock'
 
 	const focusVariantImage = useCallback(
 		(variantImageUrl?: string | null) => {
@@ -126,15 +231,16 @@ export function ProductDetail({
 
 			const targetNormalized = normalizeImageUrl(variantImageUrl)
 			const index = productImages.findIndex(
-				(imageUrl) =>
-					normalizeImageUrl(imageUrl) === targetNormalized,
+				(imageUrl) => normalizeImageUrl(imageUrl) === targetNormalized,
 			)
 
 			if (index >= 0) {
-				scrollTo(index)
+				// Objeto nuevo en cada pedido: re-seleccionar la misma talla
+				// vuelve a desplazar la galería hacia su foto.
+				setGalleryFocus({ index })
 			}
 		},
-		[normalizeImageUrl, productImages, scrollTo],
+		[normalizeImageUrl, productImages],
 	)
 
 	const handleToggleSize = useCallback(
@@ -153,17 +259,6 @@ export function ProductDetail({
 		[focusVariantImage, product.variants, selectedSize],
 	)
 
-	useEffect(() => {
-		if (!emblaApi) return
-		const onSelect = () => {
-			setSelectedImageIndex(emblaApi.selectedScrollSnap())
-		}
-		emblaApi.on('select', onSelect)
-		return () => {
-			emblaApi.off('select', onSelect)
-		}
-	}, [emblaApi])
-
 	// A-03: auto-seleccionar si hay exactamente 1 talla disponible
 	useEffect(() => {
 		const availableSizes = product.sizes.filter((size) => {
@@ -179,25 +274,6 @@ export function ProductDetail({
 		}
 		// Solo al montar o cambiar de producto — product.sizes y variants son inmutables en SSR
 	}, [product.id])
-
-	const handleWhatsAppOrder = () => {
-		if (!selectedSize || !whatsappNumber) return
-		const url = generateWhatsAppMessage(product, selectedSize)
-		const opened = window.open(url, '_blank')
-		if (!opened) {
-			toast('Abrí WhatsApp manualmente', {
-				description:
-					'Tu navegador bloqueó la ventana emergente.',
-				action: {
-					label: 'Abrir',
-					onClick: () => {
-						window.location.href = url
-					},
-				},
-				duration: 8000,
-			})
-		}
-	}
 
 	const handleAddToCart = () => {
 		if (!selectedSize) return
@@ -222,158 +298,73 @@ export function ProductDetail({
 		})
 	}
 
-	useEffect(() => {
-		if (selectedImageIndex < productImages.length) return
-		setSelectedImageIndex(0)
-		emblaApi?.scrollTo(0)
-	}, [selectedImageIndex, productImages.length, emblaApi])
-
 	return (
-		<div className="min-h-screen bg-background pb-20 lg:pb-0">
+		<div className="bg-background pb-24 lg:pb-0">
 			<ViewTracker productId={product.id} />
-			{/* Breadcrumbs */}
-			<div className="container mx-auto px-4 py-4">
-				<nav
-					className="flex items-center gap-2 text-sm"
-					aria-label="Breadcrumb"
-				>
-					<Link
-						href="/"
-						className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+
+			{/* Barra técnica: breadcrumb + referencia */}
+			<div className="border-b border-border">
+				<div className="container mx-auto flex items-center justify-between gap-4 px-4 py-3">
+					<nav
+						className="flex min-w-0 items-center gap-2 font-mono text-[11px] uppercase tracking-[0.15em]"
+						aria-label="Breadcrumb"
 					>
-						<ArrowLeft className="h-4 w-4" aria-hidden="true" />
-						<span>Inicio</span>
-					</Link>
-					<span className="text-muted-foreground">/</span>
-					<Link
-						href="/#stock"
-						className="text-muted-foreground hover:text-foreground transition-colors"
-					>
-						Stock
-					</Link>
-					<span className="text-muted-foreground">/</span>
-					<span className="font-medium">{product.name}</span>
-				</nav>
+						<Link
+							href="/"
+							className="flex shrink-0 items-center gap-1 text-muted-foreground transition-colors hover:text-foreground"
+						>
+							<ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+							<span>Inicio</span>
+						</Link>
+						<span className="text-border-strong" aria-hidden="true">
+							/
+						</span>
+						<Link
+							href="/#stock"
+							className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+						>
+							Stock
+						</Link>
+						<span className="text-border-strong" aria-hidden="true">
+							/
+						</span>
+						<span className="truncate font-bold">{product.name}</span>
+					</nav>
+					<span className="hidden shrink-0 font-mono text-[10px] tracking-[0.25em] text-muted-foreground sm:block">
+						REF {refCode}
+					</span>
+				</div>
 			</div>
 
-			{/* Product Content */}
-			<div className="container mx-auto px-4 py-8">
-				<div className="grid lg:grid-cols-2 gap-8 lg:gap-10">
-					{/* Main Gallery */}
-					<div className="flex flex-col lg:flex-row gap-4 w-full">
-						{/* Main Carousel */}
-						<div className="relative aspect-square bg-secondary overflow-hidden group flex-1 order-1">
-							<div ref={emblaRef} className="overflow-hidden h-full">
-								<div className="flex h-full">
-									{productImages.map((img, index) => (
-										<div
-											key={index}
-											className="relative flex-[0_0_100%] min-w-0 h-full"
-										>
-											<Image
-												src={img || '/placeholder.svg'}
-												alt={`${product.name} - vista ${index + 1}`}
-												fill
-												priority={index === 0}
-												sizes="(max-width: 1024px) 100vw, 50vw"
-												className={`object-cover ${
-													isSoldOut ? 'opacity-50 grayscale' : ''
-												}`}
-											/>
-										</div>
-									))}
-								</div>
-							</div>
-
-							{/* Aria live para screen readers al navegar el carousel */}
-							<div
-								aria-live="polite"
-								aria-atomic="true"
-								className="sr-only"
-							>
-								{`Imagen ${selectedImageIndex + 1} de ${productImages.length}`}
-							</div>
-
-							{/* Navigation Arrows */}
-							{productImages.length > 1 && (
-								<>
-									<button
-										type="button"
-										onClick={scrollPrev}
-										className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center border border-foreground bg-background/90 opacity-100 transition-opacity focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
-										aria-label="Imagen anterior"
-									>
-										<ChevronLeft className="w-5 h-5" />
-									</button>
-									<button
-										type="button"
-										onClick={scrollNext}
-										className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center border border-foreground bg-background/90 opacity-100 transition-opacity focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
-										aria-label="Siguiente imagen"
-									>
-										<ChevronRight className="w-5 h-5" />
-									</button>
-								</>
-							)}
-
-							{/* Stock Badge — mismo lenguaje visual que product-badge.tsx */}
-							{product.stockStatus === 'low' && !isSoldOut && (
-								<span className="absolute left-4 top-4 z-10 bg-background/90 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.15em] text-primary-strong">
-									ÚLTIMO
-								</span>
-							)}
-							{isSoldOut && (
-								<span className="absolute left-4 top-4 z-10 bg-foreground px-3 py-1 font-mono text-[10px] uppercase tracking-[0.15em] text-background">
-									AGOTADO
-								</span>
-							)}
-
-							{/* Sale Badge */}
-							{product.originalPrice && !isSoldOut && (
-								<span className="absolute right-4 top-4 z-10 bg-background/90 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.15em] text-primary-strong">
-									OFERTA
-								</span>
-							)}
-						</div>
-
-						{/* Thumbnail Row/Column */}
-						{productImages.length > 1 && (
-							<div className="flex gap-2 lg:flex-col lg:w-24 order-2 lg:h-[calc(100%-0)] overflow-y-auto scrollbar-hide">
-								{productImages.map((img, index) => (
-									<button
-										key={index}
-										type="button"
-										onClick={() => scrollTo(index)}
-										aria-label={`Ver imagen ${index + 1} de ${productImages.length}`}
-										aria-pressed={selectedImageIndex === index}
-										className={`relative aspect-square bg-secondary overflow-hidden border-2 transition-colors shrink-0 ${
-											selectedImageIndex === index
-												? 'border-foreground'
-												: 'border-transparent hover:border-muted-foreground'
-										} ${
-											// Mobile: fill available space equally. Desktop: Fixed width
-											'flex-1 lg:flex-none lg:w-full'
-										}`}
-									>
-										<Image
-											src={img || '/placeholder.svg'}
-											alt={`${product.name} — vista ${index + 1} de ${productImages.length}`}
-											fill
-											sizes="96px"
-											className="object-cover"
-										/>
-									</button>
-								))}
-							</div>
-						)}
+			{/* Layout asimétrico 7/5 con costura central */}
+			<div className="container mx-auto px-4">
+				<div className="grid lg:grid-cols-12">
+					{/* ── Galería: rail con snap en mobile, mosaico en desktop ── */}
+					<div className="py-6 lg:col-span-7 lg:border-r lg:border-border lg:py-10 lg:pr-10">
+						<ProductGallery
+							images={productImages}
+							productName={product.name}
+							isSoldOut={isSoldOut}
+							isLowStock={product.stockStatus === 'low'}
+							discountPercent={discountPercent}
+							focusRequest={galleryFocus}
+						/>
 					</div>
 
-					{/* Product Info */}
-					<div className="flex flex-col pt-2 w-full">
-						<div className="flex items-start justify-between gap-3 mb-3">
-							<h1 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight uppercase">
-								{product.name}
-							</h1>
+					{/* ── Panel de información ── */}
+					<div className="flex flex-col py-6 lg:col-span-5 lg:py-10 lg:pl-10">
+						{/* Kicker: categoría (+ drop abierto) + compartir */}
+						<div className="mb-4 flex items-center justify-between gap-3">
+							<div className="flex min-w-0 flex-wrap items-center gap-2">
+								<p className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary-strong">
+									// {product.category || 'Stock'}
+								</p>
+								{liveDrop && (
+									<span className="bg-primary px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-primary-foreground">
+										Drop · {liveDrop.name}
+									</span>
+								)}
+							</div>
 							{canShare && (
 								<button
 									type="button"
@@ -386,99 +377,123 @@ export function ProductDetail({
 											})
 											.catch(() => {})
 									}}
-									className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center border border-border transition-colors hover:border-foreground"
+									className="flex h-11 w-11 shrink-0 items-center justify-center border border-border transition-colors hover:border-foreground"
 									aria-label="Compartir producto"
 								>
-									<Share2
-										className="h-4 w-4"
-										aria-hidden="true"
-									/>
+									<Share2 className="h-4 w-4" aria-hidden="true" />
 								</button>
 							)}
 						</div>
 
-						<div className="flex items-center gap-3 mb-4">
-							<span className="text-2xl md:text-3xl lg:text-4xl font-black">
+						{/* Título editorial */}
+						<h1 className="font-editorial text-4xl font-extrabold uppercase leading-[0.92] tracking-tight md:text-5xl lg:text-6xl">
+							{product.name}
+						</h1>
+
+						{/* Bloque de precio */}
+						<div className="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border pb-5">
+							<span className="text-3xl font-black tabular-nums md:text-4xl">
 								{formatPrice(displayedPrice)}
 							</span>
 							{product.originalPrice && (
-								<span className="text-xl text-muted-foreground line-through">
+								<span className="text-lg tabular-nums text-muted-foreground line-through">
 									{formatPrice(product.originalPrice)}
+								</span>
+							)}
+							{discountPercent && (
+								<span className="font-mono text-xs font-bold uppercase tracking-widest text-primary-strong">
+									Ahorras {discountPercent}%
 								</span>
 							)}
 						</div>
 
-						{/* Description */}
-						{product.description?.trim() ? (
-							<div className="mb-6">
-								<h3 className="font-bold text-xs uppercase tracking-wide mb-2 text-muted-foreground">
-									Descripción
-								</h3>
-								<CollapsibleDescription
-									text={product.description}
-								/>
-							</div>
-						) : null}
-
-						{/* Bottom Actions Section */}
-						<div className="mt-auto pt-8 lg:pt-0">
-							{/* Size Selector */}
-							{!isSoldOut && (
-								<div className="mb-6">
+						{/* Selector de talla */}
+						{!isSoldOut && (
+							<div className="mt-6">
+								<div className="mb-3 flex items-baseline justify-between">
 									<h3
 										id="size-selector-label"
-										className="font-bold text-xs uppercase tracking-wide mb-3 text-muted-foreground"
+										className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground"
 									>
 										Selecciona tu talla
 									</h3>
-									<div
-										className="flex flex-wrap gap-3"
-										role="group"
-										aria-labelledby="size-selector-label"
-									>
-										{product.sizes.map((size) => {
-											// Check individual variant stock
-											const variant = product.variants?.find(
-												(v) => v.size === size,
-											)
-											const isSizeSoldOut = variant
-												? variant.trackInventory !== false &&
-												  variant.stock <= 0
-												: false
-
-											return (
-												<button
-													key={size}
-													type="button"
-													disabled={isSizeSoldOut}
-													onClick={() => handleToggleSize(size)}
-													aria-pressed={selectedSize === size}
-													aria-label={`Talla ${size}${isSizeSoldOut ? ' agotada' : ''}`}
-													className={`w-14 h-12 text-sm font-bold border-2 transition-all relative ${
-														selectedSize === size
-															? 'bg-foreground text-background border-foreground'
-															: isSizeSoldOut
-																? 'bg-secondary text-muted-foreground border-transparent opacity-50 cursor-not-allowed line-through decoration-2'
-																: 'bg-transparent text-foreground border-border hover:border-foreground'
-													}`}
-												>
-													{size}
-												</button>
-											)
-										})}
-									</div>
+									{selectedSize && (
+										<span className="font-mono text-[10px] uppercase tracking-[0.2em]">
+											Talla {selectedSize}
+										</span>
+									)}
 								</div>
-							)}
+								<div
+									className="flex flex-wrap gap-2"
+									role="group"
+									aria-labelledby="size-selector-label"
+								>
+									{product.sizes.map((size) => {
+										const variant = product.variants?.find(
+											(v) => v.size === size,
+										)
+										const isSizeSoldOut = variant
+											? variant.trackInventory !== false &&
+												variant.stock <= 0
+											: false
+										const isSizeLow =
+											!isSizeSoldOut &&
+											variant &&
+											variant.trackInventory !== false &&
+											variant.stock > 0 &&
+											variant.stock <=
+												(variant.lowStockThreshold ?? 5)
 
-							{/* A-05: Copy de escasez — visible al seleccionar una talla con poco stock */}
-							{selectedVariant &&
-								selectedVariant.trackInventory !== false &&
-								selectedVariant.stock > 0 &&
-								selectedVariant.stock <=
-									(selectedVariant.lowStockThreshold ?? 5) && (
+										return (
+											<button
+												key={size}
+												type="button"
+												disabled={isSizeSoldOut}
+												onClick={() => handleToggleSize(size)}
+												aria-pressed={selectedSize === size}
+												aria-label={`Talla ${size}${
+													isSizeSoldOut
+														? ' agotada'
+														: isSizeLow
+															? ' — pocas unidades'
+															: ''
+												}`}
+												className={`relative h-12 min-w-14 border-2 px-3 text-sm font-bold transition-all ${
+													selectedSize === size
+														? 'border-foreground bg-foreground text-background'
+														: isSizeSoldOut
+															? 'cursor-not-allowed border-transparent bg-secondary text-muted-foreground line-through decoration-2 opacity-50'
+															: 'border-border bg-transparent text-foreground hover:border-foreground'
+												}`}
+											>
+												{size}
+												{/* Punto rojo: talla con pocas unidades */}
+												{isSizeLow && (
+													<span
+														className={`absolute right-1 top-1 h-1.5 w-1.5 rounded-full ${
+															selectedSize === size
+																? 'bg-background'
+																: 'bg-primary'
+														}`}
+														aria-hidden="true"
+													/>
+												)}
+											</button>
+										)
+									})}
+								</div>
+							</div>
+						)}
+
+						{/* A-05: Copy de escasez — visible al seleccionar una talla con poco stock */}
+						{selectedVariant &&
+							selectedVariant.trackInventory !== false &&
+							selectedVariant.stock > 0 &&
+							selectedVariant.stock <=
+								(selectedVariant.lowStockThreshold ?? 5) && (
 								<p
 									role="status"
-									className="mb-4 font-mono text-xs uppercase tracking-widest text-primary"
+									className="mt-4 font-mono text-xs uppercase tracking-widest text-primary-strong"
 								>
 									{selectedVariant.stock === 1
 										? 'Solo queda 1 unidad'
@@ -486,87 +501,192 @@ export function ProductDetail({
 								</p>
 							)}
 
-							{/* Actions */}
-							<div className="space-y-4">
-								{!isSoldOut ? (
-									<>
-										{/* WhatsApp Primary CTA */}
-										<Button
-											onClick={handleWhatsAppOrder}
-											disabled={!selectedSize || !whatsappNumber}
-											className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-black text-base lg:text-lg py-6 gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-										>
-											<MessageCircle className="h-5 w-5 lg:h-6 lg:w-6" />
-											{!whatsappNumber
-												? 'WHATSAPP NO DISPONIBLE'
-												: selectedSize
-													? 'PEDIR POR WHATSAPP'
-													: 'SELECCIONA TU TALLA'}
-										</Button>
-
-										{/* Add to Cart Secondary */}
-										<Button
-											onClick={handleAddToCart}
-											disabled={!selectedSize}
-											variant="outline"
-											className="w-full border-2 border-foreground text-foreground hover:bg-foreground hover:text-background font-bold py-4 disabled:opacity-50 disabled:cursor-not-allowed bg-transparent"
-										>
-											{selectedSize
-												? 'AGREGAR AL CARRITO'
-												: 'ELIGE TU TALLA PRIMERO'}
-										</Button>
-									</>
-								) : (
+						{/* CTA — el pedido por WhatsApp se confirma desde el carrito,
+						    donde se pide el correo y se registra la orden. */}
+						<div className="mt-6 space-y-3">
+							{!isSoldOut ? (
+								<>
 									<Button
-										disabled
-										className="w-full font-bold py-8 text-lg opacity-50 cursor-not-allowed"
+										onClick={handleAddToCart}
+										disabled={!selectedSize}
+										className="h-14 w-full gap-3 bg-primary font-mono text-sm font-bold uppercase tracking-[0.15em] text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50 lg:text-base"
 									>
-										AGOTADO
+										<ShoppingBag className="h-5 w-5" aria-hidden="true" />
+										{selectedSize
+											? 'Agregar al carrito'
+											: 'Selecciona tu talla'}
 									</Button>
-								)}
-							</div>
-
-							{/* Info Note */}
-							{!isSoldOut && (
-								<p className="text-xs text-muted-foreground text-center mt-4">
-									Al hacer clic en "Pedir por WhatsApp" se abrirá una
-									conversación con nuestro equipo para coordinar tu
-									pedido.
-								</p>
+									<p className="text-center text-xs text-muted-foreground">
+										Desde el carrito confirmas el pedido y se abre
+										WhatsApp para coordinar pago y entrega.
+									</p>
+								</>
+							) : (
+								<Button
+									disabled
+									className="h-14 w-full cursor-not-allowed font-mono text-base font-bold uppercase tracking-[0.15em] opacity-50"
+								>
+									Agotado
+								</Button>
 							)}
+						</div>
+
+						{/* Señales de confianza */}
+						<div className="mt-8 grid grid-cols-3 divide-x divide-border border-y border-border">
+							{TRUST_SIGNALS.map(({ icon: Icon, label }) => (
+								<div
+									key={label}
+									className="flex flex-col items-center gap-2 px-2 py-4 text-center"
+								>
+									<Icon
+										className="h-4 w-4 text-primary-strong"
+										aria-hidden="true"
+									/>
+									<span className="font-mono text-[9px] uppercase leading-tight tracking-[0.12em] text-muted-foreground">
+										{label}
+									</span>
+								</div>
+							))}
+						</div>
+
+						{/* Descripción */}
+						{product.description?.trim() ? (
+							<div className="mt-8">
+								<h3 className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+									Notas del drop
+								</h3>
+								<CollapsibleDescription text={product.description} />
+							</div>
+						) : null}
+
+						{/* Ficha técnica */}
+						<div className="mt-8">
+							<h3 className="mb-3 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+								Ficha técnica
+							</h3>
+							<dl className="divide-y divide-border border border-border font-mono text-xs">
+								<div className="flex items-center justify-between gap-4 px-4 py-3">
+									<dt className="uppercase tracking-[0.15em] text-muted-foreground">
+										Categoría
+									</dt>
+									<dd className="font-bold uppercase tracking-wide">
+										{product.category || '—'}
+									</dd>
+								</div>
+								{liveDrop && (
+									<div className="flex items-center justify-between gap-4 px-4 py-3">
+										<dt className="uppercase tracking-[0.15em] text-muted-foreground">
+											Drop
+										</dt>
+										<dd className="text-right font-bold uppercase tracking-wide text-primary-strong">
+											{liveDrop.name}
+										</dd>
+									</div>
+								)}
+								<div className="flex items-center justify-between gap-4 px-4 py-3">
+									<dt className="uppercase tracking-[0.15em] text-muted-foreground">
+										Tallas
+									</dt>
+									<dd className="text-right font-bold uppercase tracking-wide">
+										{product.sizes.join(' / ') || '—'}
+									</dd>
+								</div>
+								<div className="flex items-center justify-between gap-4 px-4 py-3">
+									<dt className="uppercase tracking-[0.15em] text-muted-foreground">
+										Disponibilidad
+									</dt>
+									<dd
+										className={`font-bold uppercase tracking-wide ${
+											isSoldOut
+												? 'text-muted-foreground'
+												: product.stockStatus === 'low'
+													? 'text-primary-strong'
+													: ''
+										}`}
+									>
+										{availabilityLabel}
+									</dd>
+								</div>
+								{displayedSku && (
+									<div className="flex items-center justify-between gap-4 px-4 py-3">
+										<dt className="uppercase tracking-[0.15em] text-muted-foreground">
+											SKU
+										</dt>
+										<dd className="font-bold uppercase tracking-wide">
+											{displayedSku}
+										</dd>
+									</div>
+								)}
+								<div className="flex items-center justify-between gap-4 px-4 py-3">
+									<dt className="uppercase tracking-[0.15em] text-muted-foreground">
+										Ref
+									</dt>
+									<dd className="font-bold uppercase tracking-wide">
+										{refCode}
+									</dd>
+								</div>
+							</dl>
+						</div>
+
+						{/* Información de compra */}
+						<div className="mt-8 border-t border-border">
+							{INFO_SECTIONS.map((section) => (
+								<InfoDisclosure key={section.title} title={section.title}>
+									{section.content}
+								</InfoDisclosure>
+							))}
 						</div>
 					</div>
 				</div>
 			</div>
 
-			{/* Recommended Products Section */}
-			{recommendedProducts.length > 0 && (
-				<section className="container mx-auto px-4 py-16 border-t border-border">
-					<h2 className="text-2xl md:text-3xl font-black tracking-tight uppercase mb-8">
-						BAJO EL RADAR // STOCK RELACIONADO
-					</h2>
-
-					{/* Horizontal scroll on mobile, 4 columns on desktop */}
-					<div className="flex gap-4 overflow-x-auto pb-4 md:grid md:grid-cols-4 md:overflow-visible scrollbar-hide">
-						{recommendedProducts.map((recProduct) => (
-							<div
-								key={recProduct.id}
-								className="flex-none w-[260px] md:w-auto"
-							>
-								<ProductCard product={recProduct} />
+			{/* Franja marquee — solo para productos de un drop abierto; el resto
+			    del catálogo no es de stock limitado y lleva un divisor simple. */}
+			{liveDrop ? (
+				<div
+					className="overflow-hidden border-y border-border py-3"
+					aria-hidden="true"
+				>
+					<div className="flex w-max animate-announcement-marquee motion-reduce:animate-none">
+						{[0, 1].map((half) => (
+							<div key={half} className="flex shrink-0 items-center">
+								{Array.from({ length: 4 }).map((_, i) => (
+									<span
+										key={i}
+										className="flex items-center gap-6 whitespace-nowrap pr-6 font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground"
+									>
+										<span className="font-bold text-foreground">
+											{product.name}
+										</span>
+										<span className="text-primary-strong">✕</span>
+										<span className="font-bold text-primary-strong">
+											Drop {liveDrop.name} abierto
+										</span>
+										<span className="text-primary-strong">✕</span>
+										<span>Stock limitado</span>
+										<span className="text-primary-strong">✕</span>
+										<span>Una vez agotado no vuelve</span>
+										<span className="text-primary-strong">✕</span>
+									</span>
+								))}
 							</div>
 						))}
 					</div>
-				</section>
+				</div>
+			) : (
+				<div className="border-t border-border" />
 			)}
+
+			{/* Productos relacionados */}
+			<RelatedProducts products={relatedProducts} />
 
 			{/* A-01: Sticky CTA — solo visible en mobile (lg:hidden en el componente) */}
 			<ProductStickyCtaMobile
 				price={displayedPrice}
 				selectedSize={selectedSize}
-				disabled={!selectedSize || !whatsappNumber}
+				disabled={!selectedSize}
 				isSoldOut={isSoldOut}
-				onWhatsApp={handleWhatsAppOrder}
+				onAddToCart={handleAddToCart}
 			/>
 		</div>
 	)

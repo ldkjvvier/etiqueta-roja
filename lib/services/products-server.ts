@@ -1,6 +1,6 @@
 import { unstable_cache } from 'next/cache'
 import { createClient, createPublicClient } from '@/lib/supabase/server'
-import type { Product } from '@/lib/store-context'
+import type { Product, ProductDrop } from '@/lib/store-context'
 import { getPublicStoreContext } from '@/lib/data/admin-context'
 import {
 	type SearchFilters,
@@ -32,6 +32,12 @@ type ProductRow = {
 	category: { name: string | null } | null
 	variants: VariantRow[]
 	gallery?: Array<{ image_url: string; display_order: number }>
+	// Solo presente en la query de detalle (getPublicProductsBaseQuery)
+	drop?: {
+		name: string
+		slug: string | null
+		status: ProductDrop['status']
+	} | null
 }
 
 // Lean SELECT for the product listing grid — only fields needed by ProductCard.
@@ -110,6 +116,7 @@ function mapRowToProduct(row: ProductRow): Product {
 					: 'available',
 		category: row.category?.name || 'Uncategorized',
 		description: row.description ?? undefined,
+		drop: row.drop ?? null,
 	}
 }
 
@@ -117,7 +124,7 @@ function getPublicProductsBaseQuery(db: any, storeId: string) {
 	return db
 		.from('products')
 		.select(
-			`id,slug,name,description,base_price,compare_at_price,main_image,category:categories(name),variants:product_variants(id,combination_key,stock_quantity,reserved_stock,low_stock_threshold,track_inventory,price,image_url,sku),gallery:product_images(image_url,display_order)`,
+			`id,slug,name,description,base_price,compare_at_price,main_image,category:categories(name),drop:drops(name,slug,status),variants:product_variants(id,combination_key,stock_quantity,reserved_stock,low_stock_threshold,track_inventory,price,image_url,sku),gallery:product_images(image_url,display_order)`,
 		)
 		.eq('store_id', storeId)
 		.eq('status', 'active')

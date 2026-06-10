@@ -39,6 +39,12 @@ export type ProductVariant = {
 	sku?: string | null
 }
 
+export type ProductDrop = {
+	name: string
+	slug?: string | null
+	status: 'scheduled' | 'live' | 'ended'
+}
+
 export type Product = {
 	id: string
 	slug?: string
@@ -52,6 +58,9 @@ export type Product = {
 	stockStatus: 'available' | 'low' | 'sold_out'
 	category?: string
 	description?: string
+	/* Drop al que pertenece el producto (solo lo trae la query de detalle).
+	   null/undefined cuando el producto no fue creado dentro de un drop. */
+	drop?: ProductDrop | null
 }
 
 type StoreContextType = {

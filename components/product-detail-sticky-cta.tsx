@@ -1,6 +1,6 @@
 'use client'
 
-import { MessageCircle } from 'lucide-react'
+import { ShoppingBag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatPrice } from '@/lib/utils'
 
@@ -9,15 +9,17 @@ interface ProductStickyCtaMobileProps {
 	selectedSize: string | null
 	disabled: boolean
 	isSoldOut: boolean
-	onWhatsApp: () => void
+	onAddToCart: () => void
 }
 
+/* El pedido por WhatsApp se arma desde el carrito (ahí se pide el correo
+   y se registra la orden), por eso el CTA del producto agrega al carrito. */
 export function ProductStickyCtaMobile({
 	price,
 	selectedSize,
 	disabled,
 	isSoldOut,
-	onWhatsApp,
+	onAddToCart,
 }: ProductStickyCtaMobileProps) {
 	return (
 		<div
@@ -33,15 +35,15 @@ export function ProductStickyCtaMobile({
 				</span>
 			</div>
 			<Button
-				onClick={onWhatsApp}
+				onClick={onAddToCart}
 				disabled={disabled || isSoldOut}
 				className="h-12 flex-1 gap-2 bg-primary font-bold uppercase tracking-widest text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
 			>
-				<MessageCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+				<ShoppingBag className="h-4 w-4 shrink-0" aria-hidden="true" />
 				{isSoldOut
 					? 'AGOTADO'
 					: selectedSize
-						? 'PEDIR POR WHATSAPP'
+						? 'AGREGAR AL CARRITO'
 						: 'SELECCIONA TU TALLA'}
 			</Button>
 		</div>
