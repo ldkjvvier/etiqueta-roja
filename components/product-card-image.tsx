@@ -30,7 +30,7 @@ export function ProductCardImage({
 					fill
 					sizes="(max-width: 1280px) 33vw, 25vw"
 					className={cn(
-						'object-cover',
+						'object-cover will-change-transform transition-transform duration-500 ease-out-expo group-hover/card:scale-[1.08] motion-reduce:transition-none motion-reduce:group-hover/card:scale-100',
 						isSoldOut && 'grayscale brightness-95',
 					)}
 				/>
@@ -40,7 +40,7 @@ export function ProductCardImage({
 						alt={`${alt} — vista alternativa`}
 						fill
 						sizes="(max-width: 1280px) 33vw, 25vw"
-						className="object-cover opacity-0 will-change-[opacity] transition-opacity duration-300 ease-out-expo group-hover/card:opacity-100 motion-reduce:transition-none"
+						className="object-cover opacity-0 will-change-[opacity,transform] transition-[opacity,transform] duration-500 ease-out-expo group-hover/card:opacity-100 group-hover/card:scale-[1.08] motion-reduce:transition-none motion-reduce:group-hover/card:scale-100"
 					/>
 				)}
 			</div>
