@@ -31,6 +31,11 @@ export function ProductDetail({
 		null,
 	)
 	const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+	const [canShare, setCanShare] = useState(false)
+
+	useEffect(() => {
+		setCanShare(typeof navigator !== 'undefined' && 'share' in navigator)
+	}, [])
 	const { addToCart, generateWhatsAppMessage, whatsappNumber } =
 		useStore()
 
@@ -369,8 +374,7 @@ export function ProductDetail({
 							<h1 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight uppercase">
 								{product.name}
 							</h1>
-							{typeof navigator !== 'undefined' &&
-								'share' in navigator && (
+							{canShare && (
 								<button
 									type="button"
 									onClick={() => {
