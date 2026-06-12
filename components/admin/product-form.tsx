@@ -56,7 +56,9 @@ const optionalNullableUrl = z.preprocess((value) => {
 const formSchema = z
 	.object({
 		is_customizable: z.boolean().default(false),
-		name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
+		name: z
+			.string()
+			.min(2, 'El nombre debe tener al menos 2 caracteres'),
 		description: z.string().optional(),
 		base_price: z.coerce.number().min(0.01),
 		compare_at_price: optionalNullableNumber,
@@ -239,7 +241,6 @@ export function ProductForm({
 				void deleteStorageObjects(toDelete)
 			}
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
 
 	const watchedVariants = form.watch('variants')
@@ -331,7 +332,9 @@ export function ProductForm({
 
 						{/* P-04: Hint about product/variant structure */}
 						<p className="text-xs text-muted-foreground rounded-md border border-dashed px-3 py-2">
-							<strong>Tip:</strong> Un producto agrupa variantes (tallas, colores). No crees un producto por talla — agrégalas como variantes abajo.
+							<strong>Tip:</strong> Un producto agrupa variantes
+							(tallas, colores). No crees un producto por talla —
+							agrégalas como variantes abajo.
 						</p>
 
 						<div className="space-y-2">
@@ -456,7 +459,8 @@ export function ProductForm({
 									<div className="flex items-center gap-1.5 text-amber-600 text-xs mt-1">
 										<AlertTriangle className="h-3.5 w-3.5 shrink-0" />
 										<span>
-											Todas las variantes tienen stock 0. El producto aparecerá agotado.
+											Todas las variantes tienen stock 0. El producto
+											aparecerá agotado.
 										</span>
 									</div>
 								)}
@@ -573,9 +577,7 @@ export function ProductForm({
 									<div className="space-y-2">
 										<Label>Talle</Label>
 										<Input
-											{...form.register(
-												`variants.${index}.size`,
-											)}
+											{...form.register(`variants.${index}.size`)}
 											placeholder="S, M, L..."
 										/>
 										{form.formState.errors.variants?.[index]
@@ -595,9 +597,7 @@ export function ProductForm({
 										<Input
 											type="number"
 											step="0.01"
-											{...form.register(
-												`variants.${index}.price`,
-											)}
+											{...form.register(`variants.${index}.price`)}
 										/>
 									</div>
 									<div className="space-y-2">
@@ -648,9 +648,7 @@ export function ProductForm({
 									<div className="space-y-2">
 										<Label>SKU</Label>
 										<Input
-											{...form.register(
-												`variants.${index}.sku`,
-											)}
+											{...form.register(`variants.${index}.sku`)}
 											placeholder="Opcional"
 										/>
 									</div>
@@ -659,9 +657,7 @@ export function ProductForm({
 										<Input
 											type="number"
 											step="0.01"
-											{...form.register(
-												`variants.${index}.weight`,
-											)}
+											{...form.register(`variants.${index}.weight`)}
 										/>
 									</div>
 								</div>
@@ -676,9 +672,7 @@ export function ProductForm({
 									</Label>
 									<ImageUpload
 										value={
-											form.watch(
-												`variants.${index}.image_url`,
-											)
+											form.watch(`variants.${index}.image_url`)
 												? [
 														form.watch(
 															`variants.${index}.image_url`,

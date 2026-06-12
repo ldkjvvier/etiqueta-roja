@@ -11,6 +11,7 @@ export default tseslint.config(
 			'node_modules/**',
 			'out/**',
 			'build/**',
+			'**/worktrees/**',
 			'**/*.d.ts',
 		],
 	},
