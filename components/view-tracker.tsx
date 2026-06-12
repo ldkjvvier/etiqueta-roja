@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { incrementProductView } from '@/actions/analytics'
+import { incrementProductView } from '@/lib/actions/analytics'
 
 export function ViewTracker({ productId }: { productId: string }) {
 	const calledOnce = useRef(false)

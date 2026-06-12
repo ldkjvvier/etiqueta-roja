@@ -16,7 +16,7 @@ import { HeroConfigForm } from './HeroConfigForm'
 import {
 	buildDropPreview,
 	isValidExternalVideoUrl,
-} from '@/services/heroDropService'
+} from '@/lib/services/hero-drop-service'
 import { useHeroStudioState } from '@/hooks/useHeroStudioState'
 import { HeroDropOption } from '@/types/heroStudio.types'
 import { HomeHeroBannerConfig } from '@/lib/data/site-config'
