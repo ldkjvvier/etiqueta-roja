@@ -1,7 +1,7 @@
 import {
 	getCategories,
 	getDrops,
-} from '@/lib/services/products-admin-fetcher'
+} from '@/lib/services/products-admin'
 import { ProductForm } from '@/components/admin/product-form'
 
 export default async function NewProductPage() {

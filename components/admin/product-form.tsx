@@ -36,7 +36,7 @@ import { toast } from 'sonner'
 import {
 	Category,
 	DropOption,
-} from '@/lib/services/products-admin-fetcher'
+} from '@/lib/services/products-admin'
 
 const optionalNullableNumber = z.preprocess((value) => {
 	if (value === '' || value === null || value === undefined) {

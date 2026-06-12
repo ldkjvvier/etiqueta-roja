@@ -2,7 +2,7 @@ import {
 	getCategories,
 	getDrops,
 	getProductById,
-} from '@/lib/services/products-admin-fetcher'
+} from '@/lib/services/products-admin'
 import { ProductForm } from '@/components/admin/product-form'
 import { notFound } from 'next/navigation'
 
