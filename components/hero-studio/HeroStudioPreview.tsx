@@ -2,7 +2,7 @@
 'use client'
 
 import { memo } from 'react'
-import { HeroDropPreview } from '@/services/heroDropService'
+import { HeroDropPreview } from '@/lib/services/hero-drop-service'
 import { HeroStudioState } from '@/types/heroStudio.types'
 import { HeroBannerLayout } from './HeroBannerLayout'
 import { HeroPresetContent } from './HeroPresetContent'
